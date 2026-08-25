@@ -60,6 +60,30 @@ export function SettingsClient({ profile, user, role }: Props) {
     try {
       await updateProfile(fd);
       setMessage('已保存');
+      // Force reload to update sidebar
+      setTimeout(() => window.location.reload(), 600);
+    } catch (err: any) {
+      setMessage(err.message || '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleNameSave = async () => {
+    if (!displayName.trim()) {
+      setMessage('名字不能为空');
+      return;
+    }
+    setSaving(true);
+    setMessage('');
+    const fd = new FormData();
+    fd.set('displayName', displayName.trim());
+    fd.set('avatarIcon', avatarIcon);
+    fd.set('avatarColor', avatarColor);
+    try {
+      await updateProfile(fd);
+      setMessage(`名字已改成 ${displayName.trim()}`);
+      setTimeout(() => window.location.reload(), 600);
     } catch (err: any) {
       setMessage(err.message || '保存失败');
     } finally {
@@ -72,10 +96,10 @@ export function SettingsClient({ profile, user, role }: Props) {
       <div className="mx-auto max-w-[720px] space-y-6">
         <Card>
           <CardTitle>个人资料</CardTitle>
-          <p className="mt-2 text-[13px] text-[#0f3d2e]/60">配置你的头像图标和显示名称，会在侧边栏和系统里显示</p>
+          <p className="mt-2 text-[13px] text-[#0f3d2e]/60">改自己的名字和头像，会在侧边栏和系统里显示</p>
 
           {message && (
-            <div className={`mt-4 rounded-[12px] px-3 py-2 text-[12px] ${message.includes('失败') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+            <div className={`mt-4 rounded-[12px] px-3 py-2 text-[12px] ${message.includes('失败') || message.includes('不能为空') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
               {message}
             </div>
           )}
@@ -83,14 +107,26 @@ export function SettingsClient({ profile, user, role }: Props) {
           <div className="mt-4 rounded-[12px] bg-[#faf6ee] p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f7a5c]">当前账号</p>
             <p className="mt-1 text-[13px] font-mono">{user?.email}</p>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-[12px] text-[#4f7a5c]">角色</span>
               <Badge variant={role === 'super_admin' ? 'danger' : role === 'admin' ? 'active' : 'default'}>{role || '无角色'}</Badge>
               {role === 'super_admin' && <span className="text-[11px] text-[#4f7a5c]">可管理所有人员</span>}
               {role === 'admin' && <span className="text-[11px] text-[#4f7a5c]">可查看人员和记录</span>}
               {role === 'staff' && <span className="text-[11px] text-[#4f7a5c]">日常操作</span>}
             </div>
-            <p className="mt-1 text-[11px] text-[#4f7a5c]">ID: {user?.id?.slice(0,8)}…</p>
+
+            <div className="mt-4 flex gap-2">
+              <div className="flex-1">
+                <label className="text-[11px] font-semibold text-[#4f7a5c]">我的名字 *</label>
+                <div className="mt-1 flex gap-2">
+                  <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="张牧师" className="flex-1" />
+                  <Button size="sm" onClick={handleNameSave} disabled={saving} className="shrink-0">{saving ? '保存…' : '改名'}</Button>
+                </div>
+                <p className="mt-1 text-[11px] text-[#4f7a5c]">改完点“改名”，侧边栏会同步更新</p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[11px] text-[#4f7a5c]">ID: {user?.id?.slice(0,8)}…</p>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.2fr]">
@@ -109,7 +145,7 @@ export function SettingsClient({ profile, user, role }: Props) {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-[11px] font-semibold text-[#4f7a5c]">显示名称</label>
+                <label className="text-[11px] font-semibold text-[#4f7a5c]">显示名称（同上）</label>
                 <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="张牧师" className="mt-1" />
               </div>
 
@@ -134,7 +170,7 @@ export function SettingsClient({ profile, user, role }: Props) {
                 </div>
               </div>
 
-              <Button type="submit" disabled={saving} className="w-full">{saving ? '保存中…' : '保存'}</Button>
+              <Button type="submit" disabled={saving} className="w-full">{saving ? '保存中…' : '保存全部'}</Button>
             </form>
           </div>
         </Card>
