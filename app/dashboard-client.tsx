@@ -115,11 +115,6 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           </div>
         </Card>
       </div>
-
-      {/* Design credit */}
-      <div className="mt-6 rounded-[20px] bg-[#0f3d2e] p-5 text-white">
-        <p className="mt-1 font-serif text-[16px]">{tt('dashboard.designTokens')}</p>
-      </div>
     </AppShell>
   );
 }

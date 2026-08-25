@@ -71,7 +71,6 @@ export const translations = {
       guideHint: 'Inventory value auto-aggregates from batch costs, no manual work',
       goBooks: 'Go to Books',
       createPO: 'Create PO',
-      designTokens: 'cream #faf6ee • forest #0f3d2e • ember #d26a39 • DM Serif + Inter + Noto Sans SC',
     },
     books: {
       title: 'Books',
@@ -280,7 +279,6 @@ export const translations = {
       guideHint: '库存价值按批次成本自动汇总，无需手工算',
       goBooks: '去书库',
       createPO: '建采购单',
-      designTokens: 'cream #faf6ee • forest #0f3d2e • ember #d26a39 • DM Serif + Inter + Noto Sans SC',
     },
     books: {
       title: '书库',
