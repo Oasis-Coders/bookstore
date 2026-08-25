@@ -11,6 +11,12 @@ function getSupabase() {
   return { supabaseUrl, supabaseAnonKey };
 }
 
+type CookieToSet = {
+  name: string;
+  value: string;
+  options?: Record<string, unknown>;
+};
+
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
@@ -31,7 +37,7 @@ export async function signIn(formData: FormData) {
       getAll() {
         return cookieStore.getAll();
       },
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) =>
           cookieStore.set(name, value, options as any)
         );
@@ -57,7 +63,7 @@ export async function signOut() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options as any)
           );
