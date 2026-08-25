@@ -10,6 +10,8 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
 type Book = {
+  title_en?: string | null;
+  metadata?: any;
   id: string;
   sku: string;
   title: string;
@@ -44,7 +46,9 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 <Badge>{book.sku}</Badge>
                 <span className="text-[11px] text-[#4f7a5c]">{book.category || tt('books.uncategorized')}</span>
               </div>
-              <h3 className="mt-3 font-serif text-[16px] leading-tight line-clamp-2">{book.title}</h3>
+              <h3 className="mt-3 font-serif text-[16px] leading-tight line-clamp-2">{(!isZh && (book.title_en || book.metadata?.title_en)) ? (book.title_en || book.metadata?.title_en) : book.title}</h3>
+              {isZh && (book.title_en || book.metadata?.title_en) ? <p className="mt-1 text-[11px] text-[#4f7a5c]">{book.title_en || book.metadata?.title_en}</p> : null}
+              {!isZh && (book.title_en || book.metadata?.title_en) ? <p className="mt-1 text-[11px] text-[#4f7a5c]">{book.title}</p> : null}
               <p className="mt-1 text-[12px] text-[#4f7a5c]">{book.author || ''} {book.publisher ? `· ${book.publisher}` : ''}</p>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-[13px] font-semibold">{formatCurrency(book.current_price || 0)}</span>

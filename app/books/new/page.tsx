@@ -65,9 +65,13 @@ export default function NewBookPage() {
               </div>
             </div>
 
+                        <div>
+              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
+              <Input name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
+            </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title *'}</label>
-              <Input name="title" placeholder={isZh ? '书名' : 'Title'} required className="mt-1" />
+              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
+              <Input name="title_en" placeholder={isZh ? '如 The Way of Victory' : 'English title for display'} className="mt-1" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
