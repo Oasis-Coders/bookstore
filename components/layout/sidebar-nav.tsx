@@ -4,14 +4,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { navItems } from '@/lib/app-config';
 import { cn } from '@/lib/utils';
+import { useT } from '@/lib/i18n/use-t';
 
 export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
   const pathname = usePathname();
+  const { lang } = useT();
+  const isZh = lang === 'zh';
 
   return (
     <nav className="flex flex-col gap-1">
       {items.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+        const label = isZh ? item.labelZh : item.label;
         return (
           <Link
             key={item.href}
@@ -23,8 +27,7 @@ export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
                 : 'text-white/70 hover:bg-white/8 hover:text-white'
             )}
           >
-            <span>{item.labelZh}</span>
-            <span className="text-[11px] opacity-60">{item.label}</span>
+            <span>{label}</span>
           </Link>
         );
       })}

@@ -1,8 +1,5 @@
-import { AppShell } from '@/components/layout/app-shell';
-import { Card, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { SuppliersClient } from './suppliers-client';
 
 export default async function SuppliersPage() {
   const supabase = await createSupabaseServerClient();
@@ -26,32 +23,5 @@ export default async function SuppliersPage() {
     ];
   }
 
-  return (
-    <AppShell title="Suppliers" titleZh="供应商" eyebrow={`${suppliers.length} 家合作`} actions={<Button>+ 新增供应商</Button>}>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {suppliers.map((s) => (
-          <Card key={s.id}>
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-serif text-[16px]">{s.name_zh}</p>
-                {s.name_en && <p className="text-[12px] text-[#4f7a5c]">{s.name_en}</p>}
-              </div>
-              <Badge>{s.code}</Badge>
-            </div>
-            <div className="mt-3 space-y-1 text-[12px] text-[#0f3d2e]/70">
-              {s.contact_name && <p>联系人：{s.contact_name}</p>}
-              {s.phone && <p>电话：{s.phone}</p>}
-              {s.email && <p>邮箱：{s.email}</p>}
-              {s.payment_terms && <p>账期：{s.payment_terms}</p>}
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      <Card className="mt-6">
-        <CardTitle>如何使用</CardTitle>
-        <p className="mt-2 text-[13px] text-[#4f7a5c]">供应商与采购单关联。下单后自动汇总金额，收货时按行建批次，支持同一供应商多次不同进货价。</p>
-      </Card>
-    </AppShell>
-  );
+  return <SuppliersClient suppliers={suppliers} />;
 }
