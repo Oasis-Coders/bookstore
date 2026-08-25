@@ -6,16 +6,6 @@ import { navItems } from '@/lib/app-config';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 
-const icons: Record<string, string> = {
-  '/': '◐',
-  '/books': '📚',
-  '/suppliers': '🏭',
-  '/locations': '📍',
-  '/purchase-orders': '📋',
-  '/sales': '💳',
-  '/reports': '📊',
-};
-
 export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
   const pathname = usePathname();
   const { lang } = useT();
@@ -26,7 +16,6 @@ export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
       {items.map((item) => {
         const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
         const label = isZh ? item.labelZh : item.label;
-        const icon = icons[item.href] || '•';
 
         return (
           <Link
@@ -39,7 +28,7 @@ export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
                 : 'text-white/75 hover:bg-white/10 hover:text-white'
             )}
           >
-            <span className={cn('text-[15px] leading-none transition-transform group-hover:scale-110', isActive && 'text-[#0f3d2e]')}>{icon}</span>
+            <span className={cn('h-1.5 w-1.5 rounded-full transition-all', isActive ? 'bg-[#d26a39]' : 'bg-white/40 group-hover:bg-white/70')} />
             <span className="flex-1">{label}</span>
             {isActive && <span className="h-1.5 w-1.5 rounded-full bg-[#d26a39]" />}
           </Link>
