@@ -122,16 +122,7 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
           <p className="mt-2 text-[11px] text-[#4f7a5c]">{tt('reports.lowStockHint')}</p>
         </Card>
 
-        <Card>
-          <CardTitle>{tt('reports.sqlTitle')}</CardTitle>
-          <div className="mt-3 space-y-2 text-[11px]">
-            <p className="font-mono rounded bg-[#faf6ee] p-2">SELECT * FROM low_stock_view ORDER BY reorder_shortage DESC;</p>
-            <p className="font-mono rounded bg-[#faf6ee] p-2">SELECT * FROM inventory_movement_report_view WHERE occurred_at &gt;= date_trunc(&apos;month&apos;, now()) ORDER BY occurred_at;</p>
-            <p className="font-mono rounded bg-[#faf6ee] p-2">SELECT * FROM sales_margin_report_view ORDER BY sold_at DESC;</p>
-            <p className="text-[12px] text-[#4f7a5c] mt-2">{tt('reports.sqlDesc')}</p>
-          </div>
-          <Button variant="secondary" size="sm" className="mt-3" onClick={downloadTemplate}>{tt('reports.downloadTemplate')}</Button>
-        </Card>
+        
       </div>
     </AppShell>
   );

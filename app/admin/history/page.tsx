@@ -268,7 +268,7 @@ export default function AuditHistoryPage() {
               ? '所有流水表都有触发器禁止 UPDATE/DELETE，保证审计可信。'
               : 'All log tables have triggers blocking UPDATE/DELETE to ensure audit integrity.'}
           </p>
-          <p className="mt-1">SQL: SELECT * FROM inventory_movement_report_view ORDER BY occurred_at DESC;</p>
+          
         </div>
       </div>
     </AppShell>
