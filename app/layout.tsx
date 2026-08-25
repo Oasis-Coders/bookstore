@@ -3,14 +3,14 @@ import './globals.css';
 import { I18nProvider } from '@/lib/i18n/context';
 
 export const metadata: Metadata = {
-  title: '活水书室管理系统 | Living Water Bookstore',
-  description: 'Bookstore inventory, purchasing, and accounting for 活水书室 - Bookstore management system',
-  applicationName: '活水书室管理系统',
+  title: '活水书房 | COCM Bookshop',
+  description: 'COCM Bookshop 活水书房 - Bookstore inventory, purchasing, and accounting',
+  applicationName: '活水书房 | COCM Bookshop',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="zh-CN">
       <body className="bg-[#faf6ee] text-[#0f3d2e] antialiased">
         <I18nProvider>{children}</I18nProvider>
       </body>

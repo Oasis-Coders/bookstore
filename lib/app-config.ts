@@ -16,8 +16,11 @@ export const navItems: NavItem[] = [
 ];
 
 export const appConfig = {
-  name: '活水书室管理系统',
-  nameEn: 'Living Water Bookstore',
+  name: '活水书房管理系统',
+  nameEn: 'COCM Bookshop',
+  shortName: '活水书房',
+  shortNameEn: 'COCM Bookshop',
   description: 'Bookstore inventory, purchasing, and accounting',
+  descriptionZh: '书店库存、采购与账务管理',
   defaultCurrency: 'GBP',
 };

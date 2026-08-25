@@ -18,7 +18,7 @@ export default async function LocationsPage() {
 
   if (mode === 'demo' && locations.length === 0) {
     locations = [
-      { id: '1', code: 'STORE-MAIN', name: '书店门店', location_type: 'store', address: '伦敦活水书室' },
+      { id: '1', code: 'STORE-MAIN', name: '书店门店', location_type: 'store', address: '伦敦活水书房' },
       { id: '2', code: 'WH-01', name: '仓库', location_type: 'warehouse', address: '后仓' },
     ];
   }

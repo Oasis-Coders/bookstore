@@ -44,7 +44,7 @@ export const translations = {
     },
     dashboard: {
       title: 'Dashboard',
-      eyebrow: 'Huo Shui Bookstore',
+      eyebrow: 'COCM Bookshop',
       inventoryValue: 'Inventory Value',
       inventoryValueHint: 'Calculated from FIFO batch cost',
       booksInStock: 'Books in Stock',
@@ -253,7 +253,7 @@ export const translations = {
     },
     dashboard: {
       title: '总览',
-      eyebrow: '活水书室 Huo Shui Bookstore',
+      eyebrow: '活水书房 COCM Bookshop',
       inventoryValue: '库存总值',
       inventoryValueHint: '按 FIFO 批次成本计算',
       booksInStock: '在库图书',

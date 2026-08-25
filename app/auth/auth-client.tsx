@@ -27,7 +27,7 @@ export function AuthClient({ isSignUp, error, message, redirectTo, signInAction,
   };
 
   return (
-    <AppShell title={isSignUp ? tt('auth.titleSignUp') : tt('auth.titleSignIn')} titleZh={isSignUp ? tt('auth.titleSignUp') : tt('auth.titleSignIn')} eyebrow="活水书室">
+    <AppShell title={isSignUp ? tt('auth.titleSignUp') : tt('auth.titleSignIn')} titleZh={isSignUp ? tt('auth.titleSignUp') : tt('auth.titleSignIn')} eyebrow="活水书房">
       <div className="mx-auto max-w-[480px]">
         <Card>
           <CardTitle>{isSignUp ? tt('auth.signUpTitle') : tt('auth.loginTitle')}</CardTitle>
