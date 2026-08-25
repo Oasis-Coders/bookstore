@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { navItems } from '@/lib/app-config';
+import { navItems as defaultNav } from '@/lib/app-config';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 
-export function SidebarNav({ items = navItems }: { items?: typeof navItems }) {
+export function SidebarNav({ items = defaultNav }: { items?: typeof defaultNav }) {
   const pathname = usePathname();
   const { lang } = useT();
   const isZh = lang === 'zh';

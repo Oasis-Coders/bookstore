@@ -22,17 +22,35 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
   const [avatarIcon, setAvatarIcon] = useState('活');
   const [avatarColor, setAvatarColor] = useState('#d26a39');
   const [displayName, setDisplayName] = useState('');
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) return;
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const meta = data.user?.user_metadata as any;
       if (meta?.avatar_icon) setAvatarIcon(meta.avatar_icon);
       if (meta?.avatar_color) setAvatarColor(meta.avatar_color);
       if (meta?.display_name) setDisplayName(meta.display_name);
+      
+      if (data.user) {
+        const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', data.user.id);
+        const roleNames = (roles || []).map((r: any) => r.roles?.name).filter(Boolean);
+        const isSuperAdmin = roleNames.includes('super_admin');
+        const isAdmin = isSuperAdmin || roleNames.includes('admin');
+        setUserRole(isSuperAdmin ? 'super_admin' : isAdmin ? 'admin' : roleNames[0] || 'staff');
+      }
     });
   }, []);
+
+  const filteredNav = navItems.filter(item => {
+    if (!item.roles) return true;
+    if (!userRole) return false;
+    return item.roles.includes(userRole) || (userRole === 'super_admin');
+  });
+
+  // Always show base nav if role not yet loaded (to avoid flicker, show all non-role items)
+  const navToShow = userRole ? filteredNav : navItems.filter(i => !i.roles);
 
   return (
     <div className="min-h-screen bg-[#faf6ee] text-[#0f3d2e]">
@@ -47,12 +65,12 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">COCM</p>
-                  {displayName && <span className="text-[11px] text-white/60">• {displayName}</span>}
+                  {userRole && <span className="rounded-[6px] bg-white/15 px-1.5 py-0.5 text-[10px] text-white/80">{userRole}</span>}
                 </div>
                 <h1 className="mt-1.5 font-serif text-[20px] leading-tight tracking-tight text-white">
                   {isZh ? '活水书房' : 'COCM Bookshop'}
                   <br />
-                  <span className="text-[12px] font-sans font-normal tracking-wide opacity-70">{isZh ? '书店管理系统' : 'Bookshop System'}</span>
+                  <span className="text-[12px] font-sans font-normal tracking-wide opacity-70">{displayName || (isZh ? '书店管理系统' : 'Bookshop System')}</span>
                 </h1>
               </div>
             </div>
@@ -60,7 +78,12 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
           </div>
 
           <div className="mt-6 flex min-h-0 flex-1 flex-col">
-            <SidebarNav items={navItems} />
+            <SidebarNav items={navToShow} />
+            {userRole === 'super_admin' && (
+              <div className="mt-3 rounded-[12px] bg-white/10 px-3 py-2 text-[11px] text-white/60">
+                super_admin 模式
+              </div>
+            )}
           </div>
         </MobileSidebar>
 

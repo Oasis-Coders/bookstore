@@ -10,6 +10,8 @@ const protectedPrefixes = [
   '/purchase-orders',
   '/reports',
   '/sales',
+  '/admin',
+  '/settings',
 ];
 
 function getEnv() {
@@ -40,7 +42,6 @@ export async function middleware(request: NextRequest) {
 
   const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
 
-  // 如果 env 缺失，跳过认证（防止 Vercel 500）
   if (!supabaseUrl || !supabaseAnonKey) {
     return supabaseResponse;
   }
@@ -50,13 +51,13 @@ export async function middleware(request: NextRequest) {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet: Array<{ name: string; value: string; options?: Record<string, unknown> }>) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+      setAll(cookiesToSet: any) {
+        cookiesToSet.forEach(({ name, value, options }: any) => request.cookies.set(name, value));
         supabaseResponse = NextResponse.next({
           request,
         });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options as any)
+        cookiesToSet.forEach(({ name, value, options }: any) =>
+          supabaseResponse.cookies.set(name, value, options)
         );
       },
     },
@@ -66,18 +67,13 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = protectedPrefixes.some((prefix) => {
-    if (prefix === '/') {
-      return pathname === '/' || protectedPrefixes.slice(1).some((p) => pathname.startsWith(p));
-    }
-    return pathname.startsWith(prefix);
-  });
+  const isProtected = protectedPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) || pathname === '/';
 
-  // 如果访问受保护路径但没登录，跳到 /auth
-  if (isProtected && !user && pathname !== '/auth') {
-    const signInUrl = new URL('/auth', request.url);
-    signInUrl.searchParams.set('redirectTo', pathname);
-    return NextResponse.redirect(signInUrl);
+  if (isProtected && !user) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = '/auth';
+    redirectUrl.searchParams.set('redirectTo', pathname);
+    return NextResponse.redirect(redirectUrl);
   }
 
   return supabaseResponse;
