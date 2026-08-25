@@ -3,6 +3,8 @@
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { createSupabaseAdminClient } from '@/lib/supabase/admin';
+import { hasSupabaseServiceRole } from '@/lib/supabase/env';
 
 function getSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -81,12 +83,51 @@ export async function signUp(formData: FormData) {
     redirect(`/auth?mode=signup&error=no-supabase&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
+  // Like COCM: if we have service role, use admin.createUser with email_confirm: true to skip email verification
+  if (hasSupabaseServiceRole()) {
+    const adminSupabase = createSupabaseAdminClient();
+    if (adminSupabase) {
+      const { data, error } = await adminSupabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          display_name: displayName,
+        },
+      });
+
+      if (error || !data.user) {
+        redirect(`/auth?mode=signup&error=${encodeURIComponent(error?.message || '创建失败')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+      }
+
+      // Auto sign in after creation
+      const cookieStore = await cookies();
+      const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll(cookiesToSet: CookieToSet[]) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options as any)
+            );
+          },
+        },
+      });
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (signInError) {
+        redirect(`/auth?message=${encodeURIComponent('账号已创建，请登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+      }
+
+      redirect(redirectTo);
+    }
+  }
+
+  // Fallback: regular signUp (may require email confirmation if Supabase setting is on)
   const cookieStore = await cookies();
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
+      getAll() { return cookieStore.getAll(); },
       setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) =>
           cookieStore.set(name, value, options as any)
@@ -95,22 +136,27 @@ export async function signUp(formData: FormData) {
     },
   });
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         display_name: displayName,
       },
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:3000'}/auth`,
     },
   });
 
-  if (error) {
-    redirect(`/auth?mode=signup&error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  if (error || !data.user) {
+    redirect(`/auth?mode=signup&error=${encodeURIComponent(error?.message || '注册失败')}&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
-  redirect(`/auth?message=${encodeURIComponent('账号创建成功，请去邮箱确认或直接登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  if (data.session) {
+    // Already signed in (email confirmation disabled)
+    redirect(redirectTo);
+  }
+
+  // No session means email confirmation required
+  redirect(`/auth?message=${encodeURIComponent('账号创建成功，请去邮箱确认后登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
 export async function signOut() {
