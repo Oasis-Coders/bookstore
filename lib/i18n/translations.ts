@@ -3,7 +3,7 @@ export type Lang = 'en' | 'zh';
 export const translations = {
   en: {
     common: {
-      livingWater: 'Living Water',
+      livingWater: 'COCM',
       bookstoreSystem: 'Bookstore System',
       save: 'Save',
       cancel: 'Cancel',
@@ -133,7 +133,7 @@ export const translations = {
       cancelled: 'Cancelled',
       differentCostTitle: 'Same book, different batch cost',
       differentCostDesc:
-        'Same “Living Water Victory” costs £5.20 in Feb and £5.80 in May — system keeps two batches. FIFO deducts Feb batch first, costing is accurate.',
+        'Same “COCM Victory” costs £5.20 in Feb and £5.80 in May — system keeps two batches. FIFO deducts Feb batch first, costing is accurate.',
       receiveTitle: 'One-click Receive',
       receiveDesc: 'On PO detail → Receive → Choose location → Enter qty → System atomically:',
       receive1: 'Update PO line received qty',

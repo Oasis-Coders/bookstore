@@ -4,7 +4,7 @@ import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { navItems } from '@/lib/app-config';
 import { useT } from '@/lib/i18n/use-t';
-import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { LanguageSwitcher, LanguageSwitcherDark } from '@/components/ui/language-switcher';
 
 type AppShellProps = {
   title: string;
@@ -36,7 +36,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
                   </span>
                 </h1>
               </div>
-              <LanguageSwitcher variant="dark" />
+              <LanguageSwitcherDark />
             </div>
           </div>
 
