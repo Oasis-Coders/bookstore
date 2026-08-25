@@ -14,7 +14,7 @@ export const navItems: NavItem[] = [
   { href: '/sales', label: 'Sales', labelZh: '销售' },
   { href: '/reports', label: 'Reports', labelZh: '报表' },
   { href: '/settings', label: 'Settings', labelZh: '设置' },
-  { href: '/admin/users', label: 'Users', labelZh: '人员', roles: ['admin', 'super_admin'] },
+  { href: '/admin/users', label: 'Users', labelZh: '人员', roles: ['super_admin'] },
   { href: '/admin/history', label: 'Audit Log', labelZh: '操作记录', roles: ['admin', 'super_admin'] },
 ];
 

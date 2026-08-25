@@ -3,8 +3,8 @@ import { createSupabaseServiceRoleClient, createSupabaseServerClient } from '@/l
 import { getUserRole } from '@/lib/auth/get-role';
 
 export async function getUsersWithEmails() {
-  const { isAdmin } = await getUserRole();
-  if (!isAdmin) throw new Error('需要 admin 权限');
+  const { isSuperAdmin } = await getUserRole();
+  if (!isSuperAdmin) throw new Error('需要 super_admin 权限');
 
   const serviceSupabase = await createSupabaseServiceRoleClient();
   const supabase = await createSupabaseServerClient();

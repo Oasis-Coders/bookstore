@@ -53,7 +53,7 @@ export default function AdminUsersPage() {
       setIsAdmin(admin);
       setCurrentRole(superAdmin ? 'super_admin' : admin ? 'admin' : roleNames[0] || 'staff');
 
-      if (!admin) {
+      if (!superAdmin) {
         router.push('/');
         return;
       }
