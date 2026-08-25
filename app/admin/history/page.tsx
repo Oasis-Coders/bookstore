@@ -56,7 +56,7 @@ export default function AuditHistoryPage() {
         if (filter === 'all' || filter === 'inventory') {
           const { data } = await supabase
             .from('inventory_transactions')
-            .select('*, books(title, sku), profiles:actor_profile_id(display_name)')
+            .select('*, books(title, sku), profiles:actor_profile_id(display_name, email)')
             .order('occurred_at', { ascending: false })
             .limit(50);
           txs = (data as any) || [];
@@ -64,7 +64,7 @@ export default function AuditHistoryPage() {
         if (filter === 'all' || filter === 'sales') {
           const { data } = await supabase
             .from('sales_transactions')
-            .select('*, profiles:created_by(display_name)')
+            .select('*, profiles:created_by(display_name, email)')
             .order('sold_at', { ascending: false })
             .limit(30);
           sls = (data as any) || [];
@@ -72,7 +72,7 @@ export default function AuditHistoryPage() {
         if (filter === 'all' || filter === 'po') {
           const { data } = await supabase
             .from('purchase_orders')
-            .select('po_number, status, created_at, suppliers(name_zh)')
+            .select('po_number, status, created_at, created_by, suppliers(name_zh), profiles:created_by(display_name, email)')
             .order('created_at', { ascending: false })
             .limit(20);
           pos = (data as any) || [];
@@ -186,14 +186,15 @@ export default function AuditHistoryPage() {
                   key={t.id}
                   className="flex items-center justify-between rounded-[12px] bg-[#faf6ee]/60 px-3 py-2 text-[12px]"
                 >
-                  <div>
-                    <p className="font-medium">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium truncate">
                       {t.books?.title || t.book_id?.slice(0, 8)}{' '}
                       <span className="text-[#4f7a5c]">{t.books?.sku}</span>
                     </p>
-                    <p className="text-[11px] text-[#4f7a5c]">
+                    <p className="text-[11px] text-[#4f7a5c] truncate">
                       {new Date(t.occurred_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} •{' '}
-                      {t.profiles?.display_name || t.actor_profile_id?.slice(0, 6)}
+                      <span className="font-medium text-[#0f3d2e]">{t.profiles?.display_name || t.actor_profile_id?.slice(0, 6)}</span>
+                      {t.profiles?.email ? <span className="text-[#4f7a5c]/70"> ({t.profiles.email})</span> : null}
                     </p>
                   </div>
                   <div className="text-right">
@@ -220,10 +221,12 @@ export default function AuditHistoryPage() {
                   key={s.id}
                   className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 px-3 py-2 text-[12px]"
                 >
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-mono">{s.external_reference || s.id.slice(0, 8)}</p>
-                    <p className="text-[11px] text-[#4f7a5c]">
-                      {new Date(s.sold_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • {s.profiles?.display_name}
+                    <p className="text-[11px] text-[#4f7a5c] truncate">
+                      {new Date(s.sold_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} •{' '}
+                      <span className="font-medium text-[#0f3d2e]">{s.profiles?.display_name || ''}</span>
+                      {s.profiles?.email ? <span className="text-[#4f7a5c]/70"> ({s.profiles.email})</span> : null}
                     </p>
                   </div>
                   <div className="text-right">
@@ -248,8 +251,11 @@ export default function AuditHistoryPage() {
                   key={po.po_number}
                   className="flex items-center justify-between rounded-[12px] bg-[#faf6ee]/50 px-3 py-2 text-[12px]"
                 >
-                  <span className="font-mono">{po.po_number}</span>
-                  <div className="flex items-center gap-2">
+                  <div className="min-w-0">
+                    <span className="font-mono font-medium">{po.po_number}</span>
+                    <span className="ml-2 text-[11px] text-[#4f7a5c]">{(po as any).profiles?.display_name || ''}{(po as any).profiles?.email ? ` (${(po as any).profiles.email})` : ''}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
                     <Badge>{po.status}</Badge>
                     <span className="text-[#4f7a5c]">{po.suppliers?.name_zh}</span>
                   </div>
