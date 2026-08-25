@@ -2,7 +2,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { signIn, signUp, signOut } from './actions';
+import { signIn, signUp } from './actions';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -82,11 +82,7 @@ export default async function AuthPage({ searchParams }: Props) {
             )}
           </div>
 
-          <form action={signOut} className="mt-4">
-            <Button variant="ghost" className="w-full text-[12px]">清除登录</Button>
-          </form>
-
-          <p className="mt-4 text-center text-[11px] text-[#4f7a5c]">
+          <p className="mt-6 text-center text-[11px] text-[#4f7a5c]">
             首位 super_admin 需手动插入：<br />
             <code className="mt-1 block rounded bg-[#faf6ee] p-2 text-left text-[10px]">
               insert into user_roles(user_id, role_id) select '&lt;UUID&gt;'::uuid, id from roles where name='super_admin';
