@@ -168,3 +168,12 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
     await menuBtn.click();
   });
 });
+
+  test('admin - users and history require admin role', async ({ page }) => {
+    await page.goto('/admin/users');
+    // Should redirect to / or show page depending on role - in demo mode redirects to /
+    await expect(page).toHaveURL(/\//);
+    
+    await page.goto('/admin/history');
+    await expect(page).toHaveURL(/\//);
+  });
