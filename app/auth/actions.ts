@@ -94,12 +94,15 @@ export async function signUp(formData: FormData) {
   if (hasSupabaseServiceRole()) {
     const adminSupabase = createSupabaseAdminClient();
     if (adminSupabase) {
+      const initialIcon = displayName.trim().charAt(0).toUpperCase() || displayName.trim().charAt(0) || '活';
       const { data, error } = await adminSupabase.auth.admin.createUser({
         email,
         password,
         email_confirm: true,
         user_metadata: {
           display_name: displayName,
+          avatar_icon: initialIcon,
+          avatar_color: '#d26a39',
         },
       });
 
@@ -147,12 +150,15 @@ export async function signUp(formData: FormData) {
     },
   });
 
+  const fallbackIcon = displayName.trim().charAt(0).toUpperCase() || displayName.trim().charAt(0) || '活';
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: {
         display_name: displayName,
+        avatar_icon: fallbackIcon,
+        avatar_color: '#d26a39',
       },
     },
   });
