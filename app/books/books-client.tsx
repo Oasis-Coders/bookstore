@@ -10,6 +10,7 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
 type Book = {
+  shelf_position?: string | null;
   title_en?: string | null;
   metadata?: any;
   id: string;
@@ -58,6 +59,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 {book.author ? <span className="font-medium">{book.author}</span> : null}
                 {book.publisher ? <span className="opacity-60">· {book.publisher}</span> : null}
               </p>
+              {(book.shelf_position || (book as any).metadata?.shelf_position) ? <p className="mt-1 text-[11px] font-medium text-[#0f3d2e]/70 flex items-center gap-1"><span className="inline-block h-1.5 w-1.5 rounded-full bg-[#d26a39]" />{isZh ? '书架：' : 'Shelf: '}{book.shelf_position || (book as any).metadata?.shelf_position}</p> : null}
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-[15px] font-bold tracking-tight text-[#0f3d2e]">{formatCurrency(book.current_price || 0)}</span>
                 <div className="flex gap-1">

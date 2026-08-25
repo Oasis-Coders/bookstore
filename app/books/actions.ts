@@ -14,6 +14,7 @@ export async function createBook(formData: FormData) {
     author: String(formData.get('author') || '').trim() || null,
     isbn13: String(formData.get('isbn13') || '').trim() || null,
     category: String(formData.get('category') || '').trim() || null,
+    shelf_position: String(formData.get('shelf_position') || '').trim() || null,
     current_price: Number(formData.get('current_price') || 0),
     low_stock_threshold: Number(formData.get('low_stock_threshold') || 5),
   };
@@ -24,11 +25,15 @@ export async function createBook(formData: FormData) {
   const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user?.id || '');
   const roleNames = (roles || []).map((r: any) => r.roles?.name);
 
-  // Try with title_en, fallback to metadata if column missing
+  // Try with title_en and shelf_position, fallback if columns missing
   let payload: any = { ...basePayload, title_en: titleEn };
   let { error } = await supabase.from('books').insert(payload);
-  if (error && error.message.includes('title_en')) {
-    payload = { ...basePayload, metadata: titleEn ? { title_en: titleEn } : {} };
+  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position'))) {
+    const { shelf_position: _sp, ...rest } = basePayload;
+    const meta: any = {};
+    if (titleEn) meta.title_en = titleEn;
+    if (basePayload.shelf_position) meta.shelf_position = basePayload.shelf_position;
+    payload = { ...rest, metadata: Object.keys(meta).length ? meta : {} };
     const res = await supabase.from('books').insert(payload);
     error = res.error;
   }
@@ -55,15 +60,18 @@ export async function updateBook(bookId: string, formData: FormData) {
     is_active: formData.get('is_active') === 'true',
   };
   const titleEn = String(formData.get('title_en') || '').trim() || null;
+  const shelfPos = String(formData.get('shelf_position') || '').trim() || null;
   if (!basePayload.sku || !basePayload.title) throw new Error('SKU 和书名必填 / SKU and title required');
   let payload: any = { ...basePayload, title_en: titleEn };
   let { error } = await supabase.from('books').update(payload).eq('id', bookId);
-  if (error && error.message.includes('title_en')) {
-    // Fallback: update without title_en, merge into metadata
+  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position'))) {
+    // Fallback: update without new columns, merge into metadata
     const { data: existing } = await supabase.from('books').select('metadata').eq('id', bookId).single();
-    const meta = { ...(existing?.metadata || {}), ...(titleEn ? { title_en: titleEn } : {}) };
-    if (!titleEn) delete meta.title_en;
-    const { error: err2 } = await supabase.from('books').update({ ...basePayload, metadata: meta }).eq('id', bookId);
+    const meta: any = { ...(existing?.metadata || {}) };
+    if (titleEn) meta.title_en = titleEn; else delete meta.title_en;
+    if (shelfPos) meta.shelf_position = shelfPos; else delete meta.shelf_position;
+    const { shelf_position: _sp, ...rest } = basePayload as any;
+    const { error: err2 } = await supabase.from('books').update({ ...rest, metadata: meta }).eq('id', bookId);
     error = err2;
   }
   if (error) throw error;

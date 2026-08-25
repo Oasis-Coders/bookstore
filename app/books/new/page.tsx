@@ -65,6 +65,11 @@ export default function NewBookPage() {
                 <CategorySelect name="category" />
               </div>
             </div>
+            <div>
+              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '书架位置' : 'Shelf Position'}</label>
+              <Input name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
+              <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '书在书架上的实际位置，方便找书' : 'Physical location on shelf for easy finding'}</p>
+            </div>
 
                         <div>
               <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>

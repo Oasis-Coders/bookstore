@@ -90,6 +90,10 @@ export function EditBookClient({ book }: { book: any }) {
                 <label className="text-[11px] text-[#4f7a5c]">{isZh ? '分类' : 'Category'}</label>
                 <CategorySelect name="category" defaultValue={book.category || ''} />
               </div>
+              <div>
+                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '书架位置' : 'Shelf Position'}</label>
+                <Input name="shelf_position" defaultValue={book.shelf_position || book.metadata?.shelf_position || ''} placeholder={isZh ? '如 A-3-2' : 'e.g. A-3-2'} className="mt-1" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
