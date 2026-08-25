@@ -5,6 +5,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
+import { Badge } from '@/components/ui/badge';
 import { updateProfile } from './actions';
 import { useT } from '@/lib/i18n/use-t';
 
@@ -33,9 +34,10 @@ const colorOptions = [
 type Props = {
   profile: any;
   user: any;
+  role: string | null;
 };
 
-export function SettingsClient({ profile, user }: Props) {
+export function SettingsClient({ profile, user, role }: Props) {
   const { tt } = useT();
   const currentName = profile?.display_name || user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
   const currentIcon = user?.user_metadata?.avatar_icon || '活';
@@ -78,86 +80,64 @@ export function SettingsClient({ profile, user }: Props) {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            {/* Preview */}
-            <div className="flex items-center gap-4 rounded-[16px] bg-[#faf6ee] p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[12px] text-[18px] font-bold text-white" style={{ backgroundColor: avatarColor }}>
-                {avatarIcon}
+          <div className="mt-4 rounded-[12px] bg-[#faf6ee] p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f7a5c]">当前账号</p>
+            <p className="mt-1 text-[13px] font-mono">{user?.email}</p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-[12px] text-[#4f7a5c]">角色</span>
+              <Badge variant={role === 'super_admin' ? 'danger' : role === 'admin' ? 'active' : 'default'}>{role || '无角色'}</Badge>
+              {role === 'super_admin' && <span className="text-[11px] text-[#4f7a5c]">可管理所有人员</span>}
+              {role === 'admin' && <span className="text-[11px] text-[#4f7a5c]">可查看人员和记录</span>}
+              {role === 'staff' && <span className="text-[11px] text-[#4f7a5c]">日常操作</span>}
+            </div>
+            <p className="mt-1 text-[11px] text-[#4f7a5c]">ID: {user?.id?.slice(0,8)}…</p>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.2fr]">
+            <div className="rounded-[16px] border border-[#0f3d2e]/10 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f7a5c]">预览</p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-[10px] text-[14px] font-bold text-white" style={{ backgroundColor: avatarColor }}>
+                  {avatarIcon}
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold">{displayName || '未命名'}</p>
+                  <p className="text-[11px] text-[#4f7a5c] flex items-center gap-1"><Badge variant={role === 'super_admin' ? 'danger' : 'default'}>{role || '—'}</Badge> {user?.email?.split('@')[0]}</p>
+                </div>
               </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <p className="text-[14px] font-semibold text-[#0f3d2e]">{displayName || '未命名'}</p>
-                <p className="text-[12px] text-[#4f7a5c]">{user?.email || ''}</p>
+                <label className="text-[11px] font-semibold text-[#4f7a5c]">显示名称</label>
+                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="张牧师" className="mt-1" />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">显示名称</label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="你的名字" className="mt-1" required />
-              <p className="mt-1 text-[11px] text-[#4f7a5c]/70">会在系统各处显示，支持中文</p>
-            </div>
-
-            <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">头像图标</label>
-              <p className="mt-1 text-[11px] text-[#4f7a5c]/70">选一个字符作为你的头像，1个字最佳</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {iconOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setAvatarIcon(opt.value)}
-                    className={`flex h-10 w-10 items-center justify-center rounded-[10px] border text-[14px] font-bold transition-all ${avatarIcon === opt.value ? 'border-[#0f3d2e] bg-[#0f3d2e] text-white shadow-sm' : 'border-[#0f3d2e]/10 bg-white text-[#0f3d2e] hover:border-[#0f3d2e]/20'}`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+              <div>
+                <label className="text-[11px] font-semibold text-[#4f7a5c]">图标 (1-2 字符)</label>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {iconOptions.map((o) => (
+                    <button key={o.value} type="button" onClick={() => setAvatarIcon(o.value)} className={`h-8 w-8 rounded-[8px] text-[13px] font-bold transition ${avatarIcon === o.value ? 'bg-[#0f3d2e] text-white' : 'bg-[#faf6ee] text-[#0f3d2e] hover:bg-[#0f3d2e]/10'}`}>
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                <Input value={avatarIcon} onChange={(e) => setAvatarIcon(e.target.value.slice(0,2))} maxLength={2} className="mt-2 w-20 text-center" />
               </div>
-              <Input value={avatarIcon} onChange={(e) => setAvatarIcon(e.target.value.slice(0, 2))} placeholder="自定义 1-2 个字" className="mt-2 max-w-[160px]" maxLength={2} />
-            </div>
 
-            <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">头像颜色</label>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {colorOptions.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setAvatarColor(opt.value)}
-                    className={`h-9 w-9 rounded-full border-2 transition-all ${avatarColor === opt.value ? 'border-[#0f3d2e] ring-2 ring-[#0f3d2e]/20' : 'border-white shadow-sm'}`}
-                    style={{ backgroundColor: opt.bg }}
-                    title={opt.label}
-                  />
-                ))}
+              <div>
+                <label className="text-[11px] font-semibold text-[#4f7a5c]">颜色</label>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {colorOptions.map((c) => (
+                    <button key={c.value} type="button" onClick={() => setAvatarColor(c.value)} className={`h-7 w-7 rounded-full border-2 transition ${avatarColor === c.value ? 'border-[#0f3d2e] scale-110' : 'border-white shadow-sm'}`} style={{ backgroundColor: c.bg }} title={c.label} />
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" disabled={saving} className="min-w-[120px]">{saving ? '保存中…' : '保存设置'}</Button>
-              <Button type="button" variant="ghost" onClick={() => { setDisplayName(currentName); setAvatarIcon(currentIcon); setAvatarColor(currentColor); setMessage(''); }}>重置</Button>
-            </div>
-          </form>
-        </Card>
-
-        <Card>
-          <CardTitle>账号信息</CardTitle>
-          <div className="mt-4 space-y-2 text-[13px]">
-            <div className="flex justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2">
-              <span className="text-[#4f7a5c]">邮箱</span>
-              <span className="font-medium text-[#0f3d2e]">{user?.email || '—'}</span>
-            </div>
-            <div className="flex justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2">
-              <span className="text-[#4f7a5c]">用户 ID</span>
-              <span className="font-mono text-[11px] text-[#0f3d2e]">{user?.id?.slice(0, 8) || '—'}…</span>
-            </div>
-            <div className="flex justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2">
-              <span className="text-[#4f7a5c]">注册时间</span>
-              <span className="text-[#0f3d2e]">{user?.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '—'}</span>
-            </div>
+              <Button type="submit" disabled={saving} className="w-full">{saving ? '保存中…' : '保存'}</Button>
+            </form>
           </div>
         </Card>
-
-        <div className="rounded-[16px] bg-[#f4e8c1]/50 p-4 text-[12px] text-[#0f3d2e]/70">
-          <p>小提示：改完名字和头像后，刷新一下侧边栏就会看到新图标。</p>
-        </div>
       </div>
     </AppShell>
   );
