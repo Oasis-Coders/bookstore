@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardTitle } from '@/components/ui/card';
+import { Card, CardTitle, StatCard } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout/app-shell';
@@ -24,59 +24,70 @@ export function DashboardClient({ data }: { data: DashboardData }) {
     <AppShell title={tt('nav.dashboard')} titleZh={tt('nav.dashboard')} eyebrow={tt('dashboard.eyebrow')}>
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#4f7a5c]">{tt('dashboard.inventoryValue')}</p>
-          <p className="mt-2 font-serif text-[32px] tracking-tight">{formatCurrency(data.totalValue)}</p>
-          <p className="mt-1 text-[12px] text-[#4f7a5c]">{tt('dashboard.inventoryValueHint')}</p>
-        </Card>
-        <Card>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#4f7a5c]">{tt('dashboard.booksInStock')}</p>
-          <p className="mt-2 font-serif text-[32px] tracking-tight">
-            {data.totalBooks} {tt('dashboard.species')}
-          </p>
-          <p className="mt-1 text-[12px] text-[#4f7a5c]">{tt('dashboard.booksInStockHint')}</p>
-        </Card>
-        <Card className={data.lowStockCount > 0 ? 'border-[#d26a39]/30' : ''}>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#4f7a5c]">{tt('dashboard.lowStockAlert')}</p>
-          <p className="mt-2 font-serif text-[32px] tracking-tight">
-            {data.lowStockCount} <span className="text-[16px]">{tt('dashboard.species')}</span>
-          </p>
-          <div className="mt-2">
+        <StatCard
+          label={tt('dashboard.inventoryValue')}
+          value={formatCurrency(data.totalValue)}
+          hint={tt('dashboard.inventoryValueHint')}
+          accent="default"
+        />
+        <StatCard
+          label={tt('dashboard.booksInStock')}
+          value={<>{data.totalBooks} <span className="text-[18px] font-sans font-medium text-[#4f7a5c]">{tt('dashboard.species')}</span></>}
+          hint={tt('dashboard.booksInStockHint')}
+          accent="success"
+        />
+        <StatCard
+          label={tt('dashboard.lowStockAlert')}
+          value={<>{data.lowStockCount} <span className="text-[18px] font-sans font-medium text-[#4f7a5c]">{tt('dashboard.species')}</span></>}
+          accent={data.lowStockCount > 0 ? 'amber' : 'default'}
+        >
+          <div className="mt-3">
             {data.lowStockCount > 0 ? (
-              <Badge variant="active">
+              <Badge variant="active" className="shadow-sm">
                 {data.lowStockCount} {tt('dashboard.needRestock')}
               </Badge>
             ) : (
-              <Badge>{tt('dashboard.sufficient')}</Badge>
+              <Badge className="bg-[#1a5c46]/10 text-[#1a5c46] border-[#1a5c46]/20">{tt('dashboard.sufficient')}</Badge>
             )}
           </div>
-        </Card>
+        </StatCard>
       </div>
 
       {/* Quick actions */}
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
-            <CardTitle>{tt('dashboard.recentPOs')}</CardTitle>
-            <Link href="/purchase-orders"><Button variant="ghost" size="sm">{tt('common.viewAll')}</Button></Link>
+            <CardTitle className="flex items-center gap-2">
+              <span className="h-1 w-6 rounded-full bg-[#d26a39]" />
+              {tt('dashboard.recentPOs')}
+            </CardTitle>
+            <Link href="/purchase-orders"><Button variant="ghost" size="sm" className="rounded-[10px]">{tt('common.viewAll')}</Button></Link>
           </div>
-          <div className="mt-4">
+          <div className="mt-5">
             {data.mode === 'demo' ? (
-              <div className="rounded-[16px] bg-[#faf6ee] p-8 text-center">
-                <p className="text-[14px] text-[#4f7a5c]">{tt('dashboard.demoMode')}</p>
-                <p className="mt-2 text-[12px] text-[#4f7a5c]/70">{tt('dashboard.demoHint')}</p>
+              <div className="rounded-[16px] bg-gradient-to-br from-[#faf6ee] to-[#f4efe4] p-8 text-center border border-[#0f3d2e]/5">
+                <div className="w-12 h-12 mx-auto rounded-[12px] bg-white shadow-sm flex items-center justify-center mb-3">
+                  <span className="text-[20px]">📦</span>
+                </div>
+                <p className="text-[14px] font-medium text-[#0f3d2e]">{tt('dashboard.demoMode')}</p>
+                <p className="mt-1.5 text-[12px] text-[#4f7a5c]">{tt('dashboard.demoHint')}</p>
               </div>
             ) : data.recentPOs.length === 0 ? (
-              <p className="py-8 text-center text-[14px] text-[#4f7a5c]">{tt('dashboard.noPOs')}</p>
+              <div className="py-12 text-center">
+                <div className="w-10 h-10 mx-auto rounded-full bg-[#0f3d2e]/5 flex items-center justify-center mb-3">
+                  <span className="text-[16px] opacity-50">📋</span>
+                </div>
+                <p className="text-[13px] text-[#4f7a5c]">{tt('dashboard.noPOs')}</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {data.recentPOs.map((po: any) => (
-                  <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 bg-[#faf6ee]/50 px-4 py-3 hover:bg-[#faf6ee] transition-colors">
-                    <div>
-                      <p className="text-[13px] font-medium">{po.po_number}</p>
-                      <p className="text-[11px] text-[#4f7a5c]">{po.suppliers?.name_zh} • {po.status}</p>
+                  <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[14px] border border-[#0f3d2e]/[0.06] bg-[#faf6ee]/60 px-4 py-3.5 hover:bg-white hover:border-[#0f3d2e]/10 hover:shadow-[0_2px_12px_rgba(15,61,46,0.06)] transition-all group">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-semibold text-[#0f3d2e] group-hover:text-[#0f3d2e]">{po.po_number}</p>
+                      <p className="text-[11px] text-[#4f7a5c] mt-0.5 truncate">{po.suppliers?.name_zh} • {po.status}</p>
                     </div>
-                    <Badge>{po.status}</Badge>
+                    <Badge className="ml-3 shrink-0">{po.status}</Badge>
                   </Link>
                 ))}
               </div>
@@ -84,19 +95,23 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           </div>
         </Card>
 
-        <Card>
-          <CardTitle>{tt('dashboard.guide')}</CardTitle>
-          <div className="mt-4 space-y-3 text-[13px] leading-relaxed text-[#0f3d2e]/80">
-            <p><strong className="text-[#0f3d2e]">1. {tt('dashboard.guide1')}</strong> {tt('dashboard.guide1Desc')}</p>
-            <p><strong className="text-[#0f3d2e]">2. {tt('dashboard.guide2')}</strong> {tt('dashboard.guide2Desc')}</p>
-            <p><strong className="text-[#0f3d2e]">3. {tt('dashboard.guide3')}</strong> {tt('dashboard.guide3Desc')}</p>
-            <p><strong className="text-[#0f3d2e]">4. {tt('dashboard.guide4')}</strong> {tt('dashboard.guide4Desc')}</p>
-            <p><strong className="text-[#0f3d2e]">5. {tt('dashboard.guide5')}</strong> {tt('dashboard.guide5Desc')}</p>
-            <p className="pt-2 text-[11px] text-[#4f7a5c]">{tt('dashboard.guideHint')}</p>
+        <Card className="bg-gradient-to-br from-white to-[#faf6ee]/50">
+          <CardTitle className="flex items-center gap-2">
+            <span className="h-1 w-6 rounded-full bg-[#1a5c46]" />
+            {tt('dashboard.guide')}
+          </CardTitle>
+          <div className="mt-5 space-y-3.5 text-[13px] leading-relaxed">
+            {[1,2,3,4,5].map((i) => (
+              <div key={i} className="flex gap-3 group">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[#0f3d2e]/5 text-[11px] font-bold text-[#0f3d2e] group-hover:bg-[#0f3d2e] group-hover:text-white transition-colors">{i}</span>
+                <p className="flex-1 text-[#0f3d2e]/80 leading-[1.5]"><strong className="text-[#0f3d2e] font-semibold">{(tt as any)(`dashboard.guide${i}`)}</strong> {(tt as any)(`dashboard.guide${i}Desc`)}</p>
+              </div>
+            ))}
+            <p className="pt-2 text-[11px] text-[#4f7a5c] leading-relaxed bg-[#faf6ee]/80 rounded-[10px] px-3 py-2 border border-[#0f3d2e]/5">{tt('dashboard.guideHint')}</p>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-[#0f3d2e] px-4 text-[13px] font-semibold text-white">{tt('dashboard.goBooks')}</Link>
-            <Link href="/purchase-orders/new" className="inline-flex h-9 items-center rounded-[12px] border border-[#0f3d2e]/20 px-4 text-[13px] font-semibold">{tt('dashboard.createPO')}</Link>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-[#0f3d2e] px-4 text-[13px] font-semibold text-white hover:bg-[#1a5c46] transition-colors shadow-[0_2px_8px_rgba(15,61,46,0.2)] hover:shadow-[0_4px_12px_rgba(15,61,46,0.3)]">{tt('dashboard.goBooks')}</Link>
+            <Link href="/purchase-orders/new" className="inline-flex h-9 items-center rounded-[12px] border border-[#0f3d2e]/15 bg-white px-4 text-[13px] font-semibold text-[#0f3d2e] hover:bg-[#faf6ee] transition-colors">{tt('dashboard.createPO')}</Link>
           </div>
         </Card>
       </div>
