@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
+import Link from 'next/link';
 
 type Book = {
   id: string;
@@ -23,7 +24,11 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
   const { tt } = useT();
 
   return (
-    <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={<Button variant="secondary">{tt('books.addBook')}</Button>}>
+    <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
+      <Link href="/books/new">
+        <Button variant="secondary">{tt('books.addBook')}</Button>
+      </Link>
+    }>
       {/* Search */}
       <form className="mb-6 flex gap-2">
         <Input name="q" defaultValue={q} placeholder={tt('books.searchPlaceholder')} className="max-w-[420px]" />
