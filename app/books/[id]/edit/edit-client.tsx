@@ -6,6 +6,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateBook, deleteBook } from '@/app/books/actions';
+import { CategorySelect } from '@/components/ui/category-select';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -87,7 +88,7 @@ export function EditBookClient({ book }: { book: any }) {
               </div>
               <div>
                 <label className="text-[11px] text-[#4f7a5c]">{isZh ? '分类' : 'Category'}</label>
-                <Input name="category" defaultValue={book.category || ''} className="mt-1" />
+                <CategorySelect name="category" defaultValue={book.category || ''} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">

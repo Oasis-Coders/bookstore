@@ -8,6 +8,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createBook } from '../actions';
+import { CategorySelect } from '@/components/ui/category-select';
 import Link from 'next/link';
 
 export default function NewBookPage() {
@@ -61,7 +62,7 @@ export default function NewBookPage() {
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '分类' : 'Category'}</label>
-                <Input name="category" placeholder={isZh ? '如 灵修、神学' : 'e.g. Devotion, Theology'} className="mt-1" />
+                <CategorySelect name="category" />
               </div>
             </div>
 
