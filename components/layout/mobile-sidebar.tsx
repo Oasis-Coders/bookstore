@@ -28,8 +28,18 @@ export function MobileSidebar({ children }: { children: React.ReactNode }) {
 
       {/* Desktop sidebar */}
       <aside className="hidden w-[300px] shrink-0 flex-col lg:flex">
-        <div className="sticky top-4 rounded-[28px] bg-[#0f3d2e] p-6 text-white shadow-[0_18px_60px_rgba(15,61,46,0.14)]">
-          {children}
+        <div className="sticky top-4 overflow-hidden rounded-[24px] bg-[#0f3d2e] shadow-[0_18px_60px_rgba(15,61,46,0.18)]">
+          {/* Subtle top accent */}
+          <div className="h-[3px] w-full bg-gradient-to-r from-[#d26a39] via-[#f4e8c1]/60 to-[#4f7a5c]" />
+          <div className="p-6">{children}</div>
+          {/* Bottom decorative */}
+          <div className="px-6 pb-4">
+            <div className="flex items-center gap-2 text-[11px] text-white/40">
+              <div className="h-px flex-1 bg-white/10" />
+              <span className="font-serif italic">COCM</span>
+              <div className="h-px flex-1 bg-white/10" />
+            </div>
+          </div>
         </div>
       </aside>
     </>
