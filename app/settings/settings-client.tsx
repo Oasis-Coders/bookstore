@@ -126,7 +126,6 @@ export function SettingsClient({ profile, user, role }: Props) {
               </div>
             </div>
 
-            <p className="mt-3 text-[11px] text-[#4f7a5c]">ID: {user?.id?.slice(0,8)}…</p>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.2fr]">

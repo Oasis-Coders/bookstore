@@ -1,13 +1,44 @@
 'use client';
 
 import { useState } from 'react';
+import { SidebarNav } from '@/components/layout/sidebar-nav';
+import { navItems as defaultNav } from '@/lib/app-config';
+import { LanguageSwitcherDark } from '@/components/ui/language-switcher';
 
-export function MobileSidebar({ children }: { children: React.ReactNode }) {
+type Props = {
+  items?: typeof defaultNav;
+  avatarIcon?: string;
+  avatarColor?: string;
+  displayName?: string;
+  userRole?: string | null;
+  children?: React.ReactNode;
+};
+
+export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarColor = '#d26a39', displayName = '', userRole, children }: Props) {
   const [open, setOpen] = useState(false);
+
+  const sidebarContent = children || (
+    <>
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/15 text-[14px] font-bold" style={{ backgroundColor: avatarColor }}>
+          {avatarIcon}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-[13px] font-semibold text-white">{displayName || '活水书房'}</p>
+          <p className="text-[11px] text-white/60">COCM Bookshop</p>
+        </div>
+      </div>
+      <div className="mt-6 flex-1 overflow-y-auto">
+        <SidebarNav items={items} />
+      </div>
+      <div className="mt-4 border-t border-white/10 pt-4">
+        <LanguageSwitcherDark />
+      </div>
+    </>
+  );
 
   return (
     <>
-      {/* Mobile toggle */}
       <button
         onClick={() => setOpen(!open)}
         className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#0f3d2e] text-white shadow-lg lg:hidden"
@@ -18,30 +49,12 @@ export function MobileSidebar({ children }: { children: React.ReactNode }) {
         </svg>
       </button>
 
-      {/* Mobile drawer */}
       <div className={`fixed inset-0 z-40 flex transition lg:hidden ${open ? 'visible' : 'invisible'}`}>
         <div className={`absolute inset-0 bg-[#0f3d2e]/40 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`} onClick={() => setOpen(false)} />
-        <div className={`relative flex w-[300px] flex-col bg-[#0f3d2e] p-5 transition-transform ${open ? 'translate-x-0' : '-translate-x-full'}`}>
-          {children}
+        <div className={`relative flex w-[280px] flex-col bg-[#0f3d2e] p-5 transition-transform ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+          {sidebarContent}
         </div>
       </div>
-
-      {/* Desktop sidebar */}
-      <aside className="hidden w-[300px] shrink-0 flex-col lg:flex">
-        <div className="sticky top-4 overflow-hidden rounded-[24px] bg-[#0f3d2e] shadow-[0_18px_60px_rgba(15,61,46,0.18)]">
-          {/* Subtle top accent */}
-          <div className="h-[3px] w-full bg-gradient-to-r from-[#d26a39] via-[#f4e8c1]/60 to-[#4f7a5c]" />
-          <div className="p-6">{children}</div>
-          {/* Bottom decorative */}
-          <div className="px-6 pb-4">
-            <div className="flex items-center gap-2 text-[11px] text-white/40">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="font-serif italic">COCM</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-          </div>
-        </div>
-      </aside>
     </>
   );
 }
