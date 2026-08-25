@@ -70,7 +70,7 @@ export const translations = {
       guide5Desc: '→ Sales page → auto deducts earliest batch first, calculates margin',
       guideHint: 'Inventory value auto-aggregates from batch costs, no manual work',
       goBooks: 'Go to Books',
-      createPO: 'Create PO',
+      createPO: 'Create Purchase Order',
     },
     books: {
       title: 'Books',
@@ -280,7 +280,7 @@ export const translations = {
       guide5Desc: '→ 销售页自动按最早进货先出，算毛利',
       guideHint: '库存价值按批次成本自动汇总，无需手工算',
       goBooks: '去书库',
-      createPO: '建采购单',
+      createPO: '新建采购单',
     },
     books: {
       title: '书库',
