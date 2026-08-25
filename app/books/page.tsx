@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { formatCurrency } from '@/lib/utils';
 
-export default async function BooksPage({ searchParams }: { searchParams: { q?: string } }) {
-  const q = searchParams?.q || '';
+export default async function BooksPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q: qRaw } = await searchParams;
+  const q = qRaw || '';
   const supabase = await createSupabaseServerClient();
 
   let books: any[] = [];
