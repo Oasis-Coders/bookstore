@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { updateUserRole } from './actions';
 
-type Profile = { id: string; display_name?: string | null; created_at?: string };
+type Profile = { id: string; display_name?: string | null; email?: string | null; created_at?: string };
 type RoleRow = { user_id: string; roles?: { name: string } | null };
 
 export default function AdminUsersPage() {
@@ -34,7 +34,6 @@ export default function AdminUsersPage() {
         return;
       }
 
-      // current user
       const { data: userData } = await supabase.auth.getUser();
       const user = userData.user;
       if (!user) {
@@ -42,7 +41,6 @@ export default function AdminUsersPage() {
         return;
       }
 
-      // current user roles
       const { data: myRoles } = await supabase
         .from('user_roles')
         .select('roles(name)')
@@ -60,17 +58,22 @@ export default function AdminUsersPage() {
         return;
       }
 
-      // all profiles
-      const { data: profs } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-      setProfiles((profs as any) || []);
-
-      // all user_roles
-      const { data: ur } = await supabase.from('user_roles').select('user_id, roles(name)');
-      const m: Record<string, string> = {};
-      (ur as any[] || []).forEach((row: any) => {
-        m[row.user_id] = row.roles?.name || '';
-      });
-      setRoleMap(m);
+      try {
+        const { getUsersWithEmails } = await import('./get-users-action');
+        const { profiles: profs, roleMap: m } = await getUsersWithEmails();
+        setProfiles(profs as any);
+        setRoleMap(m);
+      } catch (e) {
+        // Fallback to direct fetch
+        const { data: profs } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+        setProfiles((profs as any) || []);
+        const { data: ur } = await supabase.from('user_roles').select('user_id, roles(name)');
+        const m: Record<string, string> = {};
+        (ur as any[] || []).forEach((row: any) => {
+          m[row.user_id] = row.roles?.name || '';
+        });
+        setRoleMap(m);
+      }
       setLoading(false);
     };
     run();
@@ -142,7 +145,10 @@ export default function AdminUsersPage() {
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold">{p.display_name || shortId}</p>
-                    <p className="truncate text-[11px] text-[#4f7a5c]">
+                    <p className="truncate text-[11px] text-[#0f3d2e]/70">
+                      {(p as any).email || ''}
+                    </p>
+                    <p className="truncate text-[10px] text-[#4f7a5c]">
                       {p.id.slice(0, 8)}… • {new Date(p.created_at || Date.now()).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}
                     </p>
                   </div>
