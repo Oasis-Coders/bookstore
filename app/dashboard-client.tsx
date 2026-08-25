@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
+import Link from 'next/link';
 
 type DashboardData = {
   mode: 'demo' | 'live';
@@ -57,9 +58,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <CardTitle>{tt('dashboard.recentPOs')}</CardTitle>
-            <Button variant="ghost" size="sm">
-              <a href="/purchase-orders">{tt('common.viewAll')}</a>
-            </Button>
+            <Link href="/purchase-orders"><Button variant="ghost" size="sm">{tt('common.viewAll')}</Button></Link>
           </div>
           <div className="mt-4">
             {data.mode === 'demo' ? (
@@ -72,13 +71,13 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             ) : (
               <div className="space-y-2">
                 {data.recentPOs.map((po: any) => (
-                  <div key={po.id} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 bg-[#faf6ee]/50 px-4 py-3">
+                  <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 bg-[#faf6ee]/50 px-4 py-3 hover:bg-[#faf6ee] transition-colors">
                     <div>
                       <p className="text-[13px] font-medium">{po.po_number}</p>
                       <p className="text-[11px] text-[#4f7a5c]">{po.suppliers?.name_zh} • {po.status}</p>
                     </div>
                     <Badge>{po.status}</Badge>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -88,30 +87,16 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <Card>
           <CardTitle>{tt('dashboard.guide')}</CardTitle>
           <div className="mt-4 space-y-3 text-[13px] leading-relaxed text-[#0f3d2e]/80">
-            <p>
-              <strong className="text-[#0f3d2e]">1. {tt('dashboard.guide1')}</strong> {tt('dashboard.guide1Desc')}
-            </p>
-            <p>
-              <strong className="text-[#0f3d2e]">2. {tt('dashboard.guide2')}</strong> {tt('dashboard.guide2Desc')}
-            </p>
-            <p>
-              <strong className="text-[#0f3d2e]">3. {tt('dashboard.guide3')}</strong> {tt('dashboard.guide3Desc')}
-            </p>
-            <p>
-              <strong className="text-[#0f3d2e]">4. {tt('dashboard.guide4')}</strong> {tt('dashboard.guide4Desc')}
-            </p>
-            <p>
-              <strong className="text-[#0f3d2e]">5. {tt('dashboard.guide5')}</strong> {tt('dashboard.guide5Desc')}
-            </p>
+            <p><strong className="text-[#0f3d2e]">1. {tt('dashboard.guide1')}</strong> {tt('dashboard.guide1Desc')}</p>
+            <p><strong className="text-[#0f3d2e]">2. {tt('dashboard.guide2')}</strong> {tt('dashboard.guide2Desc')}</p>
+            <p><strong className="text-[#0f3d2e]">3. {tt('dashboard.guide3')}</strong> {tt('dashboard.guide3Desc')}</p>
+            <p><strong className="text-[#0f3d2e]">4. {tt('dashboard.guide4')}</strong> {tt('dashboard.guide4Desc')}</p>
+            <p><strong className="text-[#0f3d2e]">5. {tt('dashboard.guide5')}</strong> {tt('dashboard.guide5Desc')}</p>
             <p className="pt-2 text-[11px] text-[#4f7a5c]">{tt('dashboard.guideHint')}</p>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
-            <a href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-[#0f3d2e] px-4 text-[13px] font-semibold text-white">
-              {tt('dashboard.goBooks')}
-            </a>
-            <a href="/purchase-orders" className="inline-flex h-9 items-center rounded-[12px] border border-[#0f3d2e]/20 px-4 text-[13px] font-semibold">
-              {tt('dashboard.createPO')}
-            </a>
+            <Link href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-[#0f3d2e] px-4 text-[13px] font-semibold text-white">{tt('dashboard.goBooks')}</Link>
+            <Link href="/purchase-orders/new" className="inline-flex h-9 items-center rounded-[12px] border border-[#0f3d2e]/20 px-4 text-[13px] font-semibold">{tt('dashboard.createPO')}</Link>
           </div>
         </Card>
       </div>

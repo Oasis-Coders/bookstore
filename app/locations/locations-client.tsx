@@ -2,16 +2,20 @@
 
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout/app-shell';
 import { useT } from '@/lib/i18n/use-t';
+import Link from 'next/link';
 
 export function LocationsClient({ locations }: { locations: any[] }) {
   const { tt } = useT();
   return (
-    <AppShell title={tt('locations.title')} titleZh={tt('locations.title')} eyebrow={tt('locations.eyebrow')}>
+    <AppShell title={tt('locations.title')} titleZh={tt('locations.title')} eyebrow={tt('locations.eyebrow')} actions={
+      <Link href="/locations/new"><Button>+ 添加库位</Button></Link>
+    }>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {locations.map((loc: any) => (
-          <Card key={loc.id}>
+          <Card key={loc.id} className="group hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5 transition-all">
             <div className="flex items-center justify-between">
               <CardTitle>{loc.name}</CardTitle>
               <Badge variant={loc.location_type === 'store' ? 'active' : 'default'}>
@@ -27,6 +31,10 @@ export function LocationsClient({ locations }: { locations: any[] }) {
           </Card>
         ))}
       </div>
+
+      {locations.length === 0 && (
+        <Card className="mt-6 py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">暂无库位</p></Card>
+      )}
 
       <Card className="mt-6">
         <CardTitle>{tt('locations.logicTitle')}</CardTitle>

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
+import Link from 'next/link';
 
 const statusColor: Record<string, 'default' | 'active' | 'warning' | 'danger'> = {
   draft: 'default',
@@ -33,7 +34,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
       title={tt('purchaseOrders.title')}
       titleZh={tt('purchaseOrders.title')}
       eyebrow={tt('purchaseOrders.count', { n: pos.length })}
-      actions={<Button>{tt('purchaseOrders.newPO')}</Button>}
+      actions={<Link href="/purchase-orders/new"><Button>{tt('purchaseOrders.newPO')}</Button></Link>}
     >
       <Card>
         <div className="flex flex-wrap gap-2 text-[12px] text-[#4f7a5c]">
@@ -45,7 +46,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
 
       <div className="mt-4 space-y-3">
         {pos.map((po) => (
-          <Card key={po.id} className="flex flex-wrap items-center justify-between gap-3">
+          <Card key={po.id} className="flex flex-wrap items-center justify-between gap-3 hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] transition-all">
             <div>
               <p className="font-mono text-[13px] font-semibold">{po.po_number}</p>
               <p className="text-[12px] text-[#4f7a5c]">
@@ -54,13 +55,16 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
             </div>
             <div className="flex items-center gap-2">
               <Badge variant={statusColor[po.status] || 'default'}>{statusZh[po.status] || po.status}</Badge>
-              <Button variant="ghost" size="sm">{tt('common.details')}</Button>
+              <Link href={`/purchase-orders/${po.id}`}><Button variant="ghost" size="sm">{tt('common.details')}</Button></Link>
               {(po.status === 'approved' || po.status === 'ordered' || po.status === 'partially_received') && (
-                <Button size="sm">{tt('purchaseOrders.receiveAction')}</Button>
+                <Link href={`/purchase-orders/${po.id}`}><Button size="sm">{tt('purchaseOrders.receiveAction')}</Button></Link>
               )}
             </div>
           </Card>
         ))}
+        {pos.length === 0 && (
+          <Card className="py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">暂无采购单</p><Link href="/purchase-orders/new" className="mt-3 inline-flex"><Button size="sm">新建第一个</Button></Link></Card>
+        )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -68,13 +72,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
           <CardTitle>{tt('purchaseOrders.differentCostTitle')}</CardTitle>
           <p className="mt-2 text-[13px] leading-relaxed text-[#0f3d2e]/80">{tt('purchaseOrders.differentCostDesc')}</p>
           <pre className="mt-3 overflow-auto rounded-[12px] bg-[#faf6ee] p-3 text-[11px]">
-            {`-- Receive
-select apply_purchase_receipt(
-  '<PO_UUID>', '<STORE_UUID>',
-  '[{"purchase_order_line_id":"<line>","quantity":10}]'
-);
-
--- Same book second purchase, different unit_cost, auto new batch`}
+            {`-- Receive\nselect apply_purchase_receipt(\n  '<PO_UUID>', '<STORE_UUID>',\n  '[{"purchase_order_line_id":"<line>","quantity":10}]'\n);\n\n-- Same book second purchase, different unit_cost, auto new batch`}
           </pre>
         </Card>
         <Card>

@@ -1,1 +1,40 @@
-{"dependencies":{"@supabase/ssr":"^0.5.2","@supabase/supabase-js":"^2.49.1","clsx":"^2.1.1","next":"^15.0.0","react":"^19.0.0","react-dom":"^19.0.0","tailwind-merge":"^2.6.0","zod":"^3.24.1"},"devDependencies":{"@types/node":"^22.10.2","@types/react":"^19.0.2","@types/react-dom":"^19.0.2","autoprefixer":"^10.4.20","eslint":"^8.57.0","eslint-config-next":"^15.0.0","postcss":"^8.4.49","prettier":"^3.4.2","prettier-plugin-tailwindcss":"^0.6.9","tailwindcss":"^3.4.17","typescript":"^5.7.2"},"name":"huoshui-bookstore","packageManager":"pnpm@10.0.0","private":true,"scripts":{"build":"next build","dev":"next dev --turbo","format":"prettier --write .","lint":"eslint . --max-warnings=0","start":"next start","test":"vitest run","typecheck":"tsc --noEmit"},"version":"0.1.0"}
+{
+  "dependencies": {
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.49.1",
+    "clsx": "^2.1.1",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.6.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.49",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.9",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "@playwright/test": "^1.52.0"
+  },
+  "name": "huoshui-bookstore",
+  "packageManager": "pnpm@10.0.0",
+  "private": true,
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev --turbo",
+    "format": "prettier --write .",
+    "lint": "eslint . --max-warnings=0",
+    "start": "next start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "version": "0.1.0"
+}

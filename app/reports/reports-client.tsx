@@ -12,12 +12,46 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
+  const exportCsv = (type: 'valuation' | 'lowstock') => {
+    let csv = '';
+    let filename = '';
+    if (type === 'valuation') {
+      filename = `inventory_valuation_${new Date().toISOString().slice(0,10)}.csv`;
+      csv = 'SKU,Title,Location,Qty,WAC,Cost Value,Retail Value\n' + valuation.map(r => 
+        `${r.sku},"${r.title}",${r.location_name},${r.quantity_on_hand},${r.weighted_average_cost},${r.inventory_value},${r.retail_value}`
+      ).join('\n');
+    } else {
+      filename = `low_stock_${new Date().toISOString().slice(0,10)}.csv`;
+      csv = 'SKU,Title,Threshold,On Hand,Shortage\n' + lowStock.map(r =>
+        `${r.sku},"${r.title}",${r.low_stock_threshold},${r.quantity_on_hand},${r.reorder_shortage}`
+      ).join('\n');
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadTemplate = () => {
+    const csv = 'sku,title,publisher,author,category,current_price,low_stock_threshold\nBOOK-001,活水得胜之路,活水出版社,张牧师,灵修,12.5,5\nBOOK-002,认识真理,福音出版社,李弟兄,神学,9.99,3';
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'books_import_template.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AppShell
       title={tt('reports.title')}
       titleZh={tt('reports.title')}
       eyebrow={tt('reports.eyebrow')}
-      actions={<Button variant="ghost">{tt('reports.exportCsv')}</Button>}
+      actions={<Button variant="ghost" onClick={() => exportCsv('valuation')}>{tt('reports.exportCsv')}</Button>}
     >
       {/* Valuation */}
       <Card>
@@ -55,13 +89,20 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
               ))}
             </tbody>
           </table>
+          {valuation.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">暂无数据</p>}
         </div>
-        <p className="mt-2 text-[11px] text-[#4f7a5c]">{tt('reports.sqlHint')}</p>
+        <div className="mt-3 flex gap-2">
+          <Button size="sm" variant="secondary" onClick={() => exportCsv('valuation')}>导出估值 CSV</Button>
+          <p className="text-[11px] text-[#4f7a5c] py-2">{tt('reports.sqlHint')}</p>
+        </div>
       </Card>
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardTitle>{tt('reports.lowStockTitle')}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>{tt('reports.lowStockTitle')}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')}>导出</Button>
+          </div>
           <div className="mt-3 space-y-2">
             {lowStock.length === 0 ? (
               <p className="py-6 text-center text-[12px] text-[#4f7a5c]">{tt('reports.noLowStock')}</p>
@@ -88,7 +129,7 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
             <p className="font-mono rounded bg-[#faf6ee] p-2">SELECT * FROM sales_margin_report_view ORDER BY sold_at DESC;</p>
             <p className="text-[12px] text-[#4f7a5c] mt-2">{tt('reports.sqlDesc')}</p>
           </div>
-          <Button variant="secondary" size="sm" className="mt-3">{tt('reports.downloadTemplate')}</Button>
+          <Button variant="secondary" size="sm" className="mt-3" onClick={downloadTemplate}>{tt('reports.downloadTemplate')}</Button>
         </Card>
       </div>
     </AppShell>
