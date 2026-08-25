@@ -8,7 +8,8 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
 export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
   return (
     <AppShell title={tt('suppliers.title')} titleZh={tt('suppliers.title')} eyebrow={tt('suppliers.count', { n: suppliers.length })} actions={
       <Link href="/suppliers/new"><Button>{tt('suppliers.add')}</Button></Link>
@@ -30,14 +31,14 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
               {s.payment_terms && <p>{tt('suppliers.paymentTerms')}：{s.payment_terms}</p>}
             </div>
             <div className="mt-3 flex gap-2">
-              <Link href={`/suppliers/${s.id}`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">查看</Button></Link>
-              <Link href={`/suppliers/${s.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">编辑</Button></Link>
+              <Link href={`/suppliers/${s.id}`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">{isZh ? '查看' : 'View'}</Button></Link>
+              <Link href={`/suppliers/${s.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">{isZh ? '编辑' : 'Edit'}</Button></Link>
             </div>
           </Card>
         ))}
       </div>
       {suppliers.length === 0 && (
-        <Card className="py-12 text-center"><p className="text-[13px] text-[#4f7a5c]">暂无供应商</p><Link href="/suppliers/new" className="mt-3 inline-block"><Button size="sm">添加供应商</Button></Link></Card>
+        <Card className="py-12 text-center"><p className="text-[13px] text-[#4f7a5c]">{isZh ? '暂无供应商' : 'No suppliers yet'}</p><Link href="/suppliers/new" className="mt-3 inline-block"><Button size="sm">{isZh ? '添加供应商' : 'Add supplier'}</Button></Link></Card>
       )}
     </AppShell>
   );

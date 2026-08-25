@@ -21,7 +21,8 @@ type Book = {
 };
 
 export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode: 'demo' | 'live' }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
 
   return (
     <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
@@ -31,9 +32,9 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
     }>
       <div className="space-y-4">
         <form method="GET" action="/books" className="flex gap-2">
-          <Input name="q" defaultValue={q} placeholder="搜索书名 / SKU / 出版社…" className="max-w-[360px]" />
-          <Button type="submit" variant="ghost">搜索</Button>
-          {q && <Link href="/books"><Button variant="ghost" type="button">清空</Button></Link>}
+          <Input name="q" defaultValue={q} placeholder={tt('books.searchPlaceholder')} className="max-w-[360px]" />
+          <Button type="submit" variant="ghost">{tt('books.search')}</Button>
+          {q && <Link href="/books"><Button variant="ghost" type="button">{tt('books.clear')}</Button></Link>}
         </form>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -41,14 +42,14 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
             <Card key={book.id} className="group transition-all hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5">
               <div className="flex items-start justify-between">
                 <Badge>{book.sku}</Badge>
-                <span className="text-[11px] text-[#4f7a5c]">{book.category || '未分类'}</span>
+                <span className="text-[11px] text-[#4f7a5c]">{book.category || tt('books.uncategorized')}</span>
               </div>
               <h3 className="mt-3 font-serif text-[16px] leading-tight line-clamp-2">{book.title}</h3>
               <p className="mt-1 text-[12px] text-[#4f7a5c]">{book.author || ''} {book.publisher ? `· ${book.publisher}` : ''}</p>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-[13px] font-semibold">{formatCurrency(book.current_price || 0)}</span>
                 <div className="flex gap-1">
-                  <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">编辑</Button></Link>
+                  <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">{isZh ? '编辑' : 'Edit'}</Button></Link>
                 </div>
               </div>
             </Card>
@@ -57,12 +58,12 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
 
         {books.length === 0 && (
           <Card className="py-12 text-center">
-            <p className="text-[13px] text-[#4f7a5c]">没有找到图书</p>
-            <Link href="/books/new" className="mt-3 inline-block"><Button size="sm">添加第一本</Button></Link>
+            <p className="text-[13px] text-[#4f7a5c]">{tt('books.notFound')}{q ? tt('books.notFoundQuery', { q }) : ''}</p>
+            <Link href="/books/new" className="mt-3 inline-block"><Button size="sm">{isZh ? '添加第一本' : 'Add first book'}</Button></Link>
           </Card>
         )}
 
-        {mode === 'demo' && <div className="rounded-[12px] bg-amber-50 px-3 py-2 text-[11px] text-amber-800">演示数据 — 连接 Supabase 后显示真实库存</div>}
+        {mode === 'demo' && <div className="rounded-[12px] bg-amber-50 px-3 py-2 text-[11px] text-amber-800">{tt('common.demoMode')}</div>}
       </div>
     </AppShell>
   );

@@ -108,6 +108,8 @@ export const translations = {
     },
     locations: {
       title: 'Locations',
+      add: '+ New Location',
+      count: '{n} locations',
       eyebrow: 'Stores + Warehouses',
       store: 'Store',
       warehouse: 'Warehouse',

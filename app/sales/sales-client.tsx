@@ -12,7 +12,8 @@ import { createSale } from './actions';
 type CartItem = { id: string; title: string; qty: number; price: number };
 
 export function SalesClient({ books, locations }: { books?: any[]; locations?: any[] } = { books: [], locations: [] }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
   const [cart, setCart] = useState<CartItem[]>([
     { id: 'demo-1', title: '活水得胜之路', qty: 2, price: 12.5 },
     { id: 'demo-2', title: '认识真理', qty: 1, price: 9.99 },
@@ -50,15 +51,15 @@ export function SalesClient({ books, locations }: { books?: any[]; locations?: a
       fd.set('items_json', JSON.stringify(cart.map(c => ({ book_id: c.id, quantity: c.qty }))));
       fd.set('external_ref', `POS-${Date.now()}`);
       await createSale(fd);
-      setMsg('销售成功！库存已按最早进货先出');
+      setMsg(isZh ? '销售成功！库存已按最早进货先出' : 'Sale success! Stock deducted earliest first');
       setCart([]);
     } catch (e: any) {
       // In demo mode, just clear and show success
       if (e.message?.includes('Supabase') || e.message?.includes('not configured')) {
-        setMsg('演示模式：销售已模拟完成');
+        setMsg(isZh ? '演示模式：销售已模拟完成' : 'Demo mode: sale simulated');
         setCart([]);
       } else {
-        setMsg(e.message || '销售失败');
+        setMsg(e.message || (isZh ? '销售失败' : 'Sale failed'));
       }
     } finally {
       setSelling(false);
@@ -72,7 +73,7 @@ export function SalesClient({ books, locations }: { books?: any[]; locations?: a
           <CardTitle>{tt('sales.newSale')}</CardTitle>
           <p className="mt-1 text-[12px] text-[#4f7a5c]">{tt('sales.newSaleHint')}</p>
 
-          {msg && <div className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
+          {msg && <div className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
 
           <div className="mt-4 space-y-3">
             <div>
@@ -106,7 +107,7 @@ export function SalesClient({ books, locations }: { books?: any[]; locations?: a
                     <span>£{(item.qty * item.price).toFixed(2)}</span>
                   </div>
                 ))}
-                {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">购物车为空，扫码或输入添加</p>}
+                {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">{isZh ? '购物车为空，扫码或输入添加' : 'Cart empty, scan or type to add'}</p>}
               </div>
 
               <div className="mt-4 flex items-center justify-between border-t border-[#0f3d2e]/10 pt-3">
@@ -114,7 +115,7 @@ export function SalesClient({ books, locations }: { books?: any[]; locations?: a
                 <span className="font-serif text-[18px]">£{total.toFixed(2)}</span>
               </div>
 
-              <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? '处理中…' : tt('sales.confirmSale')}</Button>
+              <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing...') : tt('sales.confirmSale')}</Button>
               <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{tt('sales.confirmHint')}</p>
             </div>
           </div>

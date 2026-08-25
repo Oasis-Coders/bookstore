@@ -18,7 +18,8 @@ const statusColor: Record<string, 'default' | 'active' | 'warning' | 'danger'> =
 };
 
 export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
 
   const statusZh: Record<string, string> = {
     draft: tt('purchaseOrders.draft'),
@@ -63,7 +64,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
           </Card>
         ))}
         {pos.length === 0 && (
-          <Card className="py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">暂无采购单</p><Link href="/purchase-orders/new" className="mt-3 inline-flex"><Button size="sm">新建第一个</Button></Link></Card>
+          <Card className="py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">{isZh ? '暂无采购单' : 'No purchase orders yet'}</p><Link href="/purchase-orders/new" className="mt-3 inline-flex"><Button size="sm">{isZh ? '新建第一个' : 'Create first order'}</Button></Link></Card>
         )}
       </div>
 

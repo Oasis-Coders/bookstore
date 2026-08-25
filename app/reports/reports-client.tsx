@@ -8,7 +8,8 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 
 export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowStock: any[] }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
@@ -89,10 +90,10 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
               ))}
             </tbody>
           </table>
-          {valuation.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">暂无数据</p>}
+          {valuation.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无数据' : 'No data'}</p>}
         </div>
         <div className="mt-3 flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => exportCsv('valuation')}>导出估值 CSV</Button>
+          <Button size="sm" variant="secondary" onClick={() => exportCsv('valuation')}>{isZh ? '导出估值 CSV' : 'Export Valuation CSV'}</Button>
           <p className="text-[11px] text-[#4f7a5c] py-2">{tt('reports.sqlHint')}</p>
         </div>
       </Card>
@@ -101,7 +102,7 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
         <Card>
           <div className="flex items-center justify-between">
             <CardTitle>{tt('reports.lowStockTitle')}</CardTitle>
-            <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')}>导出</Button>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')}>{isZh ? '导出' : 'Export'}</Button>
           </div>
           <div className="mt-3 space-y-2">
             {lowStock.length === 0 ? (
