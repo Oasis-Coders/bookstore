@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { MobileSidebar } from '@/components/layout/mobile-sidebar';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { navItems } from '@/lib/app-config';
 import { useT } from '@/lib/i18n/use-t';
 import { LanguageSwitcher, LanguageSwitcherDark } from '@/components/ui/language-switcher';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type AppShellProps = {
   title: string;
@@ -17,6 +19,20 @@ type AppShellProps = {
 export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShellProps) {
   const { lang } = useT();
   const isZh = lang === 'zh';
+  const [avatarIcon, setAvatarIcon] = useState('活');
+  const [avatarColor, setAvatarColor] = useState('#d26a39');
+  const [displayName, setDisplayName] = useState('');
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    supabase.auth.getUser().then(({ data }) => {
+      const meta = data.user?.user_metadata as any;
+      if (meta?.avatar_icon) setAvatarIcon(meta.avatar_icon);
+      if (meta?.avatar_color) setAvatarColor(meta.avatar_color);
+      if (meta?.display_name) setDisplayName(meta.display_name);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#faf6ee] text-[#0f3d2e]">
@@ -24,16 +40,21 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
         <MobileSidebar>
           {/* Brand */}
           <div className="flex items-start justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-[8px] bg-[#d26a39] text-[13px] font-bold text-white">活</div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">COCM</p>
+            <div className="flex items-start gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] text-[14px] font-bold text-white shadow-sm" style={{ backgroundColor: avatarColor }}>
+                {avatarIcon}
               </div>
-              <h1 className="mt-2.5 font-serif text-[22px] leading-tight tracking-tight text-white">
-                {isZh ? '活水书房' : 'COCM Bookshop'}
-                <br />
-                <span className="text-[13px] font-sans font-normal tracking-wide opacity-70">{isZh ? '书店管理系统' : 'Bookshop System'}</span>
-              </h1>
+              <div>
+                <div className="flex items-center gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">COCM</p>
+                  {displayName && <span className="text-[11px] text-white/60">• {displayName}</span>}
+                </div>
+                <h1 className="mt-1.5 font-serif text-[20px] leading-tight tracking-tight text-white">
+                  {isZh ? '活水书房' : 'COCM Bookshop'}
+                  <br />
+                  <span className="text-[12px] font-sans font-normal tracking-wide opacity-70">{isZh ? '书店管理系统' : 'Bookshop System'}</span>
+                </h1>
+              </div>
             </div>
             <LanguageSwitcherDark />
           </div>
