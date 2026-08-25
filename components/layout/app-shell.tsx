@@ -23,14 +23,10 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
   const [avatarColor, setAvatarColor] = useState('#d26a39');
   const [displayName, setDisplayName] = useState('');
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [roleLoaded, setRoleLoaded] = useState(false);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    if (!supabase) {
-      setRoleLoaded(true);
-      return;
-    }
+    if (!supabase) return;
     supabase.auth.getUser().then(async ({ data }) => {
       const meta = data.user?.user_metadata as any;
       if (meta?.avatar_icon) setAvatarIcon(meta.avatar_icon);
@@ -39,30 +35,43 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
       
       if (data.user) {
         try {
+          // Try join query first
           const { data: roles, error } = await supabase.from('user_roles').select('roles(name)').eq('user_id', data.user.id);
-          if (!error && roles) {
+          if (!error && roles && roles.length > 0) {
             const roleNames = (roles || []).map((r: any) => r.roles?.name).filter(Boolean);
             const isSuperAdmin = roleNames.includes('super_admin');
             const isAdmin = isSuperAdmin || roleNames.includes('admin');
             setUserRole(isSuperAdmin ? 'super_admin' : isAdmin ? 'admin' : roleNames[0] || 'staff');
-          } else {
-            // Fallback: if RLS blocks, assume staff at least
-            setUserRole('staff');
+            return;
           }
-        } catch {
-          setUserRole('staff');
+          // Fallback: try direct role_id then lookup
+          const { data: direct } = await supabase.from('user_roles').select('role_id').eq('user_id', data.user.id).limit(1).single();
+          if (direct?.role_id) {
+            const { data: role } = await supabase.from('roles').select('name').eq('id', direct.role_id).single();
+            if (role?.name) {
+              setUserRole(role.name);
+              return;
+            }
+          }
+          // If still no role, keep null to show admin links optimistically (avoid flash-hide for super_admin)
+          console.log('no role found, keeping optimistic');
+        } catch (e) {
+          console.log('role fetch error', e);
+          // Keep null to avoid hiding admin links
         }
       }
-      setRoleLoaded(true);
     });
   }, []);
 
-  // Before role loads, show all items to avoid flicker/missing admin links
+  // FIX: Don't hide admin links based on role detection failure.
+  // Show all links always, only hide for confirmed staff to avoid flash-hide bug.
+  // Page-level auth (/admin/*) will redirect non-admins anyway.
   const filteredNav = navItems.filter(item => {
     if (!item.roles) return true;
-    if (!roleLoaded) return true; // show optimistically while loading
-    if (!userRole) return false;
-    return item.roles.includes(userRole) || userRole === 'super_admin';
+    // Only hide admin links if we are 100% sure user is staff
+    if (userRole === 'staff') return false;
+    // For super_admin, admin, null/loading -> show
+    return true;
   });
 
   const navToShow = filteredNav;
@@ -81,7 +90,6 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
                 <div className="flex items-center gap-2">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">COCM</p>
                   {userRole && <span className="rounded-[6px] bg-white/15 px-1.5 py-0.5 text-[10px] text-white/80">{userRole}</span>}
-                  {!roleLoaded && <span className="rounded-[6px] bg-white/10 px-1.5 py-0.5 text-[10px] text-white/50">…</span>}
                 </div>
                 <h1 className="mt-1.5 font-serif text-[20px] leading-tight tracking-tight text-white">
                   {isZh ? '活水书房' : 'COCM Bookshop'}
