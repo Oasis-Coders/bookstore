@@ -7,6 +7,7 @@ import { navItems } from '@/lib/app-config';
 import { useT } from '@/lib/i18n/use-t';
 import { LanguageSwitcher, LanguageSwitcherDark } from '@/components/ui/language-switcher';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { signOut } from '@/app/auth/actions';
 
 type AppShellProps = {
   title: string;
@@ -30,7 +31,6 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
     supabase.auth.getUser().then(async ({ data }) => {
       const meta = data.user?.user_metadata as any;
       if (meta?.display_name) setDisplayName(meta.display_name);
-      // avatar_icon: use saved icon, else first char of display_name, else first char of email, else 活
       if (meta?.avatar_icon) {
         setAvatarIcon(meta.avatar_icon);
       } else if (meta?.display_name) {
@@ -58,7 +58,6 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
               return;
             }
           }
-          console.log('no role found, keeping optimistic');
         } catch (e) {
           console.log('role fetch error', e);
         }
@@ -86,7 +85,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
                 </div>
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-semibold leading-tight">{displayName || (isZh ? '活水书房' : 'COCM Bookshop')}</p>
-                  <span className="text-[11px] font-sans font-normal tracking-wide opacity-70">{displayName ? (isZh ? '书店管理系统' : 'Bookshop System') : (isZh ? '书店管理系统' : 'Bookshop System')}</span>
+                  <span className="text-[11px] font-sans font-normal tracking-wide opacity-70">{isZh ? '书店管理系统' : 'Bookshop System'}</span>
                 </div>
               </div>
             </div>
@@ -94,7 +93,13 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
           <div className="flex-1 overflow-y-auto px-3 py-3">
             <SidebarNav items={filteredNav} />
           </div>
-          <div className="border-t border-white/10 px-3 py-3">
+          <div className="border-t border-white/10 px-3 py-3 space-y-2">
+            <form action={signOut}>
+              <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-[12px] text-white/70 hover:bg-white/10 hover:text-white transition">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M11 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                {isZh ? '退出登录' : 'Logout'}
+              </button>
+            </form>
             <LanguageSwitcherDark />
           </div>
         </aside>

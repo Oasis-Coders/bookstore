@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { SidebarNav } from '@/components/layout/sidebar-nav';
 import { navItems as defaultNav } from '@/lib/app-config';
 import { LanguageSwitcherDark } from '@/components/ui/language-switcher';
+import { signOut } from '@/app/auth/actions';
 
 type Props = {
   items?: typeof defaultNav;
@@ -31,7 +32,13 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
       <div className="mt-6 flex-1 overflow-y-auto">
         <SidebarNav items={items} />
       </div>
-      <div className="mt-4 border-t border-white/10 pt-4">
+      <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+        <form action={signOut}>
+          <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-[12px] text-white/70 hover:bg-white/10 hover:text-white transition">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M11 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            退出登录
+          </button>
+        </form>
         <LanguageSwitcherDark />
       </div>
     </>
