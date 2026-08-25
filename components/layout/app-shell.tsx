@@ -24,25 +24,10 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
               <br />
               <span className="text-[15px] font-sans font-normal opacity-80">Bookstore System</span>
             </h1>
-            <div className="mt-4 flex gap-2">
-              <span className="inline-flex rounded-[10px] bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide">
-                COCM 设计
-              </span>
-              <span className="inline-flex rounded-[10px] bg-[#d26a39] px-3 py-1 text-[11px] font-semibold text-white">
-                生产版
-              </span>
-            </div>
           </div>
 
           <div className="mt-5 flex min-h-0 flex-1 flex-col">
             <SidebarNav items={navItems} />
-            <div className="mt-auto border-t border-white/10 pt-4">
-              <p className="px-4 text-[11px] text-white/40">
-                复用 COCM Camp App 设计系统
-                <br />
-                cream / forest / ember
-              </p>
-            </div>
           </div>
         </MobileSidebar>
 

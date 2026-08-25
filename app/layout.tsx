@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: '活水书室管理系统 | Living Water Bookstore',
-  description: 'Bookstore inventory, purchasing, and accounting for 活水书室 - Powered by COCM design system',
+  description: 'Bookstore inventory, purchasing, and accounting for 活水书室 - Bookstore management system',
   applicationName: '活水书室管理系统',
 };
 

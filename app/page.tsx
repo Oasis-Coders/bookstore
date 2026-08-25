@@ -149,7 +149,6 @@ export default async function DashboardPage() {
 
       {/* Design credit */}
       <div className="mt-6 rounded-[20px] bg-[#0f3d2e] p-5 text-white">
-        <p className="text-[12px] opacity-70">设计系统复用 COCM Camp App</p>
         <p className="mt-1 font-serif text-[16px]">cream #faf6ee • forest #0f3d2e • ember #d26a39 • DM Serif + Inter + Noto Sans SC</p>
       </div>
     </AppShell>
