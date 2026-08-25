@@ -1,6 +1,5 @@
 'use client';
-
-import { Card, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AppShell } from '@/components/layout/app-shell';
@@ -10,41 +9,24 @@ import Link from 'next/link';
 export function LocationsClient({ locations }: { locations: any[] }) {
   const { tt } = useT();
   return (
-    <AppShell title={tt('locations.title')} titleZh={tt('locations.title')} eyebrow={tt('locations.eyebrow')} actions={
-      <Link href="/locations/new"><Button>+ 添加库位</Button></Link>
+    <AppShell title={tt('locations.title')} titleZh={tt('locations.title')} eyebrow={tt('locations.count', { n: locations.length })} actions={
+      <Link href="/locations/new"><Button>{tt('locations.add')}</Button></Link>
     }>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {locations.map((loc: any) => (
-          <Card key={loc.id} className="group hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5 transition-all">
-            <div className="flex items-center justify-between">
-              <CardTitle>{loc.name}</CardTitle>
-              <Badge variant={loc.location_type === 'store' ? 'active' : 'default'}>
-                {loc.location_type === 'store' ? tt('locations.store') : tt('locations.warehouse')}
-              </Badge>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+        {locations.map((l: any) => (
+          <Card key={l.id} className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-[14px]">{l.name}</p>
+              <p className="text-[11px] text-[#4f7a5c]">{l.code} · {l.location_type === 'warehouse' ? '仓库' : '门店'} {l.address ? `· ${l.address}` : ''}</p>
             </div>
-            <p className="mt-1 text-[12px] text-[#4f7a5c]">{loc.code} {loc.address ? `• ${loc.address}` : ''}</p>
-            <div className="mt-4 rounded-[12px] bg-[#faf6ee] p-3 text-[12px]">
-              <p className="text-[#4f7a5c]">{tt('locations.transferExample')}</p>
-              <p className="mt-1 font-mono text-[11px]">apply_stock_transfer(book_id, STORE-MAIN, WH-01, qty)</p>
-              <p className="mt-1 text-[11px] text-[#4f7a5c]">{tt('locations.transferDesc')}</p>
+            <div className="flex items-center gap-2">
+              <Badge variant={l.location_type === 'warehouse' ? 'default' : 'active'}>{l.location_type}</Badge>
+              <Link href={`/locations/${l.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">编辑</Button></Link>
             </div>
           </Card>
         ))}
       </div>
-
-      {locations.length === 0 && (
-        <Card className="mt-6 py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">暂无库位</p></Card>
-      )}
-
-      <Card className="mt-6">
-        <CardTitle>{tt('locations.logicTitle')}</CardTitle>
-        <div className="mt-3 space-y-2 text-[13px] text-[#0f3d2e]/80">
-          <p>• {tt('locations.logic1')}</p>
-          <p>• {tt('locations.logic2')}</p>
-          <p>• {tt('locations.logic3')}</p>
-          <p>• {tt('locations.logic4')}</p>
-        </div>
-      </Card>
+      {locations.length === 0 && <Card className="py-10 text-center text-[12px] text-[#4f7a5c]">暂无库位</Card>}
     </AppShell>
   );
 }

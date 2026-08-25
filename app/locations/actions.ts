@@ -24,3 +24,25 @@ export async function createLocation(formData: FormData) {
   }
   revalidatePath('/locations');
 }
+export async function updateLocation(id: string, formData: FormData) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error('Supabase not configured');
+  const payload = {
+    code: String(formData.get('code') || '').trim(),
+    name: String(formData.get('name') || '').trim(),
+    location_type: String(formData.get('location_type') || 'store').trim(),
+    address: String(formData.get('address') || '').trim() || null,
+    is_active: formData.get('is_active') !== 'false',
+  };
+  const { error } = await supabase.from('locations').update(payload).eq('id', id);
+  if (error) throw error;
+  revalidatePath(`/locations/${id}`);
+  revalidatePath('/locations');
+}
+export async function deleteLocation(id: string) {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) throw new Error('Supabase not configured');
+  const { error } = await supabase.from('locations').delete().eq('id', id);
+  if (error) throw error;
+  revalidatePath('/locations');
+}
