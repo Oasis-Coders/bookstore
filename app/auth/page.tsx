@@ -11,14 +11,22 @@ type Props = {
   searchParams: Promise<{ redirectTo?: string; error?: string }>;
 };
 
+function getEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY;
+  return { url, anonKey };
+}
+
 export default async function AuthPage({ searchParams }: Props) {
   const params = await searchParams;
   const redirectTo = params.redirectTo ?? '/';
   const error = params.error;
 
   // Check if already logged in
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
   if (supabaseUrl && supabaseAnonKey) {
     const cookieStore = await cookies();
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {

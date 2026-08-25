@@ -12,11 +12,20 @@ const protectedPrefixes = [
   '/sales',
 ];
 
+function getEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY;
+  return { url, anonKey };
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 公开路径 - 不需要认证
-  const isPublicPath = 
+  const isPublicPath =
     pathname.startsWith('/auth') ||
     pathname.startsWith('/_next') ||
     pathname.includes('.');
@@ -29,8 +38,7 @@ export async function middleware(request: NextRequest) {
     request,
   });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
 
   // 如果 env 缺失，跳过认证（防止 Vercel 500）
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -60,7 +68,7 @@ export async function middleware(request: NextRequest) {
 
   const isProtected = protectedPrefixes.some((prefix) => {
     if (prefix === '/') {
-      return pathname === '/' || protectedPrefixes.slice(1).some(p => pathname.startsWith(p));
+      return pathname === '/' || protectedPrefixes.slice(1).some((p) => pathname.startsWith(p));
     }
     return pathname.startsWith(prefix);
   });

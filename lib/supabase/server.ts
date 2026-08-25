@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 
-import { hasSupabaseEnv } from '@/lib/supabase/env';
+import { getSupabaseUrl, getSupabaseAnonKey, getSupabaseServiceRoleKey, hasSupabaseEnv, hasSupabaseServiceRole } from '@/lib/supabase/env';
 
 export async function createSupabaseServerClient() {
   if (!hasSupabaseEnv()) {
@@ -15,36 +15,40 @@ export async function createSupabaseServerClient() {
     options?: Parameters<typeof cookieStore.set>[2];
   };
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch {
-            // Server Components cannot set cookies directly - middleware handles refresh
-          }
-        },
+  return createServerClient(getSupabaseUrl()!, getSupabaseAnonKey()!, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet: CookieToSet[]) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {}
+      },
+    },
+  });
 }
 
 export async function createSupabaseServiceRoleClient() {
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!hasSupabaseServiceRole()) {
     return null;
   }
-  const { createClient } = await import('@supabase/supabase-js');
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+
+  const cookieStore = await cookies();
+
+  return createServerClient(getSupabaseUrl()!, getSupabaseServiceRoleKey()!, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll() {},
+    },
+  });
+}
+
+// For backward compat with existing code that checks URL and service role separately
+export function hasSupabaseServiceEnv(): boolean {
+  return hasSupabaseServiceRole();
 }
