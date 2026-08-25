@@ -79,10 +79,28 @@ create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer
 set search_path = public, pg_temp
 as $$
+declare
+  v_role_id uuid;
+  v_count int;
 begin
   insert into public.profiles(id, display_name)
   values (new.id, coalesce(new.raw_user_meta_data ->> 'display_name', new.email))
   on conflict (id) do nothing;
+
+  select count(*) into v_count from public.user_roles;
+  
+  if v_count = 0 then
+    select id into v_role_id from public.roles where name = 'super_admin' limit 1;
+  else
+    select id into v_role_id from public.roles where name = 'staff' limit 1;
+  end if;
+
+  if v_role_id is not null then
+    insert into public.user_roles(user_id, role_id)
+    values (new.id, v_role_id)
+    on conflict (user_id, role_id) do nothing;
+  end if;
+
   return new;
 end;
 $$;
@@ -899,14 +917,14 @@ create policy profiles_read on public.profiles for select to authenticated
 using (id = auth.uid() or public.has_any_role(array['staff','admin','super_admin']));
 drop policy if exists profiles_update on public.profiles;
 create policy profiles_update on public.profiles for update to authenticated
-using (id = auth.uid() or public.has_any_role(array['admin','super_admin']))
-with check (id = auth.uid() or public.has_any_role(array['admin','super_admin']));
+using (id = auth.uid() or public.has_any_role(array['staff','admin','super_admin']))
+with check (id = auth.uid() or public.has_any_role(array['staff','admin','super_admin']));
 
 drop policy if exists roles_read on public.roles;
 create policy roles_read on public.roles for select to authenticated using (true);
 drop policy if exists user_roles_read on public.user_roles;
 create policy user_roles_read on public.user_roles for select to authenticated
-using (user_id = auth.uid() or public.has_any_role(array['admin','super_admin']));
+using (user_id = auth.uid() or public.has_any_role(array['staff','admin','super_admin']));
 drop policy if exists user_roles_admin_insert on public.user_roles;
 create policy user_roles_admin_insert on public.user_roles for insert to authenticated
 with check (public.has_any_role(array['super_admin']));
@@ -930,7 +948,7 @@ begin
   end loop;
 end $$;
 
--- 供应商、书籍、库位仅 admin/super_admin 可维护。
+-- 供应商、书籍、库位 staff/admin/super_admin 可维护，删除仅 admin/super_admin。
 do $$
 declare t text;
 begin
@@ -938,8 +956,8 @@ begin
     execute format('drop policy if exists admin_insert on public.%I', t);
     execute format('drop policy if exists admin_update on public.%I', t);
     execute format('drop policy if exists admin_delete on public.%I', t);
-    execute format('create policy admin_insert on public.%I for insert to authenticated with check (public.has_any_role(array[''admin'',''super_admin'']))', t);
-    execute format('create policy admin_update on public.%I for update to authenticated using (public.has_any_role(array[''admin'',''super_admin''])) with check (public.has_any_role(array[''admin'',''super_admin'']))', t);
+    execute format('create policy admin_insert on public.%I for insert to authenticated with check (public.has_any_role(array[''staff'',''admin'',''super_admin'']))', t);
+    execute format('create policy admin_update on public.%I for update to authenticated using (public.has_any_role(array[''staff'',''admin'',''super_admin''])) with check (public.has_any_role(array[''staff'',''admin'',''super_admin'']))', t);
     execute format('create policy admin_delete on public.%I for delete to authenticated using (public.has_any_role(array[''admin'',''super_admin'']))', t);
   end loop;
 end $$;
