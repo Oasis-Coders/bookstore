@@ -194,10 +194,6 @@ export function AuthClient({
               <a href={`/auth?mode=reset&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[11px] text-[#4f7a5c]/70 hover:text-[#0f3d2e] underline">
                 {isZh ? '忘记密码？' : 'Forgot password?'}
               </a>
-              <span className="text-[#4f7a5c]/20">·</span>
-              <a href={`/auth?mode=admin-reset&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[11px] text-[#4f7a5c]/50 hover:text-[#0f3d2e] underline">
-                {isZh ? '管理员重置' : 'Admin reset'}
-              </a>
             </div>
           </>
         )}
