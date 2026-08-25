@@ -13,6 +13,7 @@ export const navItems: NavItem[] = [
   { href: '/locations', label: 'Locations', labelZh: '库位' },
   { href: '/sales', label: 'Sales', labelZh: '销售' },
   { href: '/reports', label: 'Reports', labelZh: '报表' },
+  { href: '/settings', label: 'Settings', labelZh: '设置' },
 ];
 
 export const appConfig = {
