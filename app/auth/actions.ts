@@ -53,6 +53,13 @@ export async function signIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
+    // Better error for wrong password / not confirmed
+    if (error.message.includes('Invalid login credentials')) {
+      redirect(`/auth?error=${encodeURIComponent('邮箱或密码错误')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+    }
+    if (error.message.includes('Email not confirmed')) {
+      redirect(`/auth?error=${encodeURIComponent('邮箱未确认，请去邮箱点链接或联系管理员')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+    }
     redirect(`/auth?error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
@@ -83,7 +90,7 @@ export async function signUp(formData: FormData) {
     redirect(`/auth?mode=signup&error=no-supabase&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
-  // Like COCM: if we have service role, use admin.createUser with email_confirm: true to skip email verification
+  // Like COCM: if we have service role, use admin.createUser with email_confirm: true
   if (hasSupabaseServiceRole()) {
     const adminSupabase = createSupabaseAdminClient();
     if (adminSupabase) {
@@ -97,6 +104,10 @@ export async function signUp(formData: FormData) {
       });
 
       if (error || !data.user) {
+        // If user already exists, give helpful message
+        if (error?.message.includes('already exists') || error?.message.includes('already registered')) {
+          redirect(`/auth?error=${encodeURIComponent('该邮箱已注册，请直接登录或重置密码')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+        }
         redirect(`/auth?mode=signup&error=${encodeURIComponent(error?.message || '创建失败')}&redirectTo=${encodeURIComponent(redirectTo)}`);
       }
 
@@ -123,7 +134,7 @@ export async function signUp(formData: FormData) {
     }
   }
 
-  // Fallback: regular signUp (may require email confirmation if Supabase setting is on)
+  // Fallback: regular signUp
   const cookieStore = await cookies();
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
@@ -147,16 +158,131 @@ export async function signUp(formData: FormData) {
   });
 
   if (error || !data.user) {
+    if (error?.message.includes('already registered')) {
+      redirect(`/auth?error=${encodeURIComponent('该邮箱已注册，请直接登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+    }
     redirect(`/auth?mode=signup&error=${encodeURIComponent(error?.message || '注册失败')}&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
   if (data.session) {
-    // Already signed in (email confirmation disabled)
     redirect(redirectTo);
   }
 
-  // No session means email confirmation required
   redirect(`/auth?message=${encodeURIComponent('账号创建成功，请去邮箱确认后登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+}
+
+export async function resetPassword(formData: FormData) {
+  const email = String(formData.get('email') ?? '').trim();
+  const redirectTo = String(formData.get('redirectTo') ?? '/');
+
+  if (!email) {
+    redirect(`/auth?mode=reset&error=missing&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const env = getSupabase();
+  if (!env) {
+    redirect(`/auth?mode=reset&error=no-supabase&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      getAll() { return cookieStore.getAll(); },
+      setAll() {},
+    },
+  });
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cocm-bookstor.vercel.app';
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/reset`,
+  });
+
+  if (error) {
+    redirect(`/auth?mode=reset&error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  redirect(`/auth?message=${encodeURIComponent('重置邮件已发送，请查收邮箱')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = String(formData.get('password') ?? '').trim();
+  const confirmPassword = String(formData.get('confirmPassword') ?? '').trim();
+  const redirectTo = String(formData.get('redirectTo') ?? '/');
+
+  if (!password || password !== confirmPassword) {
+    redirect(`/auth/reset?error=${encodeURIComponent('两次密码不一致')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  if (password.length < 6) {
+    redirect(`/auth/reset?error=${encodeURIComponent('密码至少6位')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const env = getSupabase();
+  if (!env) {
+    redirect(`/auth/reset?error=no-supabase&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
+    cookies: {
+      getAll() { return cookieStore.getAll(); },
+      setAll(cookiesToSet: CookieToSet[]) {
+        cookiesToSet.forEach(({ name, value, options }) =>
+          cookieStore.set(name, value, options as any)
+        );
+      },
+    },
+  });
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    redirect(`/auth/reset?error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  redirect(redirectTo || '/');
+}
+
+export async function adminResetPassword(formData: FormData) {
+  // Admin function to reset a user's password directly (for the case where user forgot password and admin wants to help)
+  const email = String(formData.get('email') ?? '').trim();
+  const newPassword = String(formData.get('newPassword') ?? '').trim();
+  const redirectTo = String(formData.get('redirectTo') ?? '/');
+
+  if (!email || !newPassword) {
+    redirect(`/auth?mode=admin-reset&error=missing&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  if (!hasSupabaseServiceRole()) {
+    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent('需要 service role key')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const adminSupabase = createSupabaseAdminClient();
+  if (!adminSupabase) {
+    redirect(`/auth?mode=admin-reset&error=no-admin&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  // Find user by email
+  const { data: listData, error: listError } = await adminSupabase.auth.admin.listUsers();
+  if (listError) {
+    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent(listError.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const user = listData.users.find((u: any) => u.email === email);
+  if (!user) {
+    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent('用户不存在')}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  const { error } = await adminSupabase.auth.admin.updateUserById(user.id, {
+    password: newPassword,
+  });
+
+  if (error) {
+    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
+  }
+
+  redirect(`/auth?message=${encodeURIComponent(`已重置 ${email} 的密码`)}&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 
 export async function signOut() {

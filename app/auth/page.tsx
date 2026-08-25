@@ -1,8 +1,8 @@
+import { AuthClient } from './auth-client';
+import { signIn, signUp, resetPassword, adminResetPassword } from './actions';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { AuthClient } from './auth-client';
-import { signIn, signUp } from './actions';
 
 type Props = {
   searchParams: Promise<{ redirectTo?: string; error?: string; mode?: string; message?: string }>;
@@ -24,23 +24,40 @@ export default async function AuthPage({ searchParams }: Props) {
   const mode = params.mode ?? 'signin';
   const message = params.message;
 
-  // Check if already logged in
-  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
-  if (supabaseUrl && supabaseAnonKey) {
-    const cookieStore = await cookies();
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() { return cookieStore.getAll(); },
-        setAll() {},
-      },
-    });
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      redirect(redirectTo);
+  // Check if already logged in (except for reset flows)
+  if (mode !== 'reset' && mode !== 'admin-reset') {
+    const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
+    if (supabaseUrl && supabaseAnonKey) {
+      const cookieStore = await cookies();
+      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+          getAll() { return cookieStore.getAll(); },
+          setAll() {},
+        },
+      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        redirect(redirectTo);
+      }
     }
   }
 
   const isSignUp = mode === 'signup';
+  const isReset = mode === 'reset';
+  const isAdminReset = mode === 'admin-reset';
 
-  return <AuthClient isSignUp={isSignUp} error={error} message={message} redirectTo={redirectTo} signInAction={signIn} signUpAction={signUp} />;
+  return (
+    <AuthClient
+      isSignUp={isSignUp}
+      isReset={isReset}
+      isAdminReset={isAdminReset}
+      error={error}
+      message={message}
+      redirectTo={redirectTo}
+      signInAction={signIn}
+      signUpAction={signUp}
+      resetAction={resetPassword}
+      adminResetAction={adminResetPassword}
+    />
+  );
 }
