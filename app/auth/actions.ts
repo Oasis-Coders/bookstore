@@ -61,9 +61,10 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
   const confirmPassword = String(formData.get('confirmPassword') ?? '');
+  const displayName = String(formData.get('displayName') ?? '').trim();
   const redirectTo = String(formData.get('redirectTo') ?? '/');
 
-  if (!email || !password) {
+  if (!email || !password || !displayName) {
     redirect(`/auth?mode=signup&error=missing&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
@@ -98,7 +99,10 @@ export async function signUp(formData: FormData) {
     email,
     password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth`,
+      data: {
+        display_name: displayName,
+      },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:3000'}/auth`,
     },
   });
 
@@ -106,7 +110,6 @@ export async function signUp(formData: FormData) {
     redirect(`/auth?mode=signup&error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
   }
 
-  // Like COCM - after signup, show message to check email or login
   redirect(`/auth?message=${encodeURIComponent('账号创建成功，请去邮箱确认或直接登录')}&redirectTo=${encodeURIComponent(redirectTo)}`);
 }
 

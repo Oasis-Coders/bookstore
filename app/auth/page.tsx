@@ -53,7 +53,7 @@ export default async function AuthPage({ searchParams }: Props) {
 
           {error && (
             <div className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">
-              {error === 'missing' ? '请输入邮箱和密码' : error === 'no-supabase' ? 'Supabase 未配置' : `失败: ${error}`}
+              {error === 'missing' ? '请填写所有必填项' : error === 'no-supabase' ? 'Supabase 未配置' : `失败: ${error}`}
             </div>
           )}
           {message && (
@@ -64,6 +64,7 @@ export default async function AuthPage({ searchParams }: Props) {
 
           <form action={isSignUp ? signUp : signIn} className="mt-6 space-y-3">
             <input type="hidden" name="redirectTo" value={redirectTo} />
+            {isSignUp && <Input name="displayName" placeholder="姓名 / 显示名称" type="text" required />}
             <Input name="email" placeholder="邮箱" type="email" required />
             <Input name="password" placeholder="密码" type="password" required />
             {isSignUp && <Input name="confirmPassword" placeholder="确认密码" type="password" required />}
@@ -81,13 +82,6 @@ export default async function AuthPage({ searchParams }: Props) {
               </a>
             )}
           </div>
-
-          <p className="mt-6 text-center text-[11px] text-[#4f7a5c]">
-            首位 super_admin 需手动插入：<br />
-            <code className="mt-1 block rounded bg-[#faf6ee] p-2 text-left text-[10px]">
-              insert into user_roles(user_id, role_id) select '&lt;UUID&gt;'::uuid, id from roles where name='super_admin';
-            </code>
-          </p>
         </Card>
       </div>
     </AppShell>
