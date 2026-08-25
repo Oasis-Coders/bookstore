@@ -19,22 +19,19 @@ export function MobileSidebar({ children }: { children: React.ReactNode }) {
       </button>
 
       {/* Mobile drawer */}
-      <div
-        className={`fixed inset-0 z-40 flex transition lg:hidden ${open ? 'visible' : 'invisible'}`}
-      >
-        <div
-          className={`absolute inset-0 bg-[#0f3d2e]/40 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}
-          onClick={() => setOpen(false)}
-        />
-        <div
-          className={`relative flex w-[300px] flex-col bg-[#0f3d2e] p-5 transition-transform ${open ? 'translate-x-0' : '-translate-x-full'}`}
-        >
+      <div className={`fixed inset-0 z-40 flex transition lg:hidden ${open ? 'visible' : 'invisible'}`}>
+        <div className={`absolute inset-0 bg-[#0f3d2e]/40 backdrop-blur-sm transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`} onClick={() => setOpen(false)} />
+        <div className={`relative flex w-[300px] flex-col bg-[#0f3d2e] p-5 transition-transform ${open ? 'translate-x-0' : '-translate-x-full'}`}>
           {children}
         </div>
       </div>
 
-      {/* Desktop sidebar - hidden on mobile, shown via parent */}
-      <aside className="hidden w-[300px] shrink-0 flex-col lg:flex">{children}</aside>
+      {/* Desktop sidebar */}
+      <aside className="hidden w-[300px] shrink-0 flex-col lg:flex">
+        <div className="sticky top-4 rounded-[28px] bg-[#0f3d2e] p-6 text-white shadow-[0_18px_60px_rgba(15,61,46,0.14)]">
+          {children}
+        </div>
+      </aside>
     </>
   );
 }

@@ -22,25 +22,20 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
     <div className="min-h-screen bg-[#faf6ee] text-[#0f3d2e]">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-4 lg:flex-row lg:px-8">
         <MobileSidebar>
-          <div className="rounded-[28px] bg-[#0f3d2e] p-6 text-white shadow-[0_18px_60px_rgba(15,61,46,0.14)]">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">
-                  COCM
-                </p>
-                <h1 className="mt-2 font-serif text-[24px] leading-tight tracking-tight">
-                  {isZh ? '活水书房' : 'COCM Bookshop'}
-                  <br />
-                  <span className="text-[15px] font-sans font-normal opacity-80">
-                    {isZh ? '书店系统' : 'Bookshop System'}
-                  </span>
-                </h1>
-              </div>
-              <LanguageSwitcherDark />
+          {/* Brand */}
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#d9edf6]">COCM</p>
+              <h1 className="mt-2 font-serif text-[24px] leading-tight tracking-tight text-white">
+                {isZh ? '活水书房' : 'COCM Bookshop'}
+                <br />
+                <span className="text-[15px] font-sans font-normal opacity-80">{isZh ? '书店系统' : 'Bookshop System'}</span>
+              </h1>
             </div>
+            <LanguageSwitcherDark />
           </div>
 
-          <div className="mt-5 flex min-h-0 flex-1 flex-col">
+          <div className="mt-6 flex min-h-0 flex-1 flex-col">
             <SidebarNav items={navItems} />
           </div>
         </MobileSidebar>
@@ -48,14 +43,8 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
         <main className="flex-1 pt-14 lg:pt-0">
           <header className="flex flex-wrap items-start justify-between gap-4 rounded-[28px] border border-[#0f3d2e]/10 bg-white p-6 shadow-[rgba(15,61,46,0.03)_0px_0px_0px_1px,rgba(15,61,46,0.05)_0px_2px_8px,rgba(15,61,46,0.10)_0px_8px_24px] lg:p-8">
             <div>
-              {eyebrow && (
-                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#4f7a5c]">
-                  {eyebrow}
-                </p>
-              )}
-              <h2 className="mt-2 font-serif text-[32px] tracking-tight text-[#0f3d2e] lg:text-[40px]">
-                {isZh ? titleZh : title}
-              </h2>
+              {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-[#4f7a5c]">{eyebrow}</p>}
+              <h2 className="mt-2 font-serif text-[32px] tracking-tight text-[#0f3d2e] lg:text-[40px]">{isZh ? titleZh : title}</h2>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <LanguageSwitcher />
