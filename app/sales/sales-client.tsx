@@ -50,7 +50,7 @@ export function SalesClient({ books, locations }: { books?: any[]; locations?: a
       fd.set('items_json', JSON.stringify(cart.map(c => ({ book_id: c.id, quantity: c.qty }))));
       fd.set('external_ref', `POS-${Date.now()}`);
       await createSale(fd);
-      setMsg('销售成功！库存已按 FIFO 扣减');
+      setMsg('销售成功！库存已按最早进货先出');
       setCart([]);
     } catch (e: any) {
       // In demo mode, just clear and show success

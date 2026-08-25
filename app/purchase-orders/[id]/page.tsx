@@ -59,7 +59,7 @@ export default async function PODetailPage({ params }: { params: Promise<{ id: s
         {(po.status === 'ordered' || po.status === 'partially_received' || po.status === 'approved') && (
           <Card>
             <CardTitle>收货入库</CardTitle>
-            <p className="mt-2 text-[12px] text-[#4f7a5c]">选择库位，确认数量，系统会自动创建 FIFO 批次</p>
+            <p className="mt-2 text-[12px] text-[#4f7a5c]">选择库位，确认数量，系统会自动按每批进货价创建库存批次</p>
             <form action={async (fd: FormData) => {
               'use server';
               const supa = await (await import('@/lib/supabase/server')).createSupabaseServerClient();
