@@ -25,6 +25,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [snapshotsHistory, setSnapshotsHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [snapshotMsg, setSnapshotMsg] = useState('');
+  const [filtering, setFiltering] = useState(false);
 
   useEffect(() => {
     if (monthlyFinancial) {
@@ -141,11 +142,13 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   };
 
   const handleDateFilter = () => {
+    setFiltering(true);
     const params = new URLSearchParams(searchParams.toString());
     params.set('from', fromDate);
     params.set('to', toDate);
     if (selectedMonth) params.set('month', selectedMonth);
     router.push(`/reports?${params.toString()}`);
+    setTimeout(()=>setFiltering(false), 800);
   };
 
   return (
@@ -270,7 +273,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <label className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
             <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
-          <Button size="sm" onClick={handleDateFilter} className="h-9 rounded-[10px]">{isZh ? '查询' : 'Filter'}</Button>
+          <Button size="sm" onClick={handleDateFilter} disabled={filtering} className="h-9 rounded-[10px] min-w-[64px]">{filtering ? <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />{isZh ? '查询中' : 'Loading'}</span> : (isZh ? '查询' : 'Filter')}</Button>
           <span className="text-[11px] text-[#4f7a5c]">{isZh ? '附件财务月报表格参考：日期、单号、付款方式/状态、合计' : 'Ref attachment financial monthly report: Date, Sale No, Payment/Status, Total'}</span>
         </div>
       </Card>
