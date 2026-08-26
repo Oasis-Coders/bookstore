@@ -8,6 +8,18 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
+type DailySales = {
+  sale_date: string;
+  total_orders: number;
+  cash_total: number;
+  card_total: number;
+  bank_transfer_total: number;
+  shopify_total: number;
+  mix_total: number;
+  deferral_total: number;
+  grand_total: number;
+} | null;
+
 type DashboardData = {
   mode: 'demo' | 'live';
   totalValue: number;
@@ -15,13 +27,62 @@ type DashboardData = {
   lowStockCount: number;
   recentPOs: any[];
   valuation?: any[];
+  dailySales?: DailySales;
 };
 
 export function DashboardClient({ data }: { data: DashboardData }) {
-  const { tt } = useT();
+  const { tt, lang } = useT();
+  const isZh = lang === 'zh';
 
   return (
     <AppShell title={tt('nav.dashboard')} titleZh={tt('nav.dashboard')} eyebrow={tt('dashboard.eyebrow')}>
+      {/* Daily Sales Bar - NEW */}
+      {data.dailySales && (
+        <Card className="mb-4 bg-gradient-to-br from-[#0f3d2e] to-[#1a5c46] text-white border-0 shadow-[0_8px_32px_rgba(15,61,46,0.25)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-[12px] bg-white/15 backdrop-blur flex items-center justify-center">
+                <span className="text-[16px]">💰</span>
+              </div>
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-wider text-white/60">
+                  {isZh ? `今日销售 · ${data.dailySales.sale_date}` : `Today's Sales · ${data.dailySales.sale_date}`}
+                </p>
+                <p className="text-[20px] font-serif font-bold tracking-tight">
+                  {data.dailySales.total_orders} {isZh ? '单' : 'orders'} · {formatCurrency(data.dailySales.grand_total)}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5 text-[11px]">
+              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
+                <p className="text-white/50 text-[10px] uppercase">{isZh ? '现金' : 'Cash'}</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.cash_total)}</p>
+              </div>
+              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
+                <p className="text-white/50 text-[10px] uppercase">{isZh ? '刷卡' : 'Card'}</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.card_total)}</p>
+              </div>
+              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
+                <p className="text-white/50 text-[10px] uppercase">{isZh ? '转账' : 'Bank'}</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.bank_transfer_total)}</p>
+              </div>
+              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
+                <p className="text-white/50 text-[10px] uppercase">Shopify</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.shopify_total)}</p>
+              </div>
+              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
+                <p className="text-white/50 text-[10px] uppercase">{isZh ? '混合' : 'Mix'}</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.mix_total)}</p>
+              </div>
+              <div className="rounded-[10px] bg-[#d26a39]/30 px-3 py-2 backdrop-blur border border-[#d26a39]/30">
+                <p className="text-white/70 text-[10px] uppercase">{isZh ? '挂账' : 'Deferral'}</p>
+                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.deferral_total)}</p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <StatCard

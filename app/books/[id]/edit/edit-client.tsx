@@ -71,6 +71,20 @@ export function EditBookClient({ book }: { book: any }) {
               <label className="text-[11px] text-[#4f7a5c]">{isZh ? '书名 *' : 'Title *'}</label>
               <Input name="title" defaultValue={book.title} required className="mt-1" />
             </div>
+            <div>
+              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
+              <Input name="title_en" defaultValue={book.title_en || book.metadata?.title_en || ''} placeholder={isZh ? '如 The Way of Victory' : 'English title'} className="mt-1" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '简体标题' : 'Simplified'}</label>
+                <Input name="title_simplified" defaultValue={book.title_simplified || book.metadata?.title_simplified || ''} className="mt-1" />
+              </div>
+              <div>
+                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '繁体标题' : 'Traditional'}</label>
+                <Input name="title_traditional" defaultValue={book.title_traditional || book.metadata?.title_traditional || ''} className="mt-1" />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[11px] text-[#4f7a5c]">{isZh ? '作者' : 'Author'}</label>

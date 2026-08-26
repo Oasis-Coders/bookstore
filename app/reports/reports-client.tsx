@@ -1,19 +1,27 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
+import { useRouter, useSearchParams } from 'next/navigation';
 
-export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowStock: any[] }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
+  const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
+
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
-  const exportCsv = (type: 'valuation' | 'lowstock') => {
+  const exportCsv = (type: 'valuation' | 'lowstock' | 'sales' | 'salesBooks') => {
     let csv = '';
     let filename = '';
     if (type === 'valuation') {
@@ -21,13 +29,23 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
       csv = 'SKU,Title,Location,Qty,WAC,Cost Value,Retail Value\n' + valuation.map(r => 
         `${r.sku},"${r.title}",${r.location_name},${r.quantity_on_hand},${r.weighted_average_cost},${r.inventory_value},${r.retail_value}`
       ).join('\n');
-    } else {
+    } else if (type === 'lowstock') {
       filename = `low_stock_${new Date().toISOString().slice(0,10)}.csv`;
       csv = 'SKU,Title,Threshold,On Hand,Shortage\n' + lowStock.map(r =>
         `${r.sku},"${r.title}",${r.low_stock_threshold},${r.quantity_on_hand},${r.reorder_shortage}`
       ).join('\n');
+    } else if (type === 'sales') {
+      filename = `sales_${fromDate}_to_${toDate}.csv`;
+      csv = 'Date,Sale Number,Payment Method,Status,Subtotal,Discount,Net Total,Customer\n' + salesList.map(r =>
+        `${r.sale_date},${r.sale_number},${r.payment_method},${r.payment_status},${r.subtotal},${r.discount_amount || 0},${r.net_total},${r.customer_name || ''}`
+      ).join('\n');
+    } else if (type === 'salesBooks') {
+      filename = `sales_books_${fromDate}_to_${toDate}.csv`;
+      csv = 'Date,Sale Number,SKU,Title,Qty,Unit Price,Payment Method,Customer,Shelf\n' + salesBooksList.map(r =>
+        `${r.sale_date},${r.sale_number},${r.sku},"${r.title}",${r.quantity},${r.unit_price},${r.payment_method},${r.customer_name || ''},${r.shelf_position || ''}`
+      ).join('\n');
     }
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -36,15 +54,11 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
     URL.revokeObjectURL(url);
   };
 
-  const downloadTemplate = () => {
-    const csv = 'sku,title,publisher,author,category,current_price,low_stock_threshold\nBOOK-001,活水得胜之路,活水出版社,张牧师,灵修,12.5,5\nBOOK-002,认识真理,福音出版社,李弟兄,神学,9.99,3';
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'books_import_template.csv';
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleDateFilter = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('from', fromDate);
+    params.set('to', toDate);
+    router.push(`/reports?${params.toString()}`);
   };
 
   return (
@@ -54,8 +68,82 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
       eyebrow={tt('reports.eyebrow')}
       actions={<Button variant="ghost" onClick={() => exportCsv('valuation')}>{tt('reports.exportCsv')}</Button>}
     >
+      {/* Date Range Filter - NEW */}
+      <Card className="border-[#0f3d2e]/10 bg-gradient-to-br from-white to-[#faf6ee]/30">
+        <CardTitle className="flex items-center gap-2"><span className="h-1 w-5 rounded-full bg-[#d26a39]" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
+        <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '选择时间段查看销售列表和书目列表，用于财务对账和Shopify库存同步' : 'Select date range to view sales list and books list for accounting and Shopify stock sync'}</p>
+        <div className="mt-3 flex flex-wrap items-end gap-3">
+          <div>
+            <label className="text-[11px] font-medium">{isZh ? '开始日期' : 'From'}</label>
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="mt-1 h-9" />
+          </div>
+          <div>
+            <label className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9" />
+          </div>
+          <Button size="sm" onClick={handleDateFilter} className="h-9 rounded-[10px]">{isZh ? '查询' : 'Filter'}</Button>
+          <span className="text-[11px] text-[#4f7a5c]">{isZh ? '附件财务月报表格参考：日期、单号、付款方式/状态、合计' : 'Ref attachment financial monthly report: Date, Sale No, Payment/Status, Total'}</span>
+        </div>
+      </Card>
+
+      {/* Sales List by Date - NEW */}
+      {salesList.length > 0 && (
+        <Card className="mt-4">
+          <div className="flex items-center justify-between">
+            <CardTitle>{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px]">{isZh ? '导出CSV' : 'Export CSV'}</Button>
+          </div>
+          <div className="mt-3 overflow-auto">
+            <table className="w-full text-[12px]">
+              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th></tr></thead>
+              <tbody>
+                {salesList.map((r, i) => (
+                  <tr key={i} className="border-b border-[#0f3d2e]/5">
+                    <td className="py-2">{r.sale_date}</td>
+                    <td className="py-2 font-mono font-medium">{r.sale_number}</td>
+                    <td className="py-2"><Badge variant="active" className="text-[10px]">{r.payment_method}</Badge></td>
+                    <td className="py-2 text-[11px]">{r.payment_status}</td>
+                    <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || r.subtotal || 0))}</td>
+                    <td className="py-2 text-[#4f7a5c]">{r.customer_name || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Sales Books List for Shopify Sync - NEW */}
+      {salesBooksList.length > 0 && (
+        <Card className="mt-4">
+          <div className="flex items-center justify-between">
+            <CardTitle>{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('salesBooks')} className="rounded-[10px]">{isZh ? '导出CSV 手动改Shopify库存' : 'Export CSV for Shopify'}</Button>
+          </div>
+          <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
+          <div className="mt-3 overflow-auto">
+            <table className="w-full text-[11px]">
+              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th></tr></thead>
+              <tbody>
+                {salesBooksList.map((r, i) => (
+                  <tr key={i} className="border-b border-[#0f3d2e]/5">
+                    <td className="py-2">{r.sale_date}</td>
+                    <td className="py-2 font-mono text-[10px]">{r.sale_number}</td>
+                    <td className="py-2 font-mono">{r.sku}</td>
+                    <td className="py-2 max-w-[200px] truncate">{r.title}</td>
+                    <td className="py-2 text-center font-medium">{r.quantity}</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-[#faf6ee] text-[10px]">{r.shelf_position || '-'}</span></td>
+                    <td className="py-2 text-[#4f7a5c]">{r.customer_name || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
       {/* Valuation */}
-      <Card>
+      <Card className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>{tt('reports.valuationTitle')}</CardTitle>
           <div className="flex gap-2 text-[12px]">
@@ -121,8 +209,6 @@ export function ReportsClient({ valuation, lowStock }: { valuation: any[]; lowSt
           </div>
           <p className="mt-2 text-[11px] text-[#4f7a5c]">{tt('reports.lowStockHint')}</p>
         </Card>
-
-        
       </div>
     </AppShell>
   );

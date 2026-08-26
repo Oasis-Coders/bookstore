@@ -7,11 +7,12 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
 type SupplierOpt = { id: string; name_zh: string; code: string };
-type BookOpt = { id: string; title: string; sku: string };
+type BookOpt = { id: string; title: string; sku: string; title_en?: string; shelf_position?: string };
 
 export default function NewPOPage() {
   const router = useRouter();
@@ -40,8 +41,8 @@ export default function NewPOPage() {
     }
     (async () => {
       const [sRes, bRes] = await Promise.all([
-        supabase.from('suppliers').select('id, name_zh, code').eq('is_active', true).limit(20),
-        supabase.from('books').select('id, title, sku').eq('is_active', true).limit(20),
+        supabase.from('suppliers').select('id, name_zh, code').eq('is_active', true).limit(50),
+        supabase.from('books').select('id, title, sku, title_en, shelf_position').eq('is_active', true).limit(200),
       ]);
       setSuppliers((sRes.data as any) || []);
       setBooks((bRes.data as any) || []);
@@ -108,6 +109,10 @@ export default function NewPOPage() {
         </Link>
         <Card>
           <CardTitle>{isZh ? '新建采购单' : 'New Purchase Order'}</CardTitle>
+          <div className="mt-2 rounded-[10px] bg-[#faf6ee] p-3 text-[11px] text-[#4f7a5c]">
+            {isZh ? '💡 要采购新书？先去书库添加新书，再来填采购单。支持扫码枪扫ISBN快速添加。' : '💡 New book to purchase? Add it to Books first, then fill PO. Barcode scanner supported for ISBN.'}
+            <Link href="/books/new" className="ml-2 text-[#0f3d2e] underline font-medium">{isZh ? '去添加新书' : 'Add new book'}</Link>
+          </div>
           {error && <div className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
@@ -128,19 +133,8 @@ export default function NewPOPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <label className="text-[12px] font-semibold">{isZh ? '图书' : 'Book'}</label>
-                <select
-                  value={form.book_id}
-                  onChange={(e) => setForm((f) => ({ ...f, book_id: e.target.value }))}
-                  className="mt-1 flex h-11 w-full rounded-[20px] border border-[#0f3d2e]/15 bg-white px-4 text-[13px]"
-                >
-                  <option value="">{isZh ? '选择图书' : 'Select book'}</option>
-                  {books.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.title} ({b.sku})
-                    </option>
-                  ))}
-                </select>
+                <label className="text-[12px] font-semibold">{isZh ? '图书 (输入缩小范围)' : 'Book (type to filter)'}</label>
+                <BookAutocomplete books={books} value={form.book_id} onChange={(id) => setForm(f => ({...f, book_id: id}))} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku to filter...'} />
               </div>
               <div>
                 <label className="text-[12px] font-semibold">{isZh ? '数量' : 'Quantity'}</label>
