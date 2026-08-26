@@ -55,8 +55,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     try {
       const [y,m] = selectedMonth.split('-');
       const d = new Date(Number(y), Number(m)-1, 1);
-      const mon = d.toLocaleString(isZh ? 'zh-CN' : 'en-GB', { month: 'long', year: 'numeric' });
-      return mon;
+      return d.toLocaleString(isZh ? 'zh-CN' : 'en-GB', { month: 'long', year: 'numeric' });
     } catch { return selectedMonth; }
   })();
 
@@ -154,94 +153,109 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       title={tt('reports.title')}
       titleZh={tt('reports.title')}
       eyebrow={tt('reports.eyebrow')}
-      actions={<Button variant="ghost" onClick={() => exportCsv('valuation')}>{tt('reports.exportCsv')}</Button>}
+      actions={<Button variant="ghost" onClick={() => exportCsv('valuation')} className="rounded-[10px]">{tt('reports.exportCsv')}</Button>}
     >
-      {/* Monthly Financial Report - polished */}
-      <Card className="border-[#0f3d2e]/10 bg-white overflow-hidden">
-        {/* Header row: title left, controls right */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#0f3d2e]/[0.06]">
-          <CardTitle className="flex items-center gap-2 text-[15px]"><span className="h-1 w-5 rounded-full bg-[#0f3d2e]" />{isZh ? '每月财务报表' : 'Monthly Financial Report'}<span className="ml-2 text-[11px] font-normal text-[#4f7a5c] px-2 py-0.5 rounded-full bg-[#faf6ee]">{monthLabel}</span></CardTitle>
+      {/* Monthly Financial - Redesigned to match accounting sheet */}
+      <div className="rounded-[20px] border border-[#e9e2d4] bg-white shadow-[0_2px_20px_rgba(15,61,46,0.04)] overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-4 bg-[#fcfaf6] border-b border-[#efe8d9]">
+          <div className="flex items-center gap-3">
+            <span className="h-[6px] w-[22px] rounded-full bg-[#0f3d2e]" />
+            <h2 className="text-[15px] font-semibold tracking-tight text-[#0f3d2e]">{isZh ? '每月财务报表' : 'Monthly Financial Report'}</h2>
+            <span className="text-[11px] font-medium text-[#5a7a6a] bg-white border border-[#e9e2d4] px-2.5 py-1 rounded-full">{monthLabel}</span>
+          </div>
           <div className="flex items-center gap-2">
-            {/* wider month input so calendar icon not clipped */}
             <div className="relative">
-              <Input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-8 w-[185px] text-[12px] rounded-[10px] bg-[#faf6ee] border-[#0f3d2e]/10 pr-8" />
+              <input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-[36px] w-[168px] rounded-full bg-white border border-[#e9e2d4] px-3.5 pr-9 text-[12.5px] text-[#0f3d2e] focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/10" />
             </div>
-            <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-8 rounded-[10px] text-[11px] px-3">{isZh ? '导出' : 'Export'}</Button>
+            <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-[36px] rounded-full text-[12px] px-4 border border-[#e9e2d4] bg-white hover:bg-[#fcfaf6]">{isZh ? '导出' : 'Export'}</Button>
           </div>
         </div>
 
-        {/* Financial table - matches accounting sheet */}
-        <div className="mt-4 overflow-auto rounded-[12px] border border-[#0f3d2e]/10">
-          <table className="w-full text-[13px] border-collapse">
-            <thead>
-              <tr className="text-left bg-[#faf6ee]/70">
-                <th className="py-2.5 px-3 font-semibold w-[42%]">{monthShort}</th>
-                <th className="py-2.5 px-3 font-normal text-[#4f7a5c]"></th>
-                <th className="py-2.5 px-3 font-normal text-right text-[#4f7a5c]"></th>
-              </tr>
-            </thead>
-            <tbody className="[&>tr]:border-t [&>tr]:border-[#0f3d2e]/[0.06]">
-              <tr>
-                <td className="py-2.5 px-3 font-medium">{isZh ? '销售额 Sales' : 'Sales'}</td>
-                <td className="py-2.5 px-3"></td>
-                <td className="py-2.5 px-3 text-right font-semibold tabular-nums">{formatCurrency(financial.sales)}</td>
-              </tr>
-              <tr className="bg-[#faf6ee]/40">
-                <td className="py-2 px-3 font-medium text-[12px] text-[#4f7a5c]" colSpan={3}>{isZh ? '减：销售成本 Less cost of sales' : 'Less cost of sales'}</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '期初库存 opening stock' : 'opening stock'}</td>
-                <td className="py-2 px-3 text-right">
-                  <Input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-7 w-[130px] ml-auto text-right text-[12px] rounded-[8px]" />
-                </td>
-                <td className="py-2 px-3"></td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '加：本期进货 Add purchase' : 'Add purchase'}</td>
-                <td className="py-2 px-3 text-right tabular-nums text-[12px]">{formatCurrency(financial.purchases)}</td>
-                <td className="py-2 px-3"></td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 pl-6"></td>
-                <td className="py-2 px-3 text-right font-medium tabular-nums text-[12px] border-t border-[#0f3d2e]/15 pt-1">{formatCurrency(stockSubtotal)}</td>
-                <td className="py-2 px-3"></td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '减：期末库存 Less closing stock' : 'Less closing stock'}</td>
-                <td className="py-2 px-3 text-right">
-                  <Input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-7 w-[130px] ml-auto text-right text-[12px] rounded-[8px]" />
-                </td>
-                <td className="py-2 px-3 text-right tabular-nums font-medium text-[12px]">{formatCurrency(finalCogs)}</td>
-              </tr>
-              <tr className="bg-[#e8f5e9]/60">
-                <td className="py-2.5 px-3 font-semibold">{isZh ? '毛利 Gross profit' : 'Gross profit'}</td>
-                <td className="py-2.5 px-3"></td>
-                <td className="py-2.5 px-3 text-right font-bold tabular-nums bg-[#c8e6c9]/70 rounded-br-[10px]">{formatCurrency(grossProfit)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <div className="px-5 sm:px-6 py-5">
+          {/* Accounting grid */}
+          <div className="rounded-[14px] border border-[#ece5d6] overflow-hidden">
+            {/* Header */}
+            <div className="grid grid-cols-[1fr_150px_145px] bg-[#fdf8f0] border-b border-[#ece5d6] px-4 py-2.5">
+              <span className="text-[13px] font-semibold text-[#0f3d2e]">{monthShort}</span>
+              <span className="text-[11px] text-[#8a9a8e] text-right pr-2"></span>
+              <span className="text-[11px] text-[#8a9a8e] text-right"></span>
+            </div>
 
-        {/* Footer actions */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-[#4f7a5c] flex-1 min-w-[200px]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS 按批次成本精确计算` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing`}</span>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[10px] px-3" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存快照' : 'Save Snapshot')}</Button>
-            <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#0f3d2e] underline decoration-dashed underline-offset-2">{showHistory ? (isZh ? '收起历史' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
-            {snapshotMsg && <span className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{snapshotMsg}</span>}
-          </div>
-        </div>
-        <p className="mt-2 text-[10px] leading-snug text-[#4f7a5c]/80">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确。可手动校正期初/期末后保存快照' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations. Edit opening/closing then save snapshot'}</p>
+            {/* Sales */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-3 border-b border-[#f0ebe0] items-center hover:bg-[#fcfaf6]/50 transition">
+              <span className="text-[13px] font-medium text-[#0f3d2e]">{isZh ? '销售额' : 'Sales'} <span className="font-normal text-[#6b8a7a] ml-1">Sales</span></span>
+              <span className="text-right"></span>
+              <span className="text-right text-[13.5px] font-semibold tabular-nums text-[#0f3d2e]">{formatCurrency(financial.sales)}</span>
+            </div>
 
-        {showHistory && (
-          <div className="mt-3 rounded-[12px] border border-[#0f3d2e]/10 bg-[#faf6ee]/30 p-2.5 max-h-[180px] overflow-auto">
-            <p className="text-[11px] font-semibold mb-1.5">{isZh ? '历史快照' : 'Snapshot History'}</p>
-            {snapshotsHistory.length===0 ? <p className="text-[11px] text-[#4f7a5c] py-2">{isZh ? '暂无快照' : 'No snapshots yet — save current month to create one'}</p> : (
-              <table className="w-full text-[11px]"><thead><tr className="text-left text-[#4f7a5c] text-[10px]"><th className="pb-1.5 font-medium">Month</th><th className="font-medium">Opening</th><th className="font-medium">Closing</th><th className="font-medium">By</th></tr></thead><tbody className="[&>tr]:border-t [&>tr]:border-[#0f3d2e]/5">{snapshotsHistory.map((s:any,i:number)=><tr key={i}><td className="py-1.5 font-mono">{s.month_start?.slice(0,7)}</td><td className="tabular-nums">{s.opening_stock}</td><td className="tabular-nums">{s.closing_stock}</td><td className="text-[10px] text-[#4f7a5c]">{s.created_at?.slice(0,10)||''}</td></tr>)}</tbody></table>
-            )}
+            {/* Less cost header */}
+            <div className="grid grid-cols-1 bg-[#fcfaf6] px-4 py-2 border-b border-[#f0ebe0]">
+              <span className="text-[11.5px] font-medium text-[#6b8a7a] tracking-wide">{isZh ? '减：销售成本' : 'Less:'} <span className="font-normal">cost of sales</span></span>
+            </div>
+
+            {/* Opening */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#f6f1e8] items-center">
+              <span className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#8a9a8e]">opening stock</span></span>
+              <div className="flex justify-end">
+                <input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
+              </div>
+              <span className="text-right"></span>
+            </div>
+
+            {/* Add purchase */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#f6f1e8] items-center">
+              <span className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '加：本期进货' : 'Add:'} <span className="text-[#8a9a8e]">purchase</span></span>
+              <span className="text-right text-[12.5px] tabular-nums text-[#3d5a4e] pr-3">{formatCurrency(financial.purchases)}</span>
+              <span></span>
+            </div>
+
+            {/* Subtotal */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2 border-b border-[#f0ebe0] items-center bg-[#fdfcfa]">
+              <span></span>
+              <span className="text-right text-[12.5px] font-medium tabular-nums text-[#0f3d2e] pr-3 border-t border-[#0f3d2e]/20 pt-1 mt-1 inline-block">{formatCurrency(stockSubtotal)}</span>
+              <span></span>
+            </div>
+
+            {/* Closing */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#ece5d6] items-center">
+              <span className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#8a9a8e]">closing stock</span></span>
+              <div className="flex justify-end">
+                <input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
+              </div>
+              <span className="text-right text-[12.5px] font-medium tabular-nums text-[#0f3d2e]">{formatCurrency(finalCogs)}</span>
+            </div>
+
+            {/* Gross profit */}
+            <div className="grid grid-cols-[1fr_150px_145px] px-4 py-3 items-center bg-[#eef6ee]">
+              <span className="text-[13px] font-semibold text-[#0f3d2e]">{isZh ? '毛利' : 'Gross profit'} <span className="font-normal text-[#5a7a6a] ml-1">Gross profit</span></span>
+              <span></span>
+              <span className="text-right"><span className="inline-block rounded-full bg-[#c8e6c9] px-3.5 py-1 text-[13px] font-bold tabular-nums text-[#0f3d2e]">{formatCurrency(grossProfit)}</span></span>
+            </div>
           </div>
-        )}
-      </Card>
+
+          {/* Footer actions */}
+          <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-[#6b8a7a]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS 按批次成本` : `${monthlyFinancial?.order_count || 0} orders, COGS from batches`}</p>
+            <div className="flex items-center gap-2">
+              <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-[#0f3d2e] text-white text-[11.5px] px-4 font-medium hover:bg-[#163a2d] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
+              <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#5a7a6a] hover:text-[#0f3d2e] underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
+              {snapshotMsg && <span className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
+            </div>
+          </div>
+          <p className="mt-2 text-[10.5px] leading-relaxed text-[#8a9a8e]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本按批次更精确' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO, COGS from batch allocations'}</p>
+
+          {showHistory && (
+            <div className="mt-3 rounded-[12px] border border-[#ece5d6] bg-[#fdfcfa] p-3 max-h-[190px] overflow-auto">
+              <p className="text-[11px] font-semibold text-[#0f3d2e] mb-2">{isZh ? '历史快照' : 'Snapshot History'}</p>
+              {snapshotsHistory.length===0 ? <p className="text-[11px] text-[#8a9a8e] py-3 text-center">{isZh ? '暂无快照，保存当月后会显示在这里' : 'No snapshots yet'}</p> : (
+                <div className="space-y-1">
+                  {snapshotsHistory.map((s:any,i:number)=><div key={i} className="flex items-center justify-between text-[11px] py-1.5 px-2 rounded-[8px] hover:bg-white"><span className="font-mono text-[#5a7a6a]">{s.month_start?.slice(0,7)}</span><span className="tabular-nums">开 {Number(s.opening_stock).toFixed(2)}</span><span className="tabular-nums">末 {Number(s.closing_stock).toFixed(2)}</span><span className="text-[10px] text-[#9ab0a4]">{s.created_at?.slice(0,10)||''}</span></div>)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Date Range Filter */}
       <Card className="border-[#0f3d2e]/10 bg-gradient-to-br from-white to-[#faf6ee]/30">
