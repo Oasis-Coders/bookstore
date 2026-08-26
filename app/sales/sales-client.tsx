@@ -48,7 +48,10 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
   };
 
   const removeItem = (id: string) => setCart(cart.filter(c => c.id !== id));
-  const updateQty = (id: string, qty: number) => setCart(cart.map(c => c.id === id ? { ...c, qty: Math.max(1, qty) } : c));
+  const updateQty = (id: string, qty: number) => {
+    if (qty <= 0) { setCart(cart.filter(c => c.id !== id)); return; }
+    setCart(cart.map(c => c.id === id ? { ...c, qty } : c));
+  };
 
   const handleConfirm = async () => {
     if (cart.length === 0) return;
