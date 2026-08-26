@@ -142,8 +142,6 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
                   <option value="card">{isZh ? '刷卡 Card' : 'Card'}</option>
                   <option value="bank_transfer">{isZh ? '银行转账 Bank Transfer' : 'Bank Transfer'}</option>
                   <option value="shopify">{isZh ? '网付/Shopify' : 'Shopify/Online'}</option>
-                  <option value="mix">{isZh ? '混合 Mix' : 'Mix'}</option>
-                  <option value="deferral">{isZh ? '挂账 Deferral' : 'Deferral'}</option>
                 </select>
               </div>
               <div>
