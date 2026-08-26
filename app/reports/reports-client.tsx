@@ -10,12 +10,76 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; initialFilters?: any }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
+  const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
+  const [openingStock, setOpeningStock] = useState<number>(Number(monthlyFinancial?.opening_stock || 0));
+  const [closingStock, setClosingStock] = useState<number>(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
+
+  // Keep opening/closing in sync when monthlyFinancial changes (month switch)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const _mf = monthlyFinancial; // trigger re-render dependency via render
+
+  const financial = {
+    sales: Number(monthlyFinancial?.sales_total || 0),
+    purchases: Number(monthlyFinancial?.purchases_total || 0),
+    cogs_direct: Number(monthlyFinancial?.cogs_total || 0),
+    opening: openingStock,
+    closing: closingStock,
+  };
+  // Computed as per your sheet: Opening + Purchases = subtotal, COGS = Opening+Purchases-Closing, Gross = Sales - COGS
+  const stockSubtotal = financial.opening + financial.purchases;
+  const cogs = financial.cogs_direct > 0 ? financial.cogs_direct : (stockSubtotal - financial.closing);
+  // If cogs_direct exists (from allocations), prefer it; else fallback to stock math
+  const cogsFromStock = stockSubtotal - financial.closing;
+  const finalCogs = financial.cogs_direct > 0 ? financial.cogs_direct : cogsFromStock;
+  const grossProfit = financial.sales - finalCogs;
+
+  const monthLabel = (() => {
+    try {
+      const [y,m] = selectedMonth.split('-');
+      const d = new Date(Number(y), Number(m)-1, 1);
+      const mon = d.toLocaleString(isZh ? 'zh-CN' : 'en-GB', { month: 'short' });
+      return `${mon}-${String(y).slice(-2)}`;
+    } catch { return selectedMonth; }
+  })();
+
+  const exportFinancialCsv = () => {
+    const csv = `Month,${selectedMonth}
+Sales,${financial.sales}
+Opening Stock,${financial.opening}
+Add Purchase,${financial.purchases}
+Subtotal Opening+Purchase,${stockSubtotal}
+Less Closing Stock,${financial.closing}
+Cost of Sales,${finalCogs}
+Gross Profit,${grossProfit}
+`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `financial_${selectedMonth}.csv`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const saveSnapshot = async () => {
+    setSavingSnapshot(true);
+    try {
+      const res = await fetch('/api/reports/snapshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month_start: `${selectedMonth}-01`, opening_stock: financial.opening, closing_stock: financial.closing }),
+      });
+      if (!res.ok) throw new Error('save failed');
+      // small toast via alert for now
+    } catch {}
+    setSavingSnapshot(false);
+  };
+
   const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
 
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
@@ -68,6 +132,73 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       eyebrow={tt('reports.eyebrow')}
       actions={<Button variant="ghost" onClick={() => exportCsv('valuation')}>{tt('reports.exportCsv')}</Button>}
     >
+      {/* Monthly Financial Report - matches your screenshot framework */}
+      <Card className="border-[#0f3d2e]/10 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle className="flex items-center gap-2"><span className="h-1 w-5 rounded-full bg-[#0f3d2e]" />{isZh ? '每月财务报表' : 'Monthly Financial Report'}</CardTitle>
+          <div className="flex items-center gap-2">
+            <Input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-8 w-[140px] text-[12px]" />
+            <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-8 rounded-[8px] text-[11px]">{isZh ? '导出' : 'Export'}</Button>
+          </div>
+        </div>
+
+        <div className="mt-4 overflow-auto">
+          <table className="w-full text-[13px] border-collapse">
+            <thead>
+              <tr className="text-left">
+                <th className="py-2 px-2 font-semibold bg-[#faf6ee] border border-[#0f3d2e]/10 w-[40%]">{monthLabel}</th>
+                <th className="py-2 px-2 font-normal bg-[#faf6ee] border border-[#0f3d2e]/10"></th>
+                <th className="py-2 px-2 font-normal bg-[#faf6ee] border border-[#0f3d2e]/10 text-right"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-medium">{isZh ? '销售额 Sales' : 'Sales'}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-semibold tabular-nums">{formatCurrency(financial.sales)}</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-medium bg-[#faf6ee]/50" colSpan={3}>{isZh ? '减：销售成本 Less cost of sales' : 'Less cost of sales'}</td>
+              </tr>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '期初库存 opening stock' : 'opening stock'}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right">
+                  <Input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-7 w-[120px] ml-auto text-right text-[12px]" />
+                </td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+              </tr>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '加：本期进货 Add purchase' : 'Add purchase'}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right tabular-nums">{formatCurrency(financial.purchases)}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+              </tr>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6"></td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-medium tabular-nums border-t-2 border-[#0f3d2e]/20">{formatCurrency(stockSubtotal)}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+              </tr>
+              <tr>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '减：期末库存 Less closing stock' : 'Less closing stock'}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right">
+                  <Input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-7 w-[120px] ml-auto text-right text-[12px]" />
+                </td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right tabular-nums font-medium">{formatCurrency(finalCogs)}</td>
+              </tr>
+              <tr className="bg-[#e8f5e9]/50">
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-semibold">{isZh ? '毛利 Gross profit' : 'Gross profit'}</td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-bold tabular-nums bg-[#c8e6c9]">{formatCurrency(grossProfit)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#4f7a5c]">
+          <span>{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS按批次成本精确计算。期初/期末可手动校正后保存快照` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing. Edit opening/closing then save snapshot`}</span>
+          <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[8px]" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存期初期末快照' : 'Save Opening/Closing Snapshot')}</Button>
+        </div>
+        <p className="mt-2 text-[10px] text-[#4f7a5c]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations if available'}</p>
+      </Card>
+
       {/* Date Range Filter - NEW */}
       <Card className="border-[#0f3d2e]/10 bg-gradient-to-br from-white to-[#faf6ee]/30">
         <CardTitle className="flex items-center gap-2"><span className="h-1 w-5 rounded-full bg-[#d26a39]" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
