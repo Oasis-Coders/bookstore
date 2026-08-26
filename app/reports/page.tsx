@@ -145,14 +145,13 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     monthlyFinancial = {
       month_start: monthStart,
       month_end: monthEnd,
-      sales_total: 1427.13,
-      cogs_total: 890.01,
-      purchases_total: 398,
-      opening_stock: 53067,
-      closing_stock: 52575,
-      order_count: 12,
+      sales_total: 0,
+      cogs_total: 0,
+      purchases_total: 0,
+      opening_stock: currentInventoryValue || 0,
+      closing_stock: currentInventoryValue || 0,
+      order_count: 0,
     };
-    currentInventoryValue = 52575;
   }
 
   return <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />;
