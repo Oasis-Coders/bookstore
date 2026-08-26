@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useT } from '@/lib/i18n/use-t';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
@@ -12,7 +12,7 @@ type Tx = any;
 type Sale = any;
 type PO = any;
 
-export default function AuditHistoryPage() {
+function AuditHistoryInner() {
   const { isZh } = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -249,3 +249,14 @@ export default function AuditHistoryPage() {
     </AppShell>
   );
 }
+
+
+function AuditHistoryWrapper() {
+  return (
+    <Suspense fallback={<div className="p-6 text-[12px] text-[#6b8a7a]">Loading...</div>}>
+      <AuditHistoryInner />
+    </Suspense>
+  );
+}
+
+export default AuditHistoryWrapper;

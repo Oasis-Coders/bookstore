@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ReportsClient } from './reports-client';
 
@@ -129,5 +130,9 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   }
 
 
-  return <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />;
+  return (
+    <Suspense fallback={<div className="p-6 text-[12px] text-[#6b8a7a]">Loading...</div>}>
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />
+    </Suspense>
+  );
 }
