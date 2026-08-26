@@ -5,7 +5,7 @@ async function getDashboardData() {
   const supabase = await createSupabaseServerClient();
   if (!supabase) {
     return {
-      mode: 'demo' as const,
+      mode: 'live' as const,
       totalValue: 0,
       totalBooks: 0,
       lowStockCount: 0,
@@ -72,10 +72,10 @@ async function getDashboardData() {
     };
   } catch {
     return {
-      mode: 'demo' as const,
-      totalValue: 12458.5,
-      totalBooks: 156,
-      lowStockCount: 8,
+      mode: 'live' as const,
+      totalValue: 0,
+      totalBooks: 0,
+      lowStockCount: 0,
       recentPOs: [],
       dailySales: {
         sale_date: new Date().toISOString().slice(0,10),

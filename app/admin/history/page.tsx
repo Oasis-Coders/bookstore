@@ -79,37 +79,6 @@ export default function AuditHistoryPage() {
         }
       } catch {}
 
-      // Demo fallback
-      if (txs.length === 0 && sls.length === 0 && filter === 'all') {
-        txs = [
-          {
-            id: '1',
-            transaction_type: 'purchase_receipt',
-            quantity: 10,
-            unit_cost: 5.3,
-            occurred_at: new Date().toISOString(),
-            books: { title: isZh ? '活水得胜之路' : 'Victorious Path', sku: 'BOOK-001' },
-            profiles: { display_name: isZh ? '张牧师' : 'Pastor Zhang' },
-          },
-          {
-            id: '2',
-            transaction_type: 'sale',
-            quantity: -2,
-            occurred_at: new Date(Date.now() - 86400000).toISOString(),
-            books: { title: isZh ? '认识真理' : 'Knowing Truth', sku: 'BOOK-002' },
-            profiles: { display_name: isZh ? '李姐妹' : 'Sister Li' },
-          },
-        ];
-        sls = [
-          {
-            id: 's1',
-            external_reference: 'POS-001',
-            total_amount: 34.99,
-            sold_at: new Date().toISOString(),
-            profiles: { display_name: isZh ? '店员A' : 'Staff A' },
-          },
-        ];
-      }
 
       setTransactions(txs);
       setSales(sls);

@@ -27,7 +27,7 @@ type Book = {
   on_hand?: number;
 };
 
-export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode: 'demo' | 'live' }) {
+export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode: 'live' | 'empty' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [scanning, setScanning] = useState(false);
@@ -78,7 +78,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
           </form>
           <p className="text-[11px] text-[#4f7a5c]">
             {isZh ? '支持中英文、简繁体、SKU、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, SKU, shelf. USB barcode scanner supported - scans auto-submit.'}
-            {mode === 'demo' && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
+            {false && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
           </p>
         </div>
 

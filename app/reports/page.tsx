@@ -10,7 +10,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   let salesBooksList: any[] = [] as any[];
   let monthlyFinancial: any = null;
   let currentInventoryValue = 0;
-  let mode: 'demo' | 'live' = 'demo';
+  let mode: 'live' | 'empty' = 'empty';
 
   const targetMonth = month || new Date().toISOString().slice(0,7); // YYYY-MM
   const monthStart = `${targetMonth}-01`;
@@ -128,31 +128,6 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
     } catch {}
   }
 
-  if (mode === 'demo') {
-    valuation = [
-      { sku: 'BOOK-001', title: '活水得胜之路', location_name: '书店门店', quantity_on_hand: 8, inventory_value: 42.4, weighted_average_cost: 5.3, current_price: 12.5, retail_value: 100 },
-      { sku: 'BOOK-002', title: '认识真理', location_name: '仓库', quantity_on_hand: 15, inventory_value: 78, weighted_average_cost: 5.2, current_price: 9.99, retail_value: 149.85 },
-    ];
-    lowStock = [
-      { sku: 'BOOK-003', title: '恩典之旅', low_stock_threshold: 5, quantity_on_hand: 2, reorder_shortage: 3 },
-    ];
-    salesList = [
-      { sale_number: 'C100123', sale_date: '2026-08-26', payment_method: 'cash', payment_status: 'paid', subtotal: 45.5, discount_amount: 2, net_total: 43.5, customer_name: '张弟兄' },
-    ];
-    salesBooksList = [
-      { sale_date: '2026-08-26', sale_number: 'C100123', sku: 'BOOK-001', title: '活水得胜之路', quantity: 2, unit_price: 12.5, payment_method: 'cash', customer_name: '张弟兄' },
-    ];
-    monthlyFinancial = {
-      month_start: monthStart,
-      month_end: monthEnd,
-      sales_total: 0,
-      cogs_total: 0,
-      purchases_total: 0,
-      opening_stock: currentInventoryValue || 0,
-      closing_stock: currentInventoryValue || 0,
-      order_count: 0,
-    };
-  }
 
   return <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />;
 }

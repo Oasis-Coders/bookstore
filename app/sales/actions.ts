@@ -60,7 +60,7 @@ export async function createSale(formData: FormData) {
     revalidatePath('/reports');
     return data;
   } catch (e: any) {
-    // If RPC fails, try direct insert for demo/offline mode
+    // If RPC fails, try direct insert fallback
     try {
       const { data: userRes } = await supabase.auth.getUser();
       const salePayload: any = {

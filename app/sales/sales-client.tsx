@@ -74,9 +74,7 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
       setCustomerName('');
       setNotes('');
     } catch (e: any) {
-      if (e.message?.includes('Supabase') || e.message?.includes('not configured')) {
-        setMsg(isZh ? '演示模式：销售已模拟完成' : 'Demo mode: sale simulated');
-        setCart([]);
+      if (false) {
       } else {
         setMsg(e.message || (isZh ? '销售失败' : 'Sale failed'));
       }

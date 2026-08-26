@@ -19,7 +19,7 @@ type DailySales = {
 } | null;
 
 type DashboardData = {
-  mode: 'demo' | 'live';
+  mode: 'live' | 'empty';
   totalValue: number;
   totalBooks: number;
   lowStockCount: number;
@@ -121,7 +121,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             <Link href="/purchase-orders"><Button variant="ghost" size="sm" className="rounded-[10px]">{tt('common.viewAll')}</Button></Link>
           </div>
           <div className="mt-5">
-            {data.mode === 'demo' ? (
+            {false ? (
               <div className="rounded-[16px] bg-gradient-to-br from-[#faf6ee] to-[#f4efe4] p-8 text-center border border-[#0f3d2e]/5">
                 <div className="w-12 h-12 mx-auto rounded-[12px] bg-white shadow-sm flex items-center justify-center mb-3">
                   <span className="h-3 w-3 rounded-full bg-[#0f3d2e]/20" />
