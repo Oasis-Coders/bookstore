@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useT } from '@/lib/i18n/use-t';
 import { AppShell } from '@/components/layout/app-shell';
@@ -17,6 +17,11 @@ export default function NewBookPage() {
   const router = useRouter();
   const [error, setError] = useState<string>('');
   const [saving, setSaving] = useState(false);
+  const [isbnLookup, setIsbnLookup] = useState('');
+  const [scanning, setScanning] = useState(false);
+  const skuRef = useRef<HTMLInputElement>(null);
+  const isbnRef = useRef<HTMLInputElement>(null);
+  const titleRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,6 +38,44 @@ export default function NewBookPage() {
     }
   };
 
+  const handleBarcodeScan = (value: string) => {
+    // Barcode scanner outputs ISBN or SKU
+    const cleaned = value.trim().replace(/[^0-9Xx\-]/g, '').replace(/-/g, '');
+    if (cleaned.length >= 10) {
+      // Looks like ISBN
+      if (isbnRef.current) isbnRef.current.value = cleaned;
+      if (skuRef.current && !skuRef.current.value) {
+        skuRef.current.value = `BOOK-${cleaned.slice(-6)}`;
+      }
+      // Try to lookup book info from Open Library
+      lookupISBN(cleaned);
+    } else {
+      // Treat as SKU
+      if (skuRef.current) skuRef.current.value = value.toUpperCase();
+    }
+  };
+
+  const lookupISBN = async (isbn: string) => {
+    try {
+      const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`);
+      const data = await res.json();
+      const book = data[`ISBN:${isbn}`];
+      if (book && titleRef.current) {
+        if (!titleRef.current.value) {
+          titleRef.current.value = book.title || '';
+        }
+      }
+    } catch {}
+  };
+
+  const handleScanInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const val = (e.target as HTMLInputElement).value;
+      if (val) handleBarcodeScan(val);
+    }
+  };
+
   return (
     <AppShell title="New Book" titleZh="添加图书" eyebrow="活水书房">
       <div className="mx-auto max-w-[640px]">
@@ -44,7 +87,25 @@ export default function NewBookPage() {
 
         <Card>
           <CardTitle>{isZh ? '添加新书' : 'Add Book'}</CardTitle>
-          <p className="mt-2 text-[13px] text-[#0f3d2e]/70">
+          <div className="mt-3 rounded-[12px] border border-dashed border-[#0f3d2e]/20 bg-[#faf6ee]/50 p-3">
+            <p className="text-[12px] font-semibold text-[#0f3d2e]">📷 {isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
+            <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '扫ISBN条码自动填入ISBN和SKU，尝试联网获取书名。USB扫码枪即插即用。' : 'Scan ISBN barcode to auto-fill ISBN and SKU, tries to fetch title online. USB scanner plug-and-play.'}</p>
+            <div className="mt-2 flex gap-2">
+              <Input 
+                value={isbnLookup}
+                onChange={e => setIsbnLookup(e.target.value)}
+                onKeyDown={handleScanInput}
+                placeholder={isZh ? '扫码或输入ISBN/条码后回车...' : 'Scan or type ISBN/barcode then Enter...'} 
+                className="flex-1 h-9 text-[12px]"
+              />
+              <Button type="button" size="sm" variant="secondary" className="h-9" onClick={() => { if (isbnLookup) handleBarcodeScan(isbnLookup); setScanning(true); setTimeout(()=>setScanning(false), 2000); }}>
+                {scanning ? (isZh ? '已扫' : 'Scanned') : (isZh ? '扫码' : 'Scan')}
+              </Button>
+            </div>
+            <p className="mt-1.5 text-[10px] text-[#4f7a5c]">{isZh ? '运作：扫码枪 = 键盘，扫出数字字符串如 9781234567890，系统收到后填入ISBN，自动生成 BOOK-xxxx SKU' : 'How: scanner = keyboard, outputs string like 9781234567890, system fills ISBN, auto-generates BOOK-xxxx SKU'}</p>
+          </div>
+
+          <p className="mt-3 text-[13px] text-[#0f3d2e]/70">
             {isZh ? '支持中文书名，代号/SKU 必须唯一' : 'Supports Chinese titles, SKU must be unique'}
           </p>
 
@@ -57,8 +118,8 @@ export default function NewBookPage() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 / SKU *' : 'Code / SKU *'}</label>
-                <Input name="sku" placeholder={isZh ? '如 BOOK-001' : 'e.g. BOOK-001'} required className="mt-1" />
+                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 / SKU * (扫码自动生成)' : 'Code / SKU * (auto from scan)'}</label>
+                <Input ref={skuRef} name="sku" placeholder={isZh ? '如 BOOK-001 或扫码生成' : 'e.g. BOOK-001 or auto from scan'} required className="mt-1" />
               </div>
               <div>
                 <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '分类' : 'Category'}</label>
@@ -68,12 +129,11 @@ export default function NewBookPage() {
             <div>
               <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '书架位置' : 'Shelf Position'}</label>
               <Input name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
-              <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '书在书架上的实际位置，方便找书' : 'Physical location on shelf for easy finding'}</p>
             </div>
 
-                        <div>
+            <div>
               <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
-              <Input name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
+              <Input ref={titleRef} name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
             </div>
             <div>
               <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
@@ -113,16 +173,18 @@ export default function NewBookPage() {
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">ISBN-13</label>
-              <Input name="isbn13" placeholder={isZh ? '可选' : 'Optional'} className="mt-1" />
+              <label className="block text-[12px] font-semibold text-[#0f3d2e]">ISBN-13 {isZh ? '(扫码自动填)' : '(auto from scan)'}</label>
+              <Input ref={isbnRef} name="isbn13" placeholder={isZh ? '扫ISBN条码自动填' : 'Auto from ISBN scan'} className="mt-1" />
             </div>
 
             <div className="flex gap-2 pt-2">
               <Link href="/books" className="flex-1">
-                <Button variant="ghost" className="w-full" type="button">{isZh ? '取消' : 'Cancel'}</Button>
+                <Button variant="ghost" className="w-full" type="button">
+                  {isZh ? '取消' : 'Cancel'}
+                </Button>
               </Link>
               <Button type="submit" className="flex-1" disabled={saving}>
-                {saving ? (isZh ? '创建中…' : 'Creating…') : isZh ? '创建图书' : 'Create Book'}
+                {saving ? (isZh ? '创建中...' : 'Creating...') : isZh ? '创建' : 'Create'}
               </Button>
             </div>
           </form>
