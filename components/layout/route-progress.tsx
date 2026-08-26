@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export function RouteProgress() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -21,14 +20,12 @@ export function RouteProgress() {
 
   const start = useCallback(() => {
     clearTimers();
-    // Don't flash for instant navigations - delay show by 80ms
     showTimerRef.current = setTimeout(() => {
       setVisible(true);
       setProgress(15);
       intervalRef.current = setInterval(() => {
         setProgress((p) => {
           if (p >= 88) return p;
-          // Slow down as it approaches 90%
           const inc = p < 40 ? 12 : p < 70 ? 6 : 2;
           return Math.min(88, p + inc + Math.random() * 3);
         });
@@ -38,12 +35,10 @@ export function RouteProgress() {
 
   const complete = useCallback(() => {
     clearTimers();
-    // If never became visible (fast nav), don't show at all
     if (!visible && !showTimerRef.current) {
       setProgress(0);
       return;
     }
-    // Cancel pending show
     if (showTimerRef.current) {
       clearTimeout(showTimerRef.current);
       showTimerRef.current = null;
@@ -59,32 +54,44 @@ export function RouteProgress() {
     }, 220);
   }, [clearTimers, visible]);
 
-  // Complete when route (pathname + search) actually changes
+  // Complete when route changes (pathname or query)
   useEffect(() => {
-    const current = `${pathname}?${searchParams.toString()}`;
+    const current = typeof window !== 'undefined' ? window.location.pathname + window.location.search : pathname;
     if (prevUrlRef.current && prevUrlRef.current !== current) {
       complete();
     }
     prevUrlRef.current = current;
-  }, [pathname, searchParams, complete]);
+  }, [pathname, complete]);
 
-  // Start on internal link clicks
+  // Also watch for URL changes via interval (catches searchParams changes)
+  useEffect(() => {
+    const check = () => {
+      const current = window.location.pathname + window.location.search;
+      if (prevUrlRef.current && prevUrlRef.current !== current) {
+        complete();
+        prevUrlRef.current = current;
+      }
+    };
+    const id = setInterval(check, 100);
+    return () => clearInterval(id);
+  }, [complete]);
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest('a');
       if (!anchor) return;
       const href = anchor.getAttribute('href');
       if (!href || href.startsWith('http') || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
-      // Ignore same URL
-      const url = new URL(href, window.location.origin);
-      if (url.pathname === pathname && url.search === `?${searchParams.toString()}`) return;
+      try {
+        const url = new URL(href, window.location.origin);
+        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+      } catch {}
       start();
     };
     const handleSubmit = () => start();
 
     document.addEventListener('click', handleClick);
     document.addEventListener('submit', handleSubmit);
-    // Also handle browser back/forward which doesn't trigger click
     window.addEventListener('popstate', start);
 
     return () => {
@@ -92,9 +99,8 @@ export function RouteProgress() {
       document.removeEventListener('submit', handleSubmit);
       window.removeEventListener('popstate', start);
     };
-  }, [pathname, searchParams, start]);
+  }, [start]);
 
-  // Safety: auto-complete after 4s max to avoid stuck bar
   useEffect(() => {
     if (!visible) return;
     const t = setTimeout(() => complete(), 4000);
