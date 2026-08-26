@@ -38,10 +38,10 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
       actions={<Link href="/purchase-orders/new"><Button>{tt('purchaseOrders.newPO')}</Button></Link>}
     >
       <Card>
-        <div className="flex flex-wrap gap-2 text-[12px] text-[#4f7a5c]">
+        <div className="flex flex-wrap gap-2 text-[12px] text-[#4f7a5c] items-center">
           <span>{tt('purchaseOrders.statusFlow')}</span>
-          <Badge>{tt('purchaseOrders.draft')} draft</Badge>→<Badge variant="warning">{tt('purchaseOrders.approved')} approved</Badge>→<Badge variant="warning">{tt('purchaseOrders.ordered')} ordered</Badge>→
-          <Badge variant="active">{tt('purchaseOrders.partial')}</Badge>→<Badge variant="active">{tt('purchaseOrders.received')} received</Badge>
+          <Badge>{tt('purchaseOrders.draft')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.approved')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.ordered')}</Badge><span className="text-[10px]">→</span>
+          <Badge variant="active">{tt('purchaseOrders.partial')}</Badge><span className="text-[10px]">→</span><Badge variant="active">{tt('purchaseOrders.received')}</Badge>
         </div>
       </Card>
 
@@ -72,14 +72,15 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
         <Card>
           <CardTitle>{tt('purchaseOrders.differentCostTitle')}</CardTitle>
           <p className="mt-2 text-[13px] leading-relaxed text-[#0f3d2e]/80">{tt('purchaseOrders.differentCostDesc')}</p>
-          <pre className="mt-3 overflow-auto rounded-[12px] bg-[#faf6ee] p-3 text-[11px]">
-            {`-- Receive\nselect apply_purchase_receipt(\n  '<PO_UUID>', '<STORE_UUID>',\n  '[{"purchase_order_line_id":"<line>","quantity":10}]'\n);\n\n-- Same book second purchase, different unit_cost, auto new batch`}
-          </pre>
+          <div className="mt-3 rounded-[12px] bg-[#faf6ee] p-3 text-[11px] text-[#4f7a5c]">
+            <p className="font-semibold text-[#0f3d2e]">{isZh ? '如何处理不同进价：' : 'How different costs are handled:'}</p>
+            <p className="mt-1">{isZh ? '同一本书第二次进货若进价不同，系统会自动创建新批次，按新进价记成本，销售时按最早进货先出。' : 'If same book purchased again at different cost, system creates new batch with new cost, sells earliest batch first.'}</p>
+          </div>
         </Card>
         <Card>
           <CardTitle>{tt('purchaseOrders.receiveTitle')}</CardTitle>
           <p className="mt-2 text-[13px] text-[#4f7a5c]">{tt('purchaseOrders.receiveDesc')}</p>
-          <ul className="mt-2 list-disc pl-4 text-[12px] text-[#0f3d2e]/80">
+          <ul className="mt-2 list-disc pl-4 text-[12px] text-[#0f3d2e]/80 space-y-1">
             <li>{tt('purchaseOrders.receive1')}</li>
             <li>{tt('purchaseOrders.receive2')}</li>
             <li>{tt('purchaseOrders.receive3')}</li>

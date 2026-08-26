@@ -53,7 +53,7 @@ export function AuthClient({
           <div>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-[12px] bg-white/10 flex items-center justify-center backdrop-blur">
-                <span className="text-[20px]">📚</span>
+                <span className="h-6 w-6 rounded-full bg-white/20 block" />
               </div>
               <span className="font-serif text-[20px] text-white tracking-tight">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
             </div>
@@ -94,7 +94,7 @@ export function AuthClient({
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
             <div className="w-9 h-9 rounded-[12px] bg-[#0f3d2e] flex items-center justify-center">
-              <span className="text-[16px]">📚</span>
+              <span className="h-5 w-5 rounded-full bg-[#0f3d2e]/20 block" />
             </div>
             <span className="font-serif text-[18px] text-[#0f3d2e]">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
           </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,14 +17,25 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const searchParams = useSearchParams();
 
   const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
+  const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
   const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
   const [openingStock, setOpeningStock] = useState<number>(Number(monthlyFinancial?.opening_stock || 0));
   const [closingStock, setClosingStock] = useState<number>(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
   const [savingSnapshot, setSavingSnapshot] = useState(false);
 
-  // Keep opening/closing in sync when monthlyFinancial changes (month switch)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const _mf = monthlyFinancial; // trigger re-render dependency via render
+  useEffect(() => {
+    if (monthlyFinancial) {
+      if (monthlyFinancial.opening_stock != null) setOpeningStock(Number(monthlyFinancial.opening_stock));
+      if (monthlyFinancial.closing_stock != null) setClosingStock(Number(monthlyFinancial.closing_stock));
+      else if (currentInventoryValue) setClosingStock(Number(currentInventoryValue));
+    }
+  }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock]);
+  const [snapshotMsg, setSnapshotMsg] = useState('');
+
+  useEffect(() => {
+    setOpeningStock(Number(monthlyFinancial?.opening_stock || 0));
+    setClosingStock(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
+  }, [monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, monthlyFinancial?.month_start, currentInventoryValue]);
 
   const financial = {
     sales: Number(monthlyFinancial?.sales_total || 0),
@@ -68,6 +79,7 @@ Gross Profit,${grossProfit}
 
   const saveSnapshot = async () => {
     setSavingSnapshot(true);
+    setSnapshotMsg('');
     try {
       const res = await fetch('/api/reports/snapshot', {
         method: 'POST',
@@ -75,12 +87,13 @@ Gross Profit,${grossProfit}
         body: JSON.stringify({ month_start: `${selectedMonth}-01`, opening_stock: financial.opening, closing_stock: financial.closing }),
       });
       if (!res.ok) throw new Error('save failed');
-      // small toast via alert for now
-    } catch {}
+      setSnapshotMsg(isZh ? '已保存快照' : 'Snapshot saved');
+      setTimeout(() => setSnapshotMsg(''), 3000);
+    } catch {
+      setSnapshotMsg(isZh ? '保存失败' : 'Save failed');
+    }
     setSavingSnapshot(false);
   };
-
-  const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
 
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
@@ -122,6 +135,7 @@ Gross Profit,${grossProfit}
     const params = new URLSearchParams(searchParams.toString());
     params.set('from', fromDate);
     params.set('to', toDate);
+    if (selectedMonth) params.set('month', selectedMonth);
     router.push(`/reports?${params.toString()}`);
   };
 
@@ -195,6 +209,7 @@ Gross Profit,${grossProfit}
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#4f7a5c]">
           <span>{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS按批次成本精确计算。期初/期末可手动校正后保存快照` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing. Edit opening/closing then save snapshot`}</span>
           <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[8px]" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存期初期末快照' : 'Save Opening/Closing Snapshot')}</Button>
+          {snapshotMsg && <span className={`text-[11px] px-2 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{snapshotMsg}</span>}
         </div>
         <p className="mt-2 text-[10px] text-[#4f7a5c]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations if available'}</p>
       </Card>

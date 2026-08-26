@@ -15,9 +15,9 @@ const iconOptions = [
   { value: 'A', label: 'A' },
   { value: 'B', label: 'B' },
   { value: 'C', label: 'C' },
-  { value: '★', label: '★' },
-  { value: '✦', label: '✦' },
-  { value: '●', label: '●' },
+  { value: 'S', label: 'S' },
+  { value: 'D', label: 'D' },
+  { value: 'O', label: 'O' },
 ];
 
 const colorOptions = [

@@ -15,8 +15,6 @@ type DailySales = {
   card_total: number;
   bank_transfer_total: number;
   shopify_total: number;
-  mix_total: number;
-  deferral_total: number;
   grand_total: number;
 } | null;
 
@@ -34,44 +32,49 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
 
+  const salesItems = data.dailySales ? [
+    { key: 'cash', label: isZh ? '现金' : 'Cash', labelEn: 'Cash', value: data.dailySales.cash_total, dot: 'bg-emerald-500' },
+    { key: 'card', label: isZh ? '刷卡' : 'Card', labelEn: 'Card', value: data.dailySales.card_total, dot: 'bg-blue-500' },
+    { key: 'bank', label: isZh ? '转账' : 'Bank Transfer', labelEn: 'Bank', value: data.dailySales.bank_transfer_total, dot: 'bg-amber-500' },
+    { key: 'shopify', label: 'Shopify', labelEn: 'Shopify', value: data.dailySales.shopify_total, dot: 'bg-[#96bf48]' },
+  ] : [];
+
   return (
     <AppShell title={tt('nav.dashboard')} titleZh={tt('nav.dashboard')} eyebrow={tt('dashboard.eyebrow')}>
-      {/* Daily Sales Bar - NEW */}
+      {/* Daily Sales - redesigned for 4 items */}
       {data.dailySales && (
-        <Card className="mb-4 bg-gradient-to-br from-[#0f3d2e] to-[#1a5c46] text-white border-0 shadow-[0_8px_32px_rgba(15,61,46,0.25)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <Card className="mb-5 border-0 bg-white shadow-[0_4px_24px_rgba(15,61,46,0.08)] overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-[12px] bg-white/15 backdrop-blur flex items-center justify-center">
-                <span className="text-[16px]">💰</span>
+              <div className="h-9 w-9 rounded-[10px] bg-[#0f3d2e] flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-white"><path d="M8 1.5c-1.5 0-2.5 1-2.5 2.5S6.5 6.5 8 6.5s2.5-1 2.5-2.5S9.5 1.5 8 1.5Zm0 8c-2.2 0-4.5 1.1-4.5 2.5v1h9v-1c0-1.4-2.3-2.5-4.5-2.5Z" fill="currentColor" opacity="0.9"/></svg>
               </div>
               <div>
-                <p className="text-[12px] font-semibold uppercase tracking-wider text-white/60">
-                  {isZh ? `今日销售 · ${data.dailySales.sale_date}` : `Today's Sales · ${data.dailySales.sale_date}`}
-                </p>
-                <p className="text-[20px] font-serif font-bold tracking-tight">
-                  {data.dailySales.total_orders} {isZh ? '单' : 'orders'} · {formatCurrency(data.dailySales.grand_total)}
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f7a5c]">{isZh ? `今日销售 · ${data.dailySales.sale_date}` : `Today · ${data.dailySales.sale_date}`}</p>
+                <p className="text-[13px] font-medium text-[#0f3d2e]">{data.dailySales.total_orders} {isZh ? '笔订单' : 'orders'}</p>
               </div>
             </div>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5 text-[11px]">
-              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
-                <p className="text-white/50 text-[10px] uppercase">{isZh ? '现金' : 'Cash'}</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.cash_total)}</p>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <p className="text-[11px] text-[#4f7a5c]">{isZh ? '今日合计' : 'Grand Total'}</p>
+                <p className="text-[20px] font-serif font-bold text-[#0f3d2e] tracking-tight">{formatCurrency(data.dailySales.grand_total)}</p>
               </div>
-              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
-                <p className="text-white/50 text-[10px] uppercase">{isZh ? '刷卡' : 'Card'}</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.card_total)}</p>
-              </div>
-              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
-                <p className="text-white/50 text-[10px] uppercase">{isZh ? '转账' : 'Bank'}</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.bank_transfer_total)}</p>
-              </div>
-              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
-                <p className="text-white/50 text-[10px] uppercase">Shopify</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.shopify_total)}</p>
-              </div>
-
+              <Link href="/sales"><Button size="sm" variant="ghost" className="h-8 rounded-[10px] text-[11px]">{isZh ? '查看' : 'View'}</Button></Link>
             </div>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {salesItems.map(item => (
+              <div key={item.key} className="rounded-[14px] bg-[#faf6ee]/80 border border-[#0f3d2e]/[0.06] px-3.5 py-3 hover:bg-white hover:border-[#0f3d2e]/10 hover:shadow-sm transition-all">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className={`h-1.5 w-1.5 rounded-full ${item.dot}`} />
+                  <p className="text-[11px] font-semibold text-[#4f7a5c] uppercase tracking-wide">{item.label}</p>
+                </div>
+                <p className="text-[14px] font-semibold text-[#0f3d2e] tabular-nums">{formatCurrency(item.value)}</p>
+                <div className="mt-1.5 h-1 w-full rounded-full bg-[#0f3d2e]/5 overflow-hidden">
+                  <div className={`h-full rounded-full ${item.dot} transition-all`} style={{ width: `${Math.min(100, (item.value / Math.max(1, data.dailySales!.grand_total)) * 100)}%` }} />
+                </div>
+              </div>
+            ))}
           </div>
         </Card>
       )}
@@ -121,7 +124,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             {data.mode === 'demo' ? (
               <div className="rounded-[16px] bg-gradient-to-br from-[#faf6ee] to-[#f4efe4] p-8 text-center border border-[#0f3d2e]/5">
                 <div className="w-12 h-12 mx-auto rounded-[12px] bg-white shadow-sm flex items-center justify-center mb-3">
-                  <span className="text-[20px]">📦</span>
+                  <span className="h-3 w-3 rounded-full bg-[#0f3d2e]/20" />
                 </div>
                 <p className="text-[14px] font-medium text-[#0f3d2e]">{tt('dashboard.demoMode')}</p>
                 <p className="mt-1.5 text-[12px] text-[#4f7a5c]">{tt('dashboard.demoHint')}</p>
@@ -129,7 +132,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             ) : data.recentPOs.length === 0 ? (
               <div className="py-12 text-center">
                 <div className="w-10 h-10 mx-auto rounded-full bg-[#0f3d2e]/5 flex items-center justify-center mb-3">
-                  <span className="text-[16px] opacity-50">📋</span>
+                  <span className="h-2 w-2 rounded-full bg-[#0f3d2e]/30" />
                 </div>
                 <p className="text-[13px] text-[#4f7a5c]">{tt('dashboard.noPOs')}</p>
               </div>

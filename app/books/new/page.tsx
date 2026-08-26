@@ -88,7 +88,7 @@ export default function NewBookPage() {
         <Card>
           <CardTitle>{isZh ? '添加新书' : 'Add Book'}</CardTitle>
           <div className="mt-3 rounded-[12px] border border-dashed border-[#0f3d2e]/20 bg-[#faf6ee]/50 p-3">
-            <p className="text-[12px] font-semibold text-[#0f3d2e]">📷 {isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
+            <p className="text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
             <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '扫ISBN条码自动填入ISBN和SKU，尝试联网获取书名。USB扫码枪即插即用。' : 'Scan ISBN barcode to auto-fill ISBN and SKU, tries to fetch title online. USB scanner plug-and-play.'}</p>
             <div className="mt-2 flex gap-2">
               <Input 

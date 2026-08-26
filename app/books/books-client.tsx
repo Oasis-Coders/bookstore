@@ -33,17 +33,14 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
   const [scanning, setScanning] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Barcode scanner support: scanners typically send keystrokes ending with Enter
   const handleScanKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      // Let form submit naturally - barcode scanners send Enter after code
-      // No need to prevent
+      // barcode scanners send Enter after code - let form submit
     }
   };
 
   const handleStartScan = () => {
     setScanning(true);
-    // For USB barcode scanners, they act as keyboard - just focus input
     searchInputRef.current?.focus();
     setTimeout(() => setScanning(false), 3000);
   };
@@ -52,7 +49,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
     <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
       <div className="flex gap-2">
         <Link href="/books/import">
-          <Button variant="ghost" size="sm" className="rounded-[12px]">📥 {isZh ? '批量导入' : 'Import'}</Button>
+          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '批量导入' : 'Import'}</Button>
         </Link>
         <Link href="/books/new">
           <Button variant="secondary" className="rounded-[12px] shadow-[0_2px_8px_rgba(15,61,46,0.15)] hover:shadow-[0_4px_12px_rgba(15,61,46,0.25)] transition-all hover:scale-[1.02]">+ {tt('books.addBook')}</Button>
@@ -71,16 +68,16 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 className="pr-10 rounded-[12px] h-10 border-[#0f3d2e]/10 focus:border-[#0f3d2e]/20 bg-white shadow-sm" 
                 onKeyDown={handleScanKeyDown}
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4f7a5c]/40 text-[14px]">⌕</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4f7a5c]/40 text-[12px]"></span>
             </div>
             <Button type="submit" variant="ghost" className="rounded-[12px] h-10">{tt('books.search')}</Button>
             {q && <Link href="/books"><Button variant="ghost" type="button" className="rounded-[12px] h-10">{tt('books.clear')}</Button></Link>}
             <Button type="button" variant="ghost" size="sm" onClick={handleStartScan} className={`rounded-[10px] h-9 ${scanning ? 'bg-[#0f3d2e] text-white' : ''}`} title={isZh ? '外接扫码枪直接扫，支持USB扫码器' : 'Supports USB barcode scanner'}>
-              {scanning ? (isZh ? '等待扫码...' : 'Scanning...') : `📷 ${isZh ? '扫码' : 'Scan'}`}
+              {scanning ? (isZh ? '等待扫码...' : 'Scanning...') : `${isZh ? '扫码' : 'Scan'}`}
             </Button>
           </form>
           <p className="text-[11px] text-[#4f7a5c]">
-            {isZh ? '💡 支持中英文、简繁体、SKU、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : '💡 Bilingual search incl. EN/ZH, simplified/traditional, SKU, shelf. USB barcode scanner supported - scans auto-submit.'}
+            {isZh ? '支持中英文、简繁体、SKU、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, SKU, shelf. USB barcode scanner supported - scans auto-submit.'}
             {mode === 'demo' && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
           </p>
         </div>
@@ -126,7 +123,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
         {books.length === 0 && (
           <Card className="py-16 text-center bg-gradient-to-br from-white to-[#faf6ee]/50 border-dashed">
             <div className="w-14 h-14 mx-auto rounded-[16px] bg-[#faf6ee] flex items-center justify-center mb-4">
-              <span className="text-[24px] opacity-40">📚</span>
+              <span className="h-3 w-3 rounded-full bg-[#0f3d2e]/20" />
             </div>
             <p className="text-[14px] font-medium text-[#0f3d2e]">{tt('books.notFound')}{q ? tt('books.notFoundQuery', { q }) : ''}</p>
             <Link href="/books/new" className="mt-4 inline-block"><Button size="sm" className="rounded-[10px]">{isZh ? '添加第一本' : 'Add first book'}</Button></Link>

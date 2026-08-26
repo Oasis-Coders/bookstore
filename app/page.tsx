@@ -24,14 +24,25 @@ async function getDashboardData() {
       (async () => {
         try {
           const { data } = await supabase.from('daily_sales_summary').select('*').single();
-          if (data) return data;
+          if (data) {
+            // normalize to 4-item shape
+            return {
+              sale_date: data.sale_date,
+              total_orders: data.total_orders,
+              cash_total: Number(data.cash_total || 0),
+              card_total: Number(data.card_total || 0),
+              bank_transfer_total: Number(data.bank_transfer_total || 0),
+              shopify_total: Number(data.shopify_total || 0),
+              grand_total: Number(data.grand_total || 0),
+            };
+          }
         } catch {}
         // Fallback: aggregate today's sales manually
         try {
           const today = new Date().toISOString().slice(0,10);
           const { data: sales } = await supabase.from('sales_transactions').select('subtotal, discount_amount, payment_method, sale_date').eq('sale_date', today).eq('status', 'completed');
           if (!sales) return null;
-          const agg: any = { sale_date: today, total_orders: sales.length, cash_total: 0, card_total: 0, bank_transfer_total: 0, shopify_total: 0, mix_total: 0, deferral_total: 0, grand_total: 0 };
+          const agg: any = { sale_date: today, total_orders: sales.length, cash_total: 0, card_total: 0, bank_transfer_total: 0, shopify_total: 0, grand_total: 0 };
           sales.forEach((s: any) => {
             const net = Number(s.subtotal || 0) - Number(s.discount_amount || 0);
             agg.grand_total += net;
@@ -39,9 +50,7 @@ async function getDashboardData() {
             else if (s.payment_method === 'card') agg.card_total += net;
             else if (s.payment_method === 'bank_transfer') agg.bank_transfer_total += net;
             else if (s.payment_method === 'shopify') agg.shopify_total += net;
-            else if (s.payment_method === 'mix') agg.mix_total += net;
-            else if (s.payment_method === 'deferral') agg.deferral_total += net;
-            else agg.cash_total += net; // default to cash if old data
+            else agg.cash_total += net;
           });
           return agg;
         } catch { return null; }
@@ -75,8 +84,6 @@ async function getDashboardData() {
         card_total: 89.2,
         bank_transfer_total: 45,
         shopify_total: 234.8,
-        mix_total: 0,
-        deferral_total: 0,
         grand_total: 525.5,
       },
     };
