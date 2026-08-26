@@ -1,31 +1,57 @@
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+'use client';
 
-export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) return <div>Supabase not configured</div>;
+import { useEffect, useState } from 'react';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
-  const { data: sale, error } = await supabase.from('sales_transactions').select('*').eq('id', id).single();
-  if (error || !sale) return notFound();
+export default function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
+  const [id, setId] = useState<string>('');
+  const [sale, setSale] = useState<any>(null);
+  const [lines, setLines] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const { data: lines } = await supabase.from('sales_transaction_lines').select('*, books(id, title, sku, category)').eq('sale_id', id);
+  useEffect(() => {
+    params.then(p => setId(p.id));
+  }, [params]);
 
-  const invoiceNo = sale.sale_number?.replace(/^C/, '') || sale.id.slice(0,6);
+  useEffect(() => {
+    if (!id) return;
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setError('Supabase not configured');
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      const { data: saleData, error: saleErr } = await supabase.from('sales_transactions').select('*').eq('id', id).single();
+      if (saleErr || !saleData) {
+        setError('Invoice not found');
+        setLoading(false);
+        return;
+      }
+      setSale(saleData);
+      const { data: lineData } = await supabase.from('sales_transaction_lines').select('*, books(id, title, sku, category)').eq('sale_id', id);
+      setLines(lineData || []);
+      setLoading(false);
+    })();
+  }, [id]);
+
+  if (loading) return <div className="p-10 text-[12px] text-[#6b8a7a]">Loading invoice...</div>;
+  if (error) return <div className="p-10 text-[12px] text-red-600">{error}</div>;
+  if (!sale) return <div className="p-10 text-[12px]">Not found</div>;
+
+  const invoiceNo = sale.sale_number?.replace(/^C/, '').replace(/^SAL-/, '') || sale.id.slice(0,6);
   const purchaseDate = sale.sale_date ? new Date(sale.sale_date).toLocaleDateString('en-GB') : new Date(sale.sold_at).toLocaleDateString('en-GB');
   const customerName = sale.customer_name || '';
   const paymentMethod = sale.payment_method || 'cash';
 
-  // Real-time calculation from DB
   let bookSubtotal = 0;
-  let grossTotal = 0;
   const enriched = (lines || []).map((l: any, idx: number) => {
     const qty = Number(l.quantity);
     const unit = Number(l.unit_price);
     const discPct = Number(l.discount_percent || 0);
     const discAmt = Number(l.discount_amount || 0);
     const gross = qty * unit;
-    grossTotal += gross;
     let discount = discAmt;
     if (discPct > 0 && discAmt === 0) discount = gross * discPct / 100;
     const net = gross - discount;
@@ -42,21 +68,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     };
   });
 
-  // If transaction-level discount exists and lines have no discount, apply globally
   const globalDisc = Number(sale.discount_amount || 0);
   if (globalDisc > 0 && enriched.length > 0 && enriched.every((e:any)=>e.discAmt===0)) {
-    // Distribute proportionally, for simplicity show as adjustment on subtotal
     const totalGross = enriched.reduce((s:number, e:any)=>s+e.qty*e.unit, 0);
     if (totalGross > 0) {
-      // Recalc bookSubtotal as gross - global discount
       bookSubtotal = Math.max(0, totalGross - globalDisc);
-      // Mark first line to show discount for transparency
       enriched[0].discAmt = globalDisc;
       if (totalGross > 0) enriched[0].discPct = Math.round((globalDisc/totalGross)*100);
       enriched[0].net = enriched[0].qty * enriched[0].unit - globalDisc;
-      // Other lines net unchanged, but bookSubtotal already correct
-      // Recompute accurately: keep other lines, first line net = its gross - global
-      // To keep sum consistent, adjust
     }
   }
 
@@ -78,17 +97,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mt-6 text-[12.5px]">
+        <div className="mt-6 grid grid-cols-2 gap-8 text-[12px]">
           <div>
-            <p className="text-[10.5px] text-[#6b8a7a] uppercase">Purchase Date</p>
-            <p className="mt-1 font-medium">{purchaseDate}</p>
-          </div>
-          <div>
-            <p className="text-[10.5px] text-[#6b8a7a] uppercase">Name</p>
-            <p className="mt-1 font-medium">{customerName || '-'}</p>
+            <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">Purchase Date</p>
+            <p className="mt-1">{purchaseDate}</p>
+            {customerName && <><p className="mt-3 text-[11px] text-[#6b8a7a] uppercase tracking-widest">Customer</p><p className="mt-1">{customerName}</p></>}
           </div>
           <div className="text-right">
-            <p className="text-[10.5px] text-[#6b8a7a] uppercase">Payment</p>
+            <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">Payment Method</p>
             <p className="mt-1 capitalize">{paymentMethod.replace('_',' ')}</p>
           </div>
         </div>
