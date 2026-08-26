@@ -188,10 +188,7 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
           <Card>
             <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#4f7a5c]">{isZh ? '按时间倒序' : 'Latest first'}</span></CardTitle>
             <div className="mt-3 space-y-2">
-              {(recentSales && recentSales.length > 0 ? recentSales : [
-                { id: 'demo1', sale_number: 'C100123', subtotal: 34.99, payment_method: 'cash', customer_name: '张弟兄', sold_at: '10:30' },
-                { id: 'demo2', sale_number: 'C100124', subtotal: 15.0, payment_method: 'card', customer_name: 'Shopify #1234', sold_at: '09:15' },
-              ] as any).map((s: any) => (
+              {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => (
                 <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 px-3 py-2 text-[12px]">
                   <div>
                     <p className="font-mono font-semibold">{s.sale_number}</p>
