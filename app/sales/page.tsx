@@ -9,13 +9,17 @@ export default async function SalesPage() {
   
   if (supabase) {
     try {
-      const bRes = await supabase.from('books').select('id, title, sku, current_price, shelf_position, title_en').eq('is_active', true).limit(200);
+      const bRes = await supabase.from('books').select('id, title, sku, current_price, shelf_position, title_en').eq('is_active', true).order('title').limit(200);
       books = bRes.data || [];
-    } catch {}
+    } catch (e) {
+      console.error('books fetch error', e);
+    }
     try {
       const lRes = await supabase.from('locations').select('id, name, code').eq('is_active', true).limit(10);
       locations = lRes.data || [];
-    } catch {}
+    } catch (e) {
+      console.error('locations fetch error', e);
+    }
     try {
       const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
       recentSales = (sRes.data || []).map((s: any) => ({
@@ -26,7 +30,9 @@ export default async function SalesPage() {
         customer_name: s.customer_name,
         sold_at: s.sale_date || new Date(s.sold_at).toLocaleString(),
       }));
-    } catch {}
+    } catch (e) {
+      console.error('sales fetch error', e);
+    }
   }
 
   return <SalesClient books={books} locations={locations} recentSales={recentSales} />;

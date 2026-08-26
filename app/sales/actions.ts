@@ -9,31 +9,38 @@ export async function createSale(formData: FormData) {
 
   const locationId = String(formData.get('location_id') || '');
   const itemsJson = String(formData.get('items_json') || '[]');
-  const items = JSON.parse(itemsJson);
+  let items: any[];
+  try {
+    items = JSON.parse(itemsJson);
+  } catch {
+    throw new Error('Invalid items format');
+  }
+  if (!items || items.length === 0) throw new Error('Cart is empty');
+  
   const saleDate = String(formData.get('sale_date') || new Date().toISOString().slice(0,10));
   const discount = Number(formData.get('discount') || 0);
   const paymentMethod = String(formData.get('payment_method') || 'cash');
+  const paymentStatus = String(formData.get('payment_status') || 'paid');
   const customerName = String(formData.get('customer_name') || '').trim() || null;
   const externalRef = String(formData.get('external_ref') || '');
   const notes = String(formData.get('notes') || '').trim() || null;
 
-  // Generate C-number if not provided (avoid confusion with old 6-digit)
+  if (!locationId) throw new Error('请选择销售库位');
+
+  // Generate C-number if not provided
   let saleNumber = externalRef;
   if (!saleNumber) {
     try {
       const { data: gen } = await supabase.rpc('generate_sale_number');
       saleNumber = gen || `C${Date.now().toString().slice(-6)}`;
     } catch {
-      // Fallback: C + 6 digits
       saleNumber = `C${Math.floor(100000 + Math.random() * 900000)}`;
     }
   }
-  // Ensure C prefix for new system
   if (!saleNumber.startsWith('C') && !saleNumber.startsWith('POS-')) {
     saleNumber = `C${saleNumber.replace(/\D/g, '').padStart(6, '0').slice(-6)}`;
   }
 
-  // Try with new columns, fallback to old if migration not run yet
   try {
     const { data, error } = await supabase.rpc('apply_sale', {
       p_location_id: locationId || null,
@@ -42,17 +49,17 @@ export async function createSale(formData: FormData) {
       p_sold_at: new Date(saleDate).toISOString(),
       p_notes: notes,
     });
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
-    // Try to update with new fields if sale created
     if (data) {
       try {
         await supabase.from('sales_transactions').update({
           payment_method: paymentMethod,
+          payment_status: paymentStatus,
           discount_amount: discount,
           customer_name: customerName,
           sale_date: saleDate,
-        }).eq('sale_number', saleNumber);
+        }).eq('id', data);
       } catch {}
     }
 
@@ -60,18 +67,25 @@ export async function createSale(formData: FormData) {
     revalidatePath('/reports');
     return data;
   } catch (e: any) {
-    // If RPC fails, try direct insert fallback
+    // Fallback direct insert if RPC fails (e.g., no inventory)
+    if (e.message?.includes('库存不足')) {
+      throw e; // Real stockout, don't fallback
+    }
     try {
       const { data: userRes } = await supabase.auth.getUser();
+      const locationIdResolved = locationId || (await supabase.from('locations').select('id').limit(1).single())?.data?.id;
+      if (!locationIdResolved) throw new Error('No location found');
+      
       const salePayload: any = {
         sale_number: saleNumber,
-        location_id: locationId || (await supabase.from('locations').select('id').limit(1).single())?.data?.id,
+        location_id: locationIdResolved,
         status: 'completed',
         external_reference: saleNumber,
         sold_at: new Date(saleDate).toISOString(),
         sale_date: saleDate,
         subtotal: items.reduce((s: number, i: any) => s + (i.quantity * 10), 0),
         payment_method: paymentMethod,
+        payment_status: paymentStatus,
         discount_amount: discount,
         customer_name: customerName,
         customer_note: notes,
@@ -80,21 +94,22 @@ export async function createSale(formData: FormData) {
       const { data, error } = await supabase.from('sales_transactions').insert(salePayload).select('id').single();
       if (error) throw error;
       
-      // Insert lines
       for (const item of items) {
+        const { data: bookData } = await supabase.from('books').select('current_price').eq('id', item.book_id).single();
+        const unitPrice = bookData?.current_price || 10;
         await supabase.from('sales_transaction_lines').insert({
           sale_id: data.id,
           book_id: item.book_id,
           quantity: item.quantity,
-          unit_price: 10,
-          cost_of_goods_sold: 5,
+          unit_price: unitPrice,
+          cost_of_goods_sold: 0,
         });
       }
       
       revalidatePath('/sales');
       return data;
-    } catch {
-      throw e;
+    } catch (fallbackErr: any) {
+      throw new Error(fallbackErr.message || e.message || 'Sale failed');
     }
   }
 }
