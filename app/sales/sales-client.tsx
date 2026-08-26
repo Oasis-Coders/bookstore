@@ -86,33 +86,7 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
   };
 
   const handlePrintInvoice = (sale: RecentSale) => {
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <html><head><title>Invoice ${sale.sale_number}</title>
-      <style>
-        body { font-family: serif; padding: 40px; color: #0f3d2e; }
-        .header { border-bottom: 2px solid #0f3d2e; padding-bottom: 16px; margin-bottom: 24px; }
-        .title { font-size: 24px; font-weight: bold; }
-        .meta { margin-top: 8px; font-size: 12px; color: #4f7a5c; }
-        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-        th { text-align: left; border-bottom: 1px solid #0f3d2e; padding: 8px; font-size: 12px; }
-        td { padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 12px; }
-        .total { margin-top: 16px; text-align: right; font-size: 16px; font-weight: bold; }
-        @media print { button { display: none; } }
-      </style></head><body>
-      <div class="header">
-        <div class="title">活水书房 COCM Bookshop - Invoice</div>
-        <div class="meta">Invoice No: ${sale.sale_number} | Date: ${sale.sold_at} | Customer: ${sale.customer_name || ''} | Payment: ${sale.payment_method || ''}</div>
-      </div>
-      <table><thead><tr><th>Book</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead><tbody>
-      <tr><td colspan="4" style="text-align:center; padding:20px;">Invoice details - ${sale.sale_number}<br/>Refer to system for full details</td></tr>
-      </tbody></table>
-      <div class="total">Total: £${Number(sale.subtotal || 0).toFixed(2)}</div>
-      <button onclick="window.print()" style="margin-top:24px; padding:8px 16px; background:#0f3d2e; color:white; border-radius:8px; border:none; cursor:pointer;">Print</button>
-      </body></html>
-    `);
-    win.document.close();
+    window.open(`/sales/${sale.id}/invoice`, '_blank');
   };
 
   return (
