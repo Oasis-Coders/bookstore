@@ -22,6 +22,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [openingStock, setOpeningStock] = useState<number>(Number(monthlyFinancial?.opening_stock || 0));
   const [closingStock, setClosingStock] = useState<number>(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
   const [savingSnapshot, setSavingSnapshot] = useState(false);
+  const [snapshotsHistory, setSnapshotsHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [snapshotMsg, setSnapshotMsg] = useState('');
 
   useEffect(() => {
     if (monthlyFinancial) {
@@ -30,7 +33,6 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       else if (currentInventoryValue) setClosingStock(Number(currentInventoryValue));
     }
   }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock]);
-  const [snapshotMsg, setSnapshotMsg] = useState('');
 
   useEffect(() => {
     setOpeningStock(Number(monthlyFinancial?.opening_stock || 0));
@@ -44,15 +46,21 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     opening: openingStock,
     closing: closingStock,
   };
-  // Computed as per your sheet: Opening + Purchases = subtotal, COGS = Opening+Purchases-Closing, Gross = Sales - COGS
   const stockSubtotal = financial.opening + financial.purchases;
-  const cogs = financial.cogs_direct > 0 ? financial.cogs_direct : (stockSubtotal - financial.closing);
-  // If cogs_direct exists (from allocations), prefer it; else fallback to stock math
   const cogsFromStock = stockSubtotal - financial.closing;
   const finalCogs = financial.cogs_direct > 0 ? financial.cogs_direct : cogsFromStock;
   const grossProfit = financial.sales - finalCogs;
 
   const monthLabel = (() => {
+    try {
+      const [y,m] = selectedMonth.split('-');
+      const d = new Date(Number(y), Number(m)-1, 1);
+      const mon = d.toLocaleString(isZh ? 'zh-CN' : 'en-GB', { month: 'long', year: 'numeric' });
+      return mon;
+    } catch { return selectedMonth; }
+  })();
+
+  const monthShort = (() => {
     try {
       const [y,m] = selectedMonth.split('-');
       const d = new Date(Number(y), Number(m)-1, 1);
@@ -62,19 +70,19 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   })();
 
   const exportFinancialCsv = () => {
-    const csv = `Month,${selectedMonth}
-Sales,${financial.sales}
-Opening Stock,${financial.opening}
-Add Purchase,${financial.purchases}
-Subtotal Opening+Purchase,${stockSubtotal}
-Less Closing Stock,${financial.closing}
-Cost of Sales,${finalCogs}
-Gross Profit,${grossProfit}
-`;
+    const csv = `Month,${selectedMonth}\nSales,${financial.sales}\nOpening Stock,${financial.opening}\nAdd Purchase,${financial.purchases}\nSubtotal Opening+Purchase,${stockSubtotal}\nLess Closing Stock,${financial.closing}\nCost of Sales,${finalCogs}\nGross Profit,${grossProfit}\n`;
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = `financial_${selectedMonth}.csv`; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const loadHistory = async () => {
+    try {
+      const res = await fetch('/api/reports/snapshots');
+      const j = await res.json();
+      if (j.data) setSnapshotsHistory(j.data);
+    } catch {}
   };
 
   const saveSnapshot = async () => {
@@ -86,11 +94,13 @@ Gross Profit,${grossProfit}
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month_start: `${selectedMonth}-01`, opening_stock: financial.opening, closing_stock: financial.closing }),
       });
-      if (!res.ok) throw new Error('save failed');
-      setSnapshotMsg(isZh ? '已保存快照' : 'Snapshot saved');
-      setTimeout(() => setSnapshotMsg(''), 3000);
-    } catch {
-      setSnapshotMsg(isZh ? '保存失败' : 'Save failed');
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || 'save failed');
+      setSnapshotMsg(isZh ? '已保存' : 'Saved');
+      setTimeout(() => setSnapshotMsg(''), 2500);
+      loadHistory();
+    } catch (e:any) {
+      setSnapshotMsg((isZh ? '保存失败: ' : 'Save failed: ') + (e?.message||''));
     }
     setSavingSnapshot(false);
   };
@@ -146,97 +156,116 @@ Gross Profit,${grossProfit}
       eyebrow={tt('reports.eyebrow')}
       actions={<Button variant="ghost" onClick={() => exportCsv('valuation')}>{tt('reports.exportCsv')}</Button>}
     >
-      {/* Monthly Financial Report - matches your screenshot framework */}
-      <Card className="border-[#0f3d2e]/10 bg-white">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2"><span className="h-1 w-5 rounded-full bg-[#0f3d2e]" />{isZh ? '每月财务报表' : 'Monthly Financial Report'}</CardTitle>
+      {/* Monthly Financial Report - polished */}
+      <Card className="border-[#0f3d2e]/10 bg-white overflow-hidden">
+        {/* Header row: title left, controls right */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#0f3d2e]/[0.06]">
+          <CardTitle className="flex items-center gap-2 text-[15px]"><span className="h-1 w-5 rounded-full bg-[#0f3d2e]" />{isZh ? '每月财务报表' : 'Monthly Financial Report'}<span className="ml-2 text-[11px] font-normal text-[#4f7a5c] px-2 py-0.5 rounded-full bg-[#faf6ee]">{monthLabel}</span></CardTitle>
           <div className="flex items-center gap-2">
-            <Input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-8 w-[140px] text-[12px]" />
-            <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-8 rounded-[8px] text-[11px]">{isZh ? '导出' : 'Export'}</Button>
+            {/* wider month input so calendar icon not clipped */}
+            <div className="relative">
+              <Input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-8 w-[185px] text-[12px] rounded-[10px] bg-[#faf6ee] border-[#0f3d2e]/10 pr-8" />
+            </div>
+            <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-8 rounded-[10px] text-[11px] px-3">{isZh ? '导出' : 'Export'}</Button>
           </div>
         </div>
 
-        <div className="mt-4 overflow-auto">
+        {/* Financial table - matches accounting sheet */}
+        <div className="mt-4 overflow-auto rounded-[12px] border border-[#0f3d2e]/10">
           <table className="w-full text-[13px] border-collapse">
             <thead>
-              <tr className="text-left">
-                <th className="py-2 px-2 font-semibold bg-[#faf6ee] border border-[#0f3d2e]/10 w-[40%]">{monthLabel}</th>
-                <th className="py-2 px-2 font-normal bg-[#faf6ee] border border-[#0f3d2e]/10"></th>
-                <th className="py-2 px-2 font-normal bg-[#faf6ee] border border-[#0f3d2e]/10 text-right"></th>
+              <tr className="text-left bg-[#faf6ee]/70">
+                <th className="py-2.5 px-3 font-semibold w-[42%]">{monthShort}</th>
+                <th className="py-2.5 px-3 font-normal text-[#4f7a5c]"></th>
+                <th className="py-2.5 px-3 font-normal text-right text-[#4f7a5c]"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="[&>tr]:border-t [&>tr]:border-[#0f3d2e]/[0.06]">
               <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-medium">{isZh ? '销售额 Sales' : 'Sales'}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-semibold tabular-nums">{formatCurrency(financial.sales)}</td>
+                <td className="py-2.5 px-3 font-medium">{isZh ? '销售额 Sales' : 'Sales'}</td>
+                <td className="py-2.5 px-3"></td>
+                <td className="py-2.5 px-3 text-right font-semibold tabular-nums">{formatCurrency(financial.sales)}</td>
+              </tr>
+              <tr className="bg-[#faf6ee]/40">
+                <td className="py-2 px-3 font-medium text-[12px] text-[#4f7a5c]" colSpan={3}>{isZh ? '减：销售成本 Less cost of sales' : 'Less cost of sales'}</td>
               </tr>
               <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-medium bg-[#faf6ee]/50" colSpan={3}>{isZh ? '减：销售成本 Less cost of sales' : 'Less cost of sales'}</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '期初库存 opening stock' : 'opening stock'}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right">
-                  <Input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-7 w-[120px] ml-auto text-right text-[12px]" />
+                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '期初库存 opening stock' : 'opening stock'}</td>
+                <td className="py-2 px-3 text-right">
+                  <Input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-7 w-[130px] ml-auto text-right text-[12px] rounded-[8px]" />
                 </td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+                <td className="py-2 px-3"></td>
               </tr>
               <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '加：本期进货 Add purchase' : 'Add purchase'}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right tabular-nums">{formatCurrency(financial.purchases)}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '加：本期进货 Add purchase' : 'Add purchase'}</td>
+                <td className="py-2 px-3 text-right tabular-nums text-[12px]">{formatCurrency(financial.purchases)}</td>
+                <td className="py-2 px-3"></td>
               </tr>
               <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6"></td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-medium tabular-nums border-t-2 border-[#0f3d2e]/20">{formatCurrency(stockSubtotal)}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
+                <td className="py-2 px-3 pl-6"></td>
+                <td className="py-2 px-3 text-right font-medium tabular-nums text-[12px] border-t border-[#0f3d2e]/15 pt-1">{formatCurrency(stockSubtotal)}</td>
+                <td className="py-2 px-3"></td>
               </tr>
               <tr>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 pl-6">{isZh ? '减：期末库存 Less closing stock' : 'Less closing stock'}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right">
-                  <Input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-7 w-[120px] ml-auto text-right text-[12px]" />
+                <td className="py-2 px-3 pl-6 text-[12px] text-[#0f3d2e]/80">{isZh ? '减：期末库存 Less closing stock' : 'Less closing stock'}</td>
+                <td className="py-2 px-3 text-right">
+                  <Input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-7 w-[130px] ml-auto text-right text-[12px] rounded-[8px]" />
                 </td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right tabular-nums font-medium">{formatCurrency(finalCogs)}</td>
+                <td className="py-2 px-3 text-right tabular-nums font-medium text-[12px]">{formatCurrency(finalCogs)}</td>
               </tr>
-              <tr className="bg-[#e8f5e9]/50">
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 font-semibold">{isZh ? '毛利 Gross profit' : 'Gross profit'}</td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10"></td>
-                <td className="py-2 px-2 border border-[#0f3d2e]/10 text-right font-bold tabular-nums bg-[#c8e6c9]">{formatCurrency(grossProfit)}</td>
+              <tr className="bg-[#e8f5e9]/60">
+                <td className="py-2.5 px-3 font-semibold">{isZh ? '毛利 Gross profit' : 'Gross profit'}</td>
+                <td className="py-2.5 px-3"></td>
+                <td className="py-2.5 px-3 text-right font-bold tabular-nums bg-[#c8e6c9]/70 rounded-br-[10px]">{formatCurrency(grossProfit)}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#4f7a5c]">
-          <span>{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS按批次成本精确计算。期初/期末可手动校正后保存快照` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing. Edit opening/closing then save snapshot`}</span>
-          <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[8px]" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存期初期末快照' : 'Save Opening/Closing Snapshot')}</Button>{snapshotMsg && <span className={`text-[11px] px-2 ${snapshotMsg.includes('失败')||snapshotMsg.includes('failed') ? 'text-red-600' : 'text-green-700'}`}>{snapshotMsg}</span>}
-          {snapshotMsg && <span className={`text-[11px] px-2 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{snapshotMsg}</span>}
+
+        {/* Footer actions */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-[#4f7a5c] flex-1 min-w-[200px]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS 按批次成本精确计算` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing`}</span>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[10px] px-3" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存快照' : 'Save Snapshot')}</Button>
+            <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#0f3d2e] underline decoration-dashed underline-offset-2">{showHistory ? (isZh ? '收起历史' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
+            {snapshotMsg && <span className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{snapshotMsg}</span>}
+          </div>
         </div>
-        <p className="mt-2 text-[10px] text-[#4f7a5c]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations if available'}</p>
+        <p className="mt-2 text-[10px] leading-snug text-[#4f7a5c]/80">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确。可手动校正期初/期末后保存快照' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations. Edit opening/closing then save snapshot'}</p>
+
+        {showHistory && (
+          <div className="mt-3 rounded-[12px] border border-[#0f3d2e]/10 bg-[#faf6ee]/30 p-2.5 max-h-[180px] overflow-auto">
+            <p className="text-[11px] font-semibold mb-1.5">{isZh ? '历史快照' : 'Snapshot History'}</p>
+            {snapshotsHistory.length===0 ? <p className="text-[11px] text-[#4f7a5c] py-2">{isZh ? '暂无快照' : 'No snapshots yet — save current month to create one'}</p> : (
+              <table className="w-full text-[11px]"><thead><tr className="text-left text-[#4f7a5c] text-[10px]"><th className="pb-1.5 font-medium">Month</th><th className="font-medium">Opening</th><th className="font-medium">Closing</th><th className="font-medium">By</th></tr></thead><tbody className="[&>tr]:border-t [&>tr]:border-[#0f3d2e]/5">{snapshotsHistory.map((s:any,i:number)=><tr key={i}><td className="py-1.5 font-mono">{s.month_start?.slice(0,7)}</td><td className="tabular-nums">{s.opening_stock}</td><td className="tabular-nums">{s.closing_stock}</td><td className="text-[10px] text-[#4f7a5c]">{s.created_at?.slice(0,10)||''}</td></tr>)}</tbody></table>
+            )}
+          </div>
+        )}
       </Card>
 
-      {/* Date Range Filter - NEW */}
+      {/* Date Range Filter */}
       <Card className="border-[#0f3d2e]/10 bg-gradient-to-br from-white to-[#faf6ee]/30">
-        <CardTitle className="flex items-center gap-2"><span className="h-1 w-5 rounded-full bg-[#d26a39]" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
+        <CardTitle className="flex items-center gap-2 text-[14px]"><span className="h-1 w-5 rounded-full bg-[#d26a39]" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
         <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '选择时间段查看销售列表和书目列表，用于财务对账和Shopify库存同步' : 'Select date range to view sales list and books list for accounting and Shopify stock sync'}</p>
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <div>
             <label className="text-[11px] font-medium">{isZh ? '开始日期' : 'From'}</label>
-            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="mt-1 h-9" />
+            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
           <div>
             <label className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
-            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9" />
+            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
           <Button size="sm" onClick={handleDateFilter} className="h-9 rounded-[10px]">{isZh ? '查询' : 'Filter'}</Button>
           <span className="text-[11px] text-[#4f7a5c]">{isZh ? '附件财务月报表格参考：日期、单号、付款方式/状态、合计' : 'Ref attachment financial monthly report: Date, Sale No, Payment/Status, Total'}</span>
         </div>
       </Card>
 
-      {/* Sales List by Date - NEW */}
+      {/* Sales List by Date */}
       {salesList.length > 0 && (
         <Card className="mt-4">
           <div className="flex items-center justify-between">
-            <CardTitle>{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
+            <CardTitle className="text-[14px]">{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px]">{isZh ? '导出CSV' : 'Export CSV'}</Button>
           </div>
           <div className="mt-3 overflow-auto">
@@ -259,11 +288,11 @@ Gross Profit,${grossProfit}
         </Card>
       )}
 
-      {/* Sales Books List for Shopify Sync - NEW */}
+      {/* Sales Books List for Shopify Sync */}
       {salesBooksList.length > 0 && (
         <Card className="mt-4">
           <div className="flex items-center justify-between">
-            <CardTitle>{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
+            <CardTitle className="text-[14px]">{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('salesBooks')} className="rounded-[10px]">{isZh ? '导出CSV 手动改Shopify库存' : 'Export CSV for Shopify'}</Button>
           </div>
           <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
@@ -291,7 +320,7 @@ Gross Profit,${grossProfit}
       {/* Valuation */}
       <Card className="mt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>{tt('reports.valuationTitle')}</CardTitle>
+          <CardTitle className="text-[14px]">{tt('reports.valuationTitle')}</CardTitle>
           <div className="flex gap-2 text-[12px]">
             <span>{tt('reports.costTotal')} {formatCurrency(totalValue)}</span>
             <span className="text-[#4f7a5c]">{tt('reports.retailTotal')} {formatCurrency(totalRetail)}</span>
@@ -335,7 +364,7 @@ Gross Profit,${grossProfit}
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <div className="flex items-center justify-between">
-            <CardTitle>{tt('reports.lowStockTitle')}</CardTitle>
+            <CardTitle className="text-[14px]">{tt('reports.lowStockTitle')}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')}>{isZh ? '导出' : 'Export'}</Button>
           </div>
           <div className="mt-3 space-y-2">
