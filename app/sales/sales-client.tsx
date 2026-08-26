@@ -19,6 +19,7 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
   const isZh = lang === 'zh';
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedBookId, setSelectedBookId] = useState('');
+  const [scanInput, setScanInput] = useState('');
   const [locationId, setLocationId] = useState(locations?.[0]?.id || '');
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
@@ -154,8 +155,8 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
               <label className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
               <BookAutocomplete books={books || []} value={selectedBookId} onChange={(id) => { setSelectedBookId(id); if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
               <div className="mt-2 flex gap-2">
-                <Input value="" placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const target = e.target as HTMLInputElement; const found = books?.find((b:any) => b.sku.toLowerCase() === target.value.toLowerCase()); if (found) { addBookById(found.id); target.value = ''; } } }} />
-                <Button variant="secondary" size="sm" onClick={addToCart}>{tt('sales.add')}</Button>
+                <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q) || b.sku.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } } }} />
+                <Button variant="secondary" size="sm" onClick={() => { const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } }}>{tt('sales.add')}</Button>
               </div>
 
               <div className="mt-3 space-y-2">
