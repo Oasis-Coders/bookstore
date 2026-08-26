@@ -208,7 +208,7 @@ Gross Profit,${grossProfit}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-[#4f7a5c]">
           <span>{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS按批次成本精确计算。期初/期末可手动校正后保存快照` : `${monthlyFinancial?.order_count || 0} orders this month, COGS from batch costing. Edit opening/closing then save snapshot`}</span>
-          <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[8px]" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存期初期末快照' : 'Save Opening/Closing Snapshot')}</Button>
+          <Button size="sm" variant="secondary" className="h-7 text-[11px] rounded-[8px]" onClick={saveSnapshot} disabled={savingSnapshot}>{savingSnapshot ? (isZh ? '保存中...' : 'Saving...') : (isZh ? '保存期初期末快照' : 'Save Opening/Closing Snapshot')}</Button>{snapshotMsg && <span className={`text-[11px] px-2 ${snapshotMsg.includes('失败')||snapshotMsg.includes('failed') ? 'text-red-600' : 'text-green-700'}`}>{snapshotMsg}</span>}
           {snapshotMsg && <span className={`text-[11px] px-2 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{snapshotMsg}</span>}
         </div>
         <p className="mt-2 text-[10px] text-[#4f7a5c]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本取批次成本更准确' : 'Formula: COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO lines, COGS from batch allocations if available'}</p>
