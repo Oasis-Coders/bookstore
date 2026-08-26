@@ -3,9 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-export async function createSale(formData: FormData) {
+type SaleResult = { success: true; saleId: string } | { success: false; error: string };
+
+export async function createSale(formData: FormData): Promise<SaleResult> {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error('Supabase not configured');
+  if (!supabase) return { success: false, error: '系统未配置' };
 
   const locationId = String(formData.get('location_id') || '');
   const itemsJson = String(formData.get('items_json') || '[]');
@@ -13,9 +15,9 @@ export async function createSale(formData: FormData) {
   try {
     items = JSON.parse(itemsJson);
   } catch {
-    throw new Error('Invalid items format');
+    return { success: false, error: '商品格式错误' };
   }
-  if (!items || items.length === 0) throw new Error('Cart is empty');
+  if (!items || items.length === 0) return { success: false, error: '购物车为空' };
   
   const saleDate = String(formData.get('sale_date') || new Date().toISOString().slice(0,10));
   const discount = Number(formData.get('discount') || 0);
@@ -24,93 +26,58 @@ export async function createSale(formData: FormData) {
   const customerName = String(formData.get('customer_name') || '').trim() || null;
   const externalRef = String(formData.get('external_ref') || '');
   const notes = String(formData.get('notes') || '').trim() || null;
+  const shippingCost = Number(formData.get('shipping_cost') || 0);
 
-  if (!locationId) throw new Error('请选择销售库位');
+  if (!locationId) return { success: false, error: '请选择销售库位' };
 
-  // Generate C-number if not provided
-  let saleNumber = externalRef;
-  if (!saleNumber) {
-    try {
-      const { data: gen } = await supabase.rpc('generate_sale_number');
-      saleNumber = gen || `C${Date.now().toString().slice(-6)}`;
-    } catch {
-      saleNumber = `C${Math.floor(100000 + Math.random() * 900000)}`;
-    }
-  }
-  if (!saleNumber.startsWith('C') && !saleNumber.startsWith('POS-')) {
-    saleNumber = `C${saleNumber.replace(/\D/g, '').padStart(6, '0').slice(-6)}`;
-  }
+  // Ensure items have real unit_price snapshots (not arbitrary 10)
+  // Frontend should send unit_price, but we validate here
+  const enrichedItems = items.map((it: any) => ({
+    book_id: it.book_id,
+    quantity: it.quantity,
+    unit_price: it.unit_price, // must be real price from frontend, RPC will fallback to current_price if missing
+    discount_percent: it.discount_percent || 0,
+    discount_amount: it.discount_amount || 0,
+  }));
 
   try {
+    // Call atomic RPC that handles everything: stock deduction, sale header, lines, costs, payments
     const { data, error } = await supabase.rpc('apply_sale', {
-      p_location_id: locationId || null,
-      p_items: items,
-      p_external_reference: saleNumber,
+      p_location_id: locationId,
+      p_items: enrichedItems,
+      p_external_reference: externalRef || null,
       p_sold_at: new Date(saleDate).toISOString(),
       p_notes: notes,
-    });
-    if (error) throw new Error(error.message);
+      p_payment_method: paymentMethod,
+      p_payment_status: paymentStatus,
+      p_discount_amount: discount,
+      p_customer_name: customerName,
+      p_sale_date: saleDate,
+      p_shipping_cost: shippingCost,
+      p_customer_note: notes,
+    } as any);
 
-    if (data) {
-      try {
-        await supabase.from('sales_transactions').update({
-          payment_method: paymentMethod,
-          payment_status: paymentStatus,
-          discount_amount: discount,
-          customer_name: customerName,
-          sale_date: saleDate,
-        }).eq('id', data);
-      } catch {}
+    if (error) {
+      // Return friendly error, not raw DB error
+      const msg = error.message || '';
+      if (msg.includes('库存不足')) {
+        return { success: false, error: msg };
+      }
+      if (msg.includes('不存在') || msg.includes('停用')) {
+        return { success: false, error: msg };
+      }
+      if (msg.includes('权限') || msg.includes('role')) {
+        return { success: false, error: '没有执行销售的权限，请联系管理员' };
+      }
+      return { success: false, error: msg || '销售失败，请重试' };
     }
 
     revalidatePath('/sales');
     revalidatePath('/reports');
-    return data;
+    revalidatePath('/books');
+    return { success: true, saleId: data as string };
   } catch (e: any) {
-    // Fallback direct insert if RPC fails (e.g., no inventory)
-    if (e.message?.includes('库存不足')) {
-      throw e; // Real stockout, don't fallback
-    }
-    try {
-      const { data: userRes } = await supabase.auth.getUser();
-      const locationIdResolved = locationId || (await supabase.from('locations').select('id').limit(1).single())?.data?.id;
-      if (!locationIdResolved) throw new Error('No location found');
-      
-      const salePayload: any = {
-        sale_number: saleNumber,
-        location_id: locationIdResolved,
-        status: 'completed',
-        external_reference: saleNumber,
-        sold_at: new Date(saleDate).toISOString(),
-        sale_date: saleDate,
-        subtotal: items.reduce((s: number, i: any) => s + (i.quantity * 10), 0),
-        payment_method: paymentMethod,
-        payment_status: paymentStatus,
-        discount_amount: discount,
-        customer_name: customerName,
-        customer_note: notes,
-        created_by: userRes.user?.id,
-      };
-      const { data, error } = await supabase.from('sales_transactions').insert(salePayload).select('id').single();
-      if (error) throw error;
-      
-      for (const item of items) {
-        const { data: bookData } = await supabase.from('books').select('current_price').eq('id', item.book_id).single();
-        const unitPrice = bookData?.current_price || 10;
-        await supabase.from('sales_transaction_lines').insert({
-          sale_id: data.id,
-          book_id: item.book_id,
-          quantity: item.quantity,
-          unit_price: unitPrice,
-          cost_of_goods_sold: 0,
-        });
-      }
-      
-      revalidatePath('/sales');
-      return data;
-    } catch (fallbackErr: any) {
-      throw new Error(fallbackErr.message || e.message || 'Sale failed');
-    }
+    return { success: false, error: e.message || '销售失败，请重试' };
   }
 }
 

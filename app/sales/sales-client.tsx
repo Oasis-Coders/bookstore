@@ -60,19 +60,28 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
     try {
       const fd = new FormData();
       fd.set('location_id', locationId || (locations?.[0]?.id || ''));
-      fd.set('items_json', JSON.stringify(cart.map(c => ({ book_id: c.id, quantity: c.qty }))));
+      fd.set('items_json', JSON.stringify(cart.map(c => ({ 
+        book_id: c.id, 
+        quantity: c.qty,
+        unit_price: c.price,
+      }))));
       fd.set('sale_date', saleDate);
       fd.set('discount', discount);
       fd.set('payment_method', paymentMethod);
       fd.set('payment_status', paymentStatus);
       fd.set('customer_name', customerName);
       fd.set('notes', notes);
-      fd.set('external_ref', `C${Math.floor(100000 + Math.random() * 900000)}`);
-      await createSale(fd);
-      setMsg(isZh ? '销售成功' : 'Sale completed');
-      setCart([]);
-      setCustomerName('');
-      setNotes('');
+      fd.set('shipping_cost', '0');
+      const result = await createSale(fd);
+      if ((result as any)?.success) {
+        setMsg(isZh ? '销售成功' : 'Sale completed');
+        setCart([]);
+        setCustomerName('');
+        setNotes('');
+        window.location.reload();
+      } else {
+        setMsg((result as any)?.error || (isZh ? '销售失败' : 'Sale failed'));
+      }
     } catch (e: any) {
       if (false) {
       } else {
