@@ -70,14 +70,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                 <p className="text-white/50 text-[10px] uppercase">Shopify</p>
                 <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.shopify_total)}</p>
               </div>
-              <div className="rounded-[10px] bg-white/10 px-3 py-2 backdrop-blur">
-                <p className="text-white/50 text-[10px] uppercase">{isZh ? '混合' : 'Mix'}</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.mix_total)}</p>
-              </div>
-              <div className="rounded-[10px] bg-[#d26a39]/30 px-3 py-2 backdrop-blur border border-[#d26a39]/30">
-                <p className="text-white/70 text-[10px] uppercase">{isZh ? '挂账' : 'Deferral'}</p>
-                <p className="font-semibold text-white mt-0.5">{formatCurrency(data.dailySales.deferral_total)}</p>
-              </div>
+
             </div>
           </div>
         </Card>
