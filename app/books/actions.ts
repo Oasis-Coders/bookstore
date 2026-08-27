@@ -22,7 +22,7 @@ export async function createBook(formData: FormData) {
   const titleSimplified = String(formData.get('title_simplified') || '').trim() || null;
   const titleTraditional = String(formData.get('title_traditional') || '').trim() || null;
 
-  if (!basePayload.sku || !basePayload.title) throw new Error('SKU 和书名必填 / SKU and title required');
+  if (!basePayload.sku || !basePayload.title) throw new Error('代号和书名必填 / Code and title required');
   const { data: { user } } = await supabase.auth.getUser();
   const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user?.id || '');
   const roleNames = (roles || []).map((r: any) => r.roles?.name);
@@ -67,7 +67,7 @@ export async function updateBook(bookId: string, formData: FormData) {
   const titleEn = String(formData.get('title_en') || '').trim() || null;
   const titleSimplified = String(formData.get('title_simplified') || '').trim() || null;
   const titleTraditional = String(formData.get('title_traditional') || '').trim() || null;
-  if (!basePayload.sku || !basePayload.title) throw new Error('SKU 和书名必填 / SKU and title required');
+  if (!basePayload.sku || !basePayload.title) throw new Error('代号和书名必填 / Code and title required');
   let payload: any = { ...basePayload, title_en: titleEn, title_simplified: titleSimplified, title_traditional: titleTraditional };
   let { error } = await supabase.from('books').update(payload).eq('id', bookId);
   if (error && (error.message.includes('title_en') || error.message.includes('shelf_position') || error.message.includes('title_simplified') || error.message.includes('title_traditional'))) {
@@ -96,6 +96,14 @@ export async function updateBookPrice(bookId: string, price: number) {
 export async function deleteBook(bookId: string) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) throw new Error('Supabase not configured');
+  // Server-side role check: only admin/super_admin can delete
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('未登录 / Not authenticated');
+  const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
+  const roleNames = (roles || []).map((r: any) => r.roles?.name);
+  if (!roleNames.includes('admin') && !roleNames.includes('super_admin')) {
+    throw new Error('权限不足：只有管理员可以删除 / Only admin can delete');
+  }
   const { error } = await supabase.from('books').delete().eq('id', bookId);
   if (error) throw error;
   revalidatePath('/books');

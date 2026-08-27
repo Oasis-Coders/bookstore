@@ -53,6 +53,13 @@ export async function updateSupplier(id: string, formData: FormData) {
 export async function deleteSupplier(id: string) {
   const supabase = await createSupabaseServerClient();
   if (!supabase) throw new Error('Supabase not configured');
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('未登录 / Not authenticated');
+  const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
+  const roleNames = (roles || []).map((r: any) => r.roles?.name);
+  if (!roleNames.includes('admin') && !roleNames.includes('super_admin')) {
+    throw new Error('权限不足：只有管理员可以删除 / Only admin can delete');
+  }
   const { error } = await supabase.from('suppliers').delete().eq('id', id);
   if (error) throw error;
   revalidatePath('/suppliers');

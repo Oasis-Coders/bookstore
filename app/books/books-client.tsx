@@ -64,7 +64,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 ref={searchInputRef}
                 name="q" 
                 defaultValue={q} 
-                placeholder={isZh ? '中英文搜：书名/英文/简繁/代号/作者/书架' : 'Search EN/ZH: title, SKU, author, shelf...'} 
+                placeholder={isZh ? '中英文搜：书名/英文/简繁/代号/作者/书架' : 'Search EN/ZH: title, Code, author, shelf...'} 
                 className="pr-10 rounded-[12px] h-10 border-[#0f3d2e]/10 focus:border-[#0f3d2e]/20 bg-white shadow-sm" 
                 onKeyDown={handleScanKeyDown}
               />
@@ -77,7 +77,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
             </Button>
           </form>
           <p className="text-[11px] text-[#4f7a5c]">
-            {isZh ? '支持中英文、简繁体、SKU、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, SKU, shelf. USB barcode scanner supported - scans auto-submit.'}
+            {isZh ? '支持中英文、简繁体、代号、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, Code, shelf. USB barcode scanner supported - scans auto-submit.'}
             {false && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
           </p>
         </div>

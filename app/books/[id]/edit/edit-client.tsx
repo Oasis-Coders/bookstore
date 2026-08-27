@@ -10,7 +10,7 @@ import { CategorySelect } from '@/components/ui/category-select';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export function EditBookClient({ book }: { book: any }) {
+export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boolean }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -59,7 +59,7 @@ export function EditBookClient({ book }: { book: any }) {
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 SKU *' : 'SKU *'}</label>
+                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 *' : 'Code *'}</label>
                 <Input name="sku" defaultValue={book.sku} required className="mt-1" />
               </div>
               <div>
@@ -135,9 +135,11 @@ export function EditBookClient({ book }: { book: any }) {
                   {isZh ? '返回' : 'Back'}
                 </Button>
               </Link>
-              <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600 hover:bg-red-50">
-                {isZh ? '删除' : 'Delete'}
-              </Button>
+              {canDelete && (
+                <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600 hover:bg-red-50">
+                  {isZh ? '删除' : 'Delete'}
+                </Button>
+              )}
             </div>
           </form>
         </Card>

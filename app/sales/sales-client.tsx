@@ -219,7 +219,7 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
             <p className="mt-2 text-[11px] text-[#4f7a5c]">{isZh ? '含单号、日期、书名、数量、售价、折扣、付款方式、购书人。点击上方最近销售的发票按钮可预览打印。' : 'Includes sale no, date, books, qty, price, discount, payment, customer. Click invoice button above to preview.'}</p>
             <div className="mt-3 rounded-[10px] bg-[#faf6ee] p-3 text-[11px]">
               <p className="font-semibold">COCM Bookshop Invoice</p>
-              <p className="mt-1 text-[#4f7a5c]">Includes: Logo, Sale Number (C-format), Date, Customer (Name/Order/Church), Payment Method/Status, Books (Title/SKU/Qty/Price), Shelf Location for picking, Subtotal, Discount, Net Total</p>
+              <p className="mt-1 text-[#4f7a5c]">Includes: Logo, Sale Number (C-format), Date, Customer (Name/Order/Church), Payment Method/Status, Books (Title/Code/Quantity/Price), Shelf Location for picking, Subtotal, Discount, Net Total</p>
             </div>
           </Card>
         </div>

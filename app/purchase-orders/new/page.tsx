@@ -102,7 +102,7 @@ export default function NewPOPage() {
   }
 
   return (
-    <AppShell title={isZh ? '新建采购单' : 'New PO'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
+    <AppShell title={isZh ? '新建采购单' : 'New Purchase Order'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
       <div className="mx-auto max-w-[640px]">
         <Link href="/purchase-orders" className="mb-4 inline-flex text-[13px] text-[#4f7a5c] hover:text-[#0f3d2e]">
           ← {isZh ? '返回采购单' : 'Back to Purchase Orders'}

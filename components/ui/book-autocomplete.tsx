@@ -57,9 +57,9 @@ export function BookAutocomplete({
         <div className="flex items-center gap-2 rounded-[12px] border border-[#0f3d2e]/10 bg-[#faf6ee] px-3 py-2">
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-medium truncate">{selected.title} <span className="text-[#4f7a5c]">({selected.sku})</span></p>
-            {selected.shelf_position && <p className="text-[10px] text-[#4f7a5c]">📍 {selected.shelf_position}</p>}
+            {selected.shelf_position && <p className="text-[10px] text-[#4f7a5c]">{isZh ? '书架' : 'Shelf'}: {selected.shelf_position}</p>}
           </div>
-          <button type="button" onClick={handleClear} className="text-[12px] px-2 py-1 rounded-full bg-white hover:bg-red-50">✕</button>
+          <button type="button" onClick={handleClear} className="text-[12px] px-2 py-1 rounded-full bg-white hover:bg-red-50">{isZh ? '清除' : 'Clear'}</button>
         </div>
       ) : (
         <>
@@ -80,14 +80,14 @@ export function BookAutocomplete({
                   className="w-full text-left px-3 py-2 hover:bg-[#faf6ee] text-[12px] border-b border-[#0f3d2e]/5 last:border-0"
                 >
                   <span className="font-medium">{b.title}</span> <span className="text-[#4f7a5c]">({b.sku})</span>
-                  {b.shelf_position && <span className="ml-2 text-[10px] bg-[#faf6ee] px-1.5 py-0.5 rounded-full">📍{b.shelf_position}</span>}
+                  {b.shelf_position && <span className="ml-2 text-[10px] bg-[#faf6ee] px-1.5 py-0.5 rounded-full">{isZh ? '书架' : 'Shelf'} {b.shelf_position}</span>}
                 </button>
               ))}
             </div>
           )}
         </>
       )}
-      <p className="mt-1 text-[10px] text-[#4f7a5c]">{isZh ? '💡 输入时自动缩小范围，避免长列表' : '💡 Type to narrow down long lists'}</p>
+      <p className="mt-1 text-[10px] text-[#4f7a5c]">{isZh ? '输入时自动缩小范围，避免长列表' : 'Type to narrow down long lists'}</p>
     </div>
   );
 }

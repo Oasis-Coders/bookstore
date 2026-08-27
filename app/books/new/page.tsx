@@ -89,7 +89,7 @@ export default function NewBookPage() {
           <CardTitle>{isZh ? '添加新书' : 'Add Book'}</CardTitle>
           <div className="mt-3 rounded-[12px] border border-dashed border-[#0f3d2e]/20 bg-[#faf6ee]/50 p-3">
             <p className="text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
-            <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '扫ISBN条码自动填入ISBN和SKU，尝试联网获取书名。USB扫码枪即插即用。' : 'Scan ISBN barcode to auto-fill ISBN and SKU, tries to fetch title online. USB scanner plug-and-play.'}</p>
+            <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '扫ISBN条码自动填入ISBN和代号，尝试联网获取书名。USB扫码枪即插即用。' : 'Scan ISBN barcode to auto-fill ISBN and Code, tries to fetch title online. USB scanner plug-and-play.'}</p>
             <div className="mt-2 flex gap-2">
               <Input 
                 value={isbnLookup}
@@ -102,11 +102,11 @@ export default function NewBookPage() {
                 {scanning ? (isZh ? '已扫' : 'Scanned') : (isZh ? '扫码' : 'Scan')}
               </Button>
             </div>
-            <p className="mt-1.5 text-[10px] text-[#4f7a5c]">{isZh ? '运作：扫码枪 = 键盘，扫出数字字符串如 9781234567890，系统收到后填入ISBN，自动生成 BOOK-xxxx SKU' : 'How: scanner = keyboard, outputs string like 9781234567890, system fills ISBN, auto-generates BOOK-xxxx SKU'}</p>
+            <p className="mt-1.5 text-[10px] text-[#4f7a5c]">{isZh ? '运作：扫码枪 = 键盘，扫出数字字符串如 9781234567890，系统收到后填入ISBN，自动生成 BOOK-xxxx 代号' : 'How: scanner = keyboard, outputs string like 9781234567890, system fills ISBN, auto-generates BOOK-xxxx Code'}</p>
           </div>
 
           <p className="mt-3 text-[13px] text-[#0f3d2e]/70">
-            {isZh ? '支持中文书名，代号/SKU 必须唯一' : 'Supports Chinese titles, SKU must be unique'}
+            {isZh ? '支持中文书名，代号必须唯一' : 'Supports Chinese titles, Code must be unique'}
           </p>
 
           {error && (
@@ -118,7 +118,7 @@ export default function NewBookPage() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 / SKU * (扫码自动生成)' : 'Code / SKU * (auto from scan)'}</label>
+                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 * (扫码自动生成)' : 'Code * (auto from scan)'}</label>
                 <Input ref={skuRef} name="sku" placeholder={isZh ? '如 BOOK-001 或扫码生成' : 'e.g. BOOK-001 or auto from scan'} required className="mt-1" />
               </div>
               <div>

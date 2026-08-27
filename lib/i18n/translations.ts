@@ -124,7 +124,7 @@ export const translations = {
     purchaseOrders: {
       title: 'Purchase Orders',
       count: '{n} orders',
-      newPO: '+ New PO',
+      newPO: '+ New Purchase Order',
       statusFlow: 'Status flow:',
       draft: 'Draft',
       approved: 'Approved',

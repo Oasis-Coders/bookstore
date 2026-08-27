@@ -8,27 +8,23 @@ import { useT } from '@/lib/i18n/use-t';
 type Props = {
   isSignUp: boolean;
   isReset?: boolean;
-  isAdminReset?: boolean;
   error?: string;
   message?: string;
   redirectTo: string;
   signInAction: (fd: FormData) => void;
   signUpAction: (fd: FormData) => void;
   resetAction?: (fd: FormData) => void;
-  adminResetAction?: (fd: FormData) => void;
 };
 
 export function AuthClient({
   isSignUp,
   isReset,
-  isAdminReset,
   error,
   message,
   redirectTo,
   signInAction,
   signUpAction,
   resetAction,
-  adminResetAction,
 }: Props) {
   const { tt, lang, isZh } = useT();
 
@@ -124,28 +120,6 @@ export function AuthClient({
           <Input name="email" placeholder={isZh ? '邮箱' : 'Email'} type="email" required className="h-11" />
           <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#0f3d2e] hover:bg-[#1a5c46] text-white">
             {isZh ? '发送重置邮件' : 'Send Reset Email'}
-          </Button>
-        </form>
-        <div className="mt-4 text-center">
-          <a href={`/auth?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[12px] text-[#4f7a5c] hover:text-[#0f3d2e] underline">
-            {isZh ? '返回登录' : 'Back to Login'}
-          </a>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (isAdminReset && adminResetAction) {
-    return (
-      <Shell title={isZh ? '管理员重置' : 'Admin Reset'} subtitle={isZh ? '知道邮箱但忘了密码？管理员可以直接设置新密码' : 'Know the email but forgot password? Admin can set a new password directly'}>
-        {error && <div className="mb-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{getErrorText(error)}</div>}
-        {message && <div className="mb-4 rounded-[12px] bg-green-50 px-3 py-2 text-[12px] text-green-700">{message}</div>}
-        <form action={adminResetAction} className="space-y-3">
-          <input type="hidden" name="redirectTo" value={redirectTo} />
-          <Input name="email" placeholder={isZh ? '要重置的邮箱' : 'Email to reset'} type="email" required className="h-11" />
-          <Input name="newPassword" placeholder={isZh ? '新密码（至少6位）' : 'New password (min 6 chars)'} type="password" required className="h-11" />
-          <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#0f3d2e] hover:bg-[#1a5c46] text-white">
-            {isZh ? '直接重置密码' : 'Reset Password Directly'}
           </Button>
         </form>
         <div className="mt-4 text-center">

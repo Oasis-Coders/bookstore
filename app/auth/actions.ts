@@ -250,47 +250,6 @@ export async function updatePassword(formData: FormData) {
   redirect(redirectTo || '/');
 }
 
-export async function adminResetPassword(formData: FormData) {
-  // Admin function to reset a user's password directly (for the case where user forgot password and admin wants to help)
-  const email = String(formData.get('email') ?? '').trim();
-  const newPassword = String(formData.get('newPassword') ?? '').trim();
-  const redirectTo = String(formData.get('redirectTo') ?? '/');
-
-  if (!email || !newPassword) {
-    redirect(`/auth?mode=admin-reset&error=missing&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  if (!hasSupabaseServiceRole()) {
-    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent('需要 service role key')}&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  const adminSupabase = createSupabaseAdminClient();
-  if (!adminSupabase) {
-    redirect(`/auth?mode=admin-reset&error=no-admin&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  // Find user by email
-  const { data: listData, error: listError } = await adminSupabase.auth.admin.listUsers();
-  if (listError) {
-    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent(listError.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  const user = listData.users.find((u: any) => u.email === email);
-  if (!user) {
-    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent('用户不存在')}&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  const { error } = await adminSupabase.auth.admin.updateUserById(user.id, {
-    password: newPassword,
-  });
-
-  if (error) {
-    redirect(`/auth?mode=admin-reset&error=${encodeURIComponent(error.message)}&redirectTo=${encodeURIComponent(redirectTo)}`);
-  }
-
-  redirect(`/auth?message=${encodeURIComponent(`已重置 ${email} 的密码`)}&redirectTo=${encodeURIComponent(redirectTo)}`);
-}
-
 export async function signOut() {
   const env = getSupabase();
   if (env) {

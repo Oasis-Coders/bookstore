@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const r = rows[i];
     const sku = (r.sku || '').trim().toUpperCase();
     const title = (r.title || '').trim();
-    if (!sku || !title) { fail++; errors.push(`Row ${i+1}: SKU and title required`); continue; }
+    if (!sku || !title) { fail++; errors.push(`Row ${i+1}: Code and title required`); continue; }
 
     try {
       // Check existing

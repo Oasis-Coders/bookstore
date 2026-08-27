@@ -1,5 +1,5 @@
 import { AuthClient } from './auth-client';
-import { signIn, signUp, resetPassword, adminResetPassword } from './actions';
+import { signIn, signUp, resetPassword } from './actions';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -24,8 +24,8 @@ export default async function AuthPage({ searchParams }: Props) {
   const mode = params.mode ?? 'signin';
   const message = params.message;
 
-  // Check if already logged in (except for reset flows)
-  if (mode !== 'reset' && mode !== 'admin-reset') {
+  // Check if already logged in (except for reset flow)
+  if (mode !== 'reset') {
     const { url: supabaseUrl, anonKey: supabaseAnonKey } = getEnv();
     if (supabaseUrl && supabaseAnonKey) {
       const cookieStore = await cookies();
@@ -44,20 +44,17 @@ export default async function AuthPage({ searchParams }: Props) {
 
   const isSignUp = mode === 'signup';
   const isReset = mode === 'reset';
-  const isAdminReset = mode === 'admin-reset';
 
   return (
     <AuthClient
       isSignUp={isSignUp}
       isReset={isReset}
-      isAdminReset={isAdminReset}
       error={error}
       message={message}
       redirectTo={redirectTo}
       signInAction={signIn}
       signUpAction={signUp}
       resetAction={resetPassword}
-      adminResetAction={adminResetPassword}
     />
   );
 }

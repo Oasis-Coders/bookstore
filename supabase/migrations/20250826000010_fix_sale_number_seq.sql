@@ -1,9 +1,22 @@
 -- Fix sale_number_seq overflow (was integer, hit 20260826... large value from old SAL format)
 -- Recreate as bigint and reset to safe range, fix generate_sale_number to be robust
+-- NOTE: Do NOT use CASCADE - that would drop apply_sale functions
 
--- Drop old sequence if exists and recreate as bigint
-DROP SEQUENCE IF EXISTS public.sale_number_seq CASCADE;
-CREATE SEQUENCE public.sale_number_seq AS bigint START 100010;
+-- Drop old sequence without CASCADE if it exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_class WHERE relkind='S' AND relname='sale_number_seq') THEN
+    -- Only drop if no dependencies, otherwise alter
+    BEGIN
+      DROP SEQUENCE public.sale_number_seq;
+    EXCEPTION WHEN OTHERS THEN
+      -- If cannot drop due to dependencies, just alter it
+      EXECUTE 'ALTER SEQUENCE public.sale_number_seq AS bigint';
+    END;
+  END IF;
+END $$;
+
+CREATE SEQUENCE IF NOT EXISTS public.sale_number_seq AS bigint START 100010;
 
 -- Recreate generate_sale_number robustly
 CREATE OR REPLACE FUNCTION public.generate_sale_number()
