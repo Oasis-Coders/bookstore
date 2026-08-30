@@ -12,9 +12,19 @@ import { createSale } from './actions';
 
 type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string; stock?: number };
 
-type RecentSale = { id: string; sale_number: string; subtotal: number; payment_method?: string; customer_name?: string; sold_at: string };
+type RecentSale = { id: string; sale_number: string; subtotal: number; discount_amount?: number; total?: number; payment_method?: string; customer_name?: string; sold_at: string; net_total?: number };
 
-export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number> } = { books: [], recentSales: [], stockMap: {} }) {
+const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
+  cash: { zh: '现金', en: 'Cash' },
+  card: { zh: '刷卡', en: 'Card' },
+  bank_transfer: { zh: '银行转账', en: 'Bank Transfer' },
+  shopify: { zh: '网付', en: 'Shopify' },
+  mix: { zh: '混合', en: 'Mix' },
+  deferral: { zh: '赊账', en: 'Deferral' },
+  other: { zh: '其他', en: 'Other' },
+};
+
+export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean } = { books: [], recentSales: [], stockMap: {}, isAdmin: false }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -223,22 +233,25 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
           <Card>
             <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#4f7a5c]">{isZh ? '按时间倒序' : 'Latest first'}</span></CardTitle>
             <div className="mt-3 space-y-2">
-              {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => (
+              {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => {
+                const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
+                const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
+                return (
                 <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 px-3 py-2 text-[12px]">
                   <div>
                     <p className="font-mono font-semibold">{s.sale_number}</p>
-                    <p className="text-[11px] text-[#4f7a5c]">{s.sold_at} • {s.payment_method} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
+                    <p className="text-[11px] text-[#4f7a5c]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
                   </div>
                   <div className="text-right flex items-center gap-2">
                     <div>
-                      <p>£{Number(s.subtotal || s.total || 0).toFixed(2)}</p>
-                      <Badge variant="active" className="text-[10px]">{s.payment_method || 'cash'}</Badge>
+                      <p>£{net.toFixed(2)}</p>
+                      <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#d26a39]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>
+                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#d26a39]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
                   </div>
                 </div>
-              ))}
+              );})}
             </div>
           </Card>
 
@@ -246,7 +259,7 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
             <CardTitle>{isZh ? '改单说明' : 'Correcting Sales'}</CardTitle>
             <div className="mt-2 text-[11px] text-[#4f7a5c] space-y-1.5 leading-relaxed">
               <p>{isZh ? '• 确认前：直接在左侧购物车点 × 删除或改数量/改价。' : '• Before confirm: Remove via × or adjust qty/price in cart.'}</p>
-              <p>{isZh ? '• 确认后客人改主意：联系管理员作废整单（库存返还），再重新开一单；暂不支持部分退货。' : '• After confirm: Contact admin to void whole sale (stock returns) and re-create; partial returns not yet supported.'}</p>
+              <p>{isZh ? '• 确认后改单：点最近销售的改单，改书/数量/价格/客户/付款，填原因保存，库存会原子返还重扣，失败回滚。' : '• After confirm: Click Edit, change books/qty/price/customer/payment, enter reason, stock restores atomically, rollback on failure.'}</p>
               <p>{isZh ? '• 清仓/赠送（代号 Sales）：加入购物车后直接在单价框改价即可，系统按改后价开票。' : '• Clearance/gift (code Sales): Edit price in cart, invoice uses edited price.'}</p>
             </div>
           </Card>

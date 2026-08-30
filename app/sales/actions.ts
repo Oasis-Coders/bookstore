@@ -29,16 +29,15 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   const notes = String(formData.get('notes') || '').trim() || null;
   const shippingCost = Number(formData.get('shipping_cost') || 0);
 
-  // Auto-pick first active location if not provided (sales location removed from UI)
+  // Deterministic default location: active, ordered by code asc, prefer STORE-LON
   if (!locationId) {
     try {
-      const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).limit(1).single();
+      const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).order('code', { ascending: true }).limit(1).single();
       if (loc?.id) locationId = loc.id;
     } catch {}
-    // fallback: any location
     if (!locationId) {
       try {
-        const { data: loc2 } = await supabase.from('locations').select('id').limit(1).single();
+        const { data: loc2 } = await supabase.from('locations').select('id').order('code', { ascending: true }).limit(1).single();
         if (loc2?.id) locationId = loc2.id;
       } catch {}
     }

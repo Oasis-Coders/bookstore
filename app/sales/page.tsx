@@ -6,8 +6,17 @@ export default async function SalesPage() {
   let books: any[] = [] as any[];
   let recentSales: any[] = [] as any[];
   let stockMap: Record<string, number> = {};
+  let isAdmin = false;
   
   if (supabase) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
+        const names = (roles || []).map((r: any) => r.roles?.name);
+        isAdmin = names.includes('admin') || names.includes('super_admin');
+      }
+    } catch {}
     try {
       const bRes = await supabase.from('books').select('id, title, sku, current_price, shelf_position, title_en').eq('is_active', true).order('title').limit(200);
       books = bRes.data || [];
@@ -15,11 +24,13 @@ export default async function SalesPage() {
       console.error('books fetch error', e);
     }
     try {
-      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
+      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
       recentSales = (sRes.data || []).map((s: any) => ({
         id: s.id,
         sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
         subtotal: s.subtotal,
+        discount_amount: s.discount_amount,
+        net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
         payment_method: s.payment_method,
         customer_name: s.customer_name,
         sold_at: s.sale_date || new Date(s.sold_at).toLocaleString(),
@@ -48,5 +59,5 @@ export default async function SalesPage() {
     }
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} />;
 }
