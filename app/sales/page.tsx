@@ -7,6 +7,7 @@ export default async function SalesPage() {
   let recentSales: any[] = [] as any[];
   let stockMap: Record<string, number> = {};
   let isAdmin = false;
+  let saleLocationId: string | null = null;
   
   if (supabase) {
     try {
@@ -15,6 +16,19 @@ export default async function SalesPage() {
         const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
         const names = (roles || []).map((r: any) => r.roles?.name);
         isAdmin = names.includes('admin') || names.includes('super_admin');
+      }
+    } catch {}
+    // Deterministic sale location - same as createSale
+    try {
+      const { data: storeLoc } = await supabase.from('locations').select('id').eq('code', 'STORE-LON').eq('is_active', true).single();
+      if (storeLoc?.id) saleLocationId = storeLoc.id;
+      else {
+        const { data: storeTypeLoc } = await supabase.from('locations').select('id').eq('is_active', true).eq('location_type', 'store').order('code', { ascending: true }).limit(1).single();
+        if (storeTypeLoc?.id) saleLocationId = storeTypeLoc.id;
+        else {
+          const { data: anyLoc } = await supabase.from('locations').select('id').eq('is_active', true).order('code', { ascending: true }).limit(1).single();
+          if (anyLoc?.id) saleLocationId = anyLoc.id;
+        }
       }
     } catch {}
     try {
@@ -39,12 +53,23 @@ export default async function SalesPage() {
       console.error('sales fetch error', e);
     }
     try {
-      const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
-      if (val) {
-        for (const r of val as any[]) {
-          const bid = (r as any).book_id;
-          const q = Number((r as any).quantity_on_hand || 0);
-          stockMap[bid] = (stockMap[bid] || 0) + q;
+      // Location-specific stock - only count batches in the sale location
+      if (saleLocationId) {
+        const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').eq('location_id', saleLocationId).gt('quantity_remaining', 0).limit(1000);
+        if (batches) {
+          for (const b of batches as any[]) {
+            stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
+          }
+        }
+      } else {
+        // Fallback: if no location, sum all (should not happen)
+        const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
+        if (val) {
+          for (const r of val as any[]) {
+            const bid = (r as any).book_id;
+            const q = Number((r as any).quantity_on_hand || 0);
+            stockMap[bid] = (stockMap[bid] || 0) + q;
+          }
         }
       }
     } catch {

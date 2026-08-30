@@ -115,6 +115,15 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
       setMsg(isZh ? '改后至少要有一本书' : 'At least one book required');
       return;
     }
+    // Duplicate check in UI as well
+    const seen = new Set<string>();
+    for (const c of cart) {
+      if (seen.has(c.id)) {
+        setMsg(isZh ? `同一本书不能出现两次：${c.title}` : `Duplicate book: ${c.title}`);
+        return;
+      }
+      seen.add(c.id);
+    }
     if (!reason.trim()) {
       setMsg(isZh ? '请填写改动原因，会写入操作记录' : 'Please enter reason for audit');
       return;
@@ -128,12 +137,13 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
       const { error } = await (supabase as any).rpc('apply_sale_content_edit', {
         p_sale_id: sale.id,
         p_items: items,
-        p_customer_name: customerName || null,
+        // Send empty string to clear, null is not sent - we send '' for cleared fields, backend treats '' as clear
+        p_customer_name: customerName.trim() === '' ? '' : customerName,
         p_payment_method: paymentMethod,
         p_payment_status: paymentStatus,
         p_discount_amount: discountAmount,
         p_sale_date: saleDate,
-        p_notes: notes || null,
+        p_notes: notes.trim() === '' ? '' : notes,
         p_shipping_cost: 0,
         p_reason: reason,
       });

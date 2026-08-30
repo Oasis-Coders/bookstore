@@ -29,21 +29,28 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   const notes = String(formData.get('notes') || '').trim() || null;
   const shippingCost = Number(formData.get('shipping_cost') || 0);
 
-  // Deterministic default location: active, ordered by code asc, prefer STORE-LON
+  // Deterministic default location: active STORE-LON preferred, no inactive fallback
   if (!locationId) {
     try {
-      const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).order('code', { ascending: true }).limit(1).single();
-      if (loc?.id) locationId = loc.id;
+      // Prefer STORE-LON if active
+      const { data: storeLoc } = await supabase.from('locations').select('id').eq('code', 'STORE-LON').eq('is_active', true).single();
+      if (storeLoc?.id) {
+        locationId = storeLoc.id;
+      } else {
+        // Else first active store type, ordered by code
+        const { data: storeTypeLoc } = await supabase.from('locations').select('id').eq('is_active', true).eq('location_type', 'store').order('code', { ascending: true }).limit(1).single();
+        if (storeTypeLoc?.id) {
+          locationId = storeTypeLoc.id;
+        } else {
+          // Else any active location, ordered by code
+          const { data: anyLoc } = await supabase.from('locations').select('id').eq('is_active', true).order('code', { ascending: true }).limit(1).single();
+          if (anyLoc?.id) locationId = anyLoc.id;
+        }
+      }
     } catch {}
-    if (!locationId) {
-      try {
-        const { data: loc2 } = await supabase.from('locations').select('id').order('code', { ascending: true }).limit(1).single();
-        if (loc2?.id) locationId = loc2.id;
-      } catch {}
-    }
   }
 
-  if (!locationId) return { success: false, error: '系统未配置库位，请先在设置中添加' };
+  if (!locationId) return { success: false, error: '系统未配置可用库位（没有启用的门店），请先在设置中启用 STORE-LON' };
 
   // Only store global discount amount; per-line discount percent stays 0 to avoid double-discount
   // Items keep their edited unit_price for clearance/gift sales

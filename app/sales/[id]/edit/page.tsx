@@ -32,7 +32,7 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
     } catch {}
   }
 
-  // Books + stock for autocomplete (same as sales page)
+  // Books + stock for autocomplete - location-specific to sale's location
   let books: any[] = [];
   let stockMap: Record<string, number> = {};
   try {
@@ -40,10 +40,18 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
     books = bRes.data || [];
   } catch {}
   try {
-    const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
-    if (val) {
-      for (const r of val as any[]) {
-        stockMap[r.book_id] = (stockMap[r.book_id] || 0) + Number(r.quantity_on_hand || 0);
+    const saleLocationId = (sale as any).location_id;
+    if (saleLocationId) {
+      const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').eq('location_id', saleLocationId).gt('quantity_remaining', 0).limit(1000);
+      if (batches) {
+        for (const b of batches as any[]) stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
+      }
+    } else {
+      const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
+      if (val) {
+        for (const r of val as any[]) {
+          stockMap[r.book_id] = (stockMap[r.book_id] || 0) + Number(r.quantity_on_hand || 0);
+        }
       }
     }
   } catch {
