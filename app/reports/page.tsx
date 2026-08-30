@@ -36,21 +36,55 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       // Fetch sales for date range if provided
       if (from || to) {
         try {
-          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by, profiles(display_name)').order('sold_at', { ascending: false });
+          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by').order('sold_at', { ascending: false });
           if (from) query = query.gte('sale_date', from);
           if (to) query = query.lte('sale_date', to);
           const { data } = await query.limit(100);
+          // Fetch staff names separately for robustness (FK may not have PostgREST relationship)
+          let profileMap: Record<string, string> = {};
+          if (data && data.length > 0) {
+            const ids = [...new Set((data as any[]).map(s => s.created_by).filter(Boolean))];
+            if (ids.length > 0) {
+              const { data: profs } = await supabase.from('profiles').select('id, display_name').in('id', ids);
+              if (profs) {
+                for (const p of profs as any[]) profileMap[p.id] = p.display_name;
+              }
+            }
+          }
           salesList = (data || []).map((s: any) => ({
             ...s,
             net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
-            created_by_name: s.profiles?.display_name || s.created_by?.slice(0,8) || '-',
-            staff_name: s.profiles?.display_name || '-',
+            created_by_name: profileMap[s.created_by] || s.created_by?.slice(0,8) || '-',
+            staff_name: profileMap[s.created_by] || '-',
           }));
-        } catch {}
+        } catch (e) {
+          // fallback: try with join if profiles relationship exists
+          try {
+            let q2 = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by, profiles(display_name)').order('sold_at', { ascending: false });
+            if (from) q2 = q2.gte('sale_date', from);
+            if (to) q2 = q2.lte('sale_date', to);
+            const { data } = await q2.limit(100);
+            salesList = (data || []).map((s: any) => ({
+              ...s,
+              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
+              created_by_name: s.profiles?.display_name || s.created_by?.slice(0,8) || '-',
+              staff_name: s.profiles?.display_name || '-',
+            }));
+          } catch {}
+        }
 
         try {
-          let bQuery = supabase.from('sales_transaction_lines').select('quantity, unit_price, cost_of_goods_sold, sales_transactions!inner(sale_date, sale_number, payment_method, customer_name), books(sku, title, title_en, shelf_position)').order('created_at', { ascending: false });
+          let bQuery = supabase.from('sales_transaction_lines').select('quantity, unit_price, cost_of_goods_sold, sales_transactions!inner(sale_date, sale_number, payment_method, customer_name, created_by), books(sku, title, title_en, shelf_position)').order('created_at', { ascending: false });
           const { data: lines } = await bQuery.limit(200);
+          // Build profile map for books list staff
+          let bookProfileMap: Record<string, string> = {};
+          if (lines && (lines as any[]).length > 0) {
+            const cids = [...new Set((lines as any[]).map((l:any)=>l.sales_transactions?.created_by).filter(Boolean))];
+            if (cids.length > 0) {
+              const { data: bp } = await supabase.from('profiles').select('id, display_name').in('id', cids);
+              if (bp) for (const p of bp as any[]) bookProfileMap[p.id]=p.display_name;
+            }
+          }
           salesBooksList = (lines || []).filter((l: any) => {
             const sd = l.sales_transactions?.sale_date;
             if (from && sd < from) return false;
@@ -68,6 +102,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             cost_of_goods_sold: l.cost_of_goods_sold,
             payment_method: l.sales_transactions?.payment_method,
             customer_name: l.sales_transactions?.customer_name,
+            created_by: l.sales_transactions?.created_by,
+            staff_name: bookProfileMap[l.sales_transactions?.created_by] || '-',
           }));
         } catch {
           try {

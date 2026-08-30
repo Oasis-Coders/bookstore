@@ -65,22 +65,20 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
       discPct,
       discAmt: discount,
       net,
+      gross,
     };
   });
 
   const globalDisc = Number(sale.discount_amount || 0);
-  if (globalDisc > 0 && enriched.length > 0 && enriched.every((e:any)=>e.discAmt===0)) {
-    const totalGross = enriched.reduce((s:number, e:any)=>s+e.qty*e.unit, 0);
-    if (totalGross > 0) {
-      bookSubtotal = Math.max(0, totalGross - globalDisc);
-      enriched[0].discAmt = globalDisc;
-      if (totalGross > 0) enriched[0].discPct = Math.round((globalDisc/totalGross)*100);
-      enriched[0].net = enriched[0].qty * enriched[0].unit - globalDisc;
-    }
-  }
+  const totalGross = enriched.reduce((s:number, e:any)=>s+e.gross, 0);
+  // If global discount exists and no per-line discount, keep bookSubtotal as gross, will subtract globally in totals
+  // For display, we keep per-line discounts as is, and show global discount separately
+  const bookSubtotalAfterGlobal = Math.max(0, bookSubtotal - (enriched.every((e:any)=>e.discAmt===0) ? globalDisc : 0));
+  const effectiveBookTotal = enriched.every((e:any)=>e.discAmt===0) ? (totalGross - globalDisc > 0 ? totalGross - globalDisc : bookSubtotalAfterGlobal) : bookSubtotal;
 
   const shipping = Number((sale as any).shipping_cost || 0);
-  const total = bookSubtotal + shipping;
+  const total = (enriched.every((e:any)=>e.discAmt===0) ? Math.max(0, totalGross - globalDisc) : bookSubtotal) + shipping;
+  const displayBookSubtotal = enriched.every((e:any)=>e.discAmt===0) ? totalGross : bookSubtotal;
 
   return (
     <div className="min-h-screen bg-white text-[#0f1f17] print:bg-white">
@@ -141,7 +139,10 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
 
         <div className="mt-4 flex justify-end">
           <div className="w-[280px] text-[12.5px] space-y-2">
-            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">Book Subtotal</span><span className="font-medium tabular-nums">£{bookSubtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">Book Subtotal</span><span className="font-medium tabular-nums">£{displayBookSubtotal.toFixed(2)}</span></div>
+            {globalDisc > 0 && enriched.every((e:any)=>e.discAmt===0) && (
+              <div className="flex justify-between py-1 text-[#d26a39]"><span>Discount {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-£{globalDisc.toFixed(2)}</span></div>
+            )}
             <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">P & P Cost</span><span className="tabular-nums">£{shipping.toFixed(2)}</span></div>
             <div className="flex justify-between py-2 border-t-2 border-[#0f3d2e] font-bold text-[14px] mt-2 pt-2"><span>Total:</span><span className="tabular-nums">£{total.toFixed(2)}</span></div>
           </div>

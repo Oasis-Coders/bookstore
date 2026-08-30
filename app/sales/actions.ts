@@ -31,12 +31,14 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
 
   if (!locationId) return { success: false, error: '请选择出库库位' };
 
+  // Only store global discount amount; per-line discount percent stays 0 to avoid double-discount
+  // Items keep their edited unit_price for clearance/gift sales
   const enrichedItems = items.map((it: any) => ({
     book_id: it.book_id,
     quantity: it.quantity,
     unit_price: it.unit_price,
-    discount_percent: it.discount_percent || discountPercent || 0,
-    discount_amount: it.discount_amount || 0,
+    discount_percent: 0,
+    discount_amount: 0,
   }));
 
   try {
@@ -72,50 +74,9 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   }
 }
 
+// Void is disabled - unsafe implementation removed per feedback.
+// To re-enable, create a secure atomic DB function with role checks and audit.
+// This placeholder prevents accidental use from UI.
 export async function voidSale(saleId: string) {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error('Supabase not configured');
-  
-  try {
-    const { data: lines } = await supabase.from('sales_transaction_lines').select('id, book_id, quantity').eq('sale_id', saleId);
-    if (lines && lines.length > 0) {
-      for (const line of lines as any[]) {
-        const { data: allocs } = await supabase.from('sales_batch_allocations').select('batch_id, quantity, unit_cost').eq('sale_line_id', line.id);
-        if (allocs) {
-          for (const a of allocs as any[]) {
-            const { data: batch } = await supabase.from('inventory_batches').select('quantity_remaining, quantity_received').eq('id', a.batch_id).single();
-            if (batch) {
-              const newRemaining = Math.min(Number((batch as any).quantity_received), Number((batch as any).quantity_remaining) + Number(a.quantity));
-              await supabase.from('inventory_batches').update({ quantity_remaining: newRemaining }).eq('id', a.batch_id);
-            }
-            try {
-              const { data: sale } = await supabase.from('sales_transactions').select('location_id, created_by').eq('id', saleId).single();
-              if (sale) {
-                await supabase.from('inventory_transactions').insert({
-                  transaction_type: 'return_in',
-                  book_id: line.book_id,
-                  quantity: a.quantity,
-                  destination_location_id: (sale as any).location_id,
-                  source_batch_id: a.batch_id,
-                  unit_cost: a.unit_cost,
-                  reference_type: 'sale_void',
-                  reference_id: saleId,
-                  actor_profile_id: (sale as any).created_by,
-                  reason: `Void sale ${saleId}`,
-                } as any);
-              }
-            } catch {}
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.error('void restore error', e);
-  }
-
-  const { error } = await supabase.from('sales_transactions').update({ status: 'voided' }).eq('id', saleId);
-  if (error) throw error;
-  revalidatePath('/sales');
-  revalidatePath('/reports');
-  revalidatePath('/books');
+  throw new Error('作废功能暂不可用，请联系管理员 / Void is disabled, contact admin');
 }

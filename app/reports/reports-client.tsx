@@ -297,6 +297,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 text-[11px]">{r.payment_status}</td>
                     <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || r.subtotal || 0))}</td>
                     <td className="py-2 text-[#4f7a5c]">{r.customer_name || '-'}</td>
+                    <td className="py-2 text-[11px]">{r.created_by_name || r.staff_name || '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -326,6 +327,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 text-center font-medium">{r.quantity}</td>
                     <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-[#faf6ee] text-[10px]">{r.shelf_position || '-'}</span></td>
                     <td className="py-2 text-[#4f7a5c]">{r.customer_name || '-'}</td>
+                    <td className="py-2 text-[11px]">{r.staff_name || r.created_by_name || '-'}</td>
                   </tr>
                 ))}
               </tbody>

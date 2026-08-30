@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
-import { createSale, voidSale } from './actions';
+import { createSale } from './actions';
 
 type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string; stock?: number };
 
@@ -23,7 +23,6 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
   const [locationId, setLocationId] = useState(locations?.[0]?.id || '');
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
-  const [showVoidConfirm, setShowVoidConfirm] = useState<string | null>(null);
   
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0,10));
   const [discountPercent, setDiscountPercent] = useState('0');
@@ -42,10 +41,10 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
     const found = books?.find((b: any) => b.id === bookId);
     if (!found) return;
     const stock = stockMap?.[found.id] ?? (found as any).quantity_on_hand ?? 999;
-    // zero stock warning
+    // zero stock blocking - Luke requested warning and prevent adding
     if (stock <= 0) {
-      const proceed = confirm(isZh ? `《${found.title}》当前库存为 0，可能与实际库存不符。仍要加入销售单？\n\n（建议先盘点库存）` : `"${found.title}" has 0 stock, may be out of sync. Add anyway?`);
-      if (!proceed) return;
+      alert(isZh ? `《${found.title}》当前库存为 0，无法加入销售单。请先盘点/进货。` : `"${found.title}" has 0 stock and cannot be added. Please check inventory.`);
+      return;
     }
     // check existing
     const existing = cart.find(c=>c.id===found.id);
@@ -101,16 +100,6 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
       setMsg(e.message || (isZh ? '销售失败' : 'Sale failed'));
     } finally {
       setSelling(false);
-    }
-  };
-
-  const handleVoid = async (saleId: string) => {
-    try {
-      await voidSale(saleId);
-      setShowVoidConfirm(null);
-      window.location.reload();
-    } catch (e:any) {
-      alert(e.message);
     }
   };
 
@@ -228,7 +217,7 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
               </div>
 
               <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing...') : tt('sales.confirmSale')}</Button>
-              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存不足时整笔销售取消（原子操作）。零库存会弹窗提醒，可手动确认。' : 'Sale is atomic - cancelled if any item insufficient. Zero-stock triggers warning.'}</p>
+              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存不足时整笔销售取消（原子操作）。零库存已阻止加入。' : 'Sale is atomic - cancelled if any item insufficient. Zero-stock blocked.'}</p>
             </div>
           </div>
         </Card>
@@ -249,19 +238,9 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
                       <Badge variant="active" className="text-[10px]">{s.payment_method || 'cash'}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
-                    <Button size="sm" variant="ghost" className="h-7 text-[10px] text-red-500" onClick={()=>setShowVoidConfirm(s.id)}>{isZh ? '作废' : 'Void'}</Button>
                   </div>
                 </div>
               ))}
-              {showVoidConfirm && (
-                <div className="rounded-[12px] bg-red-50 p-3 text-[12px] text-red-700">
-                  <p>{isZh ? '确定作废该销售单？库存将返还，操作不可逆。' : 'Void this sale? Stock will be returned, irreversible.'}</p>
-                  <div className="mt-2 flex gap-2">
-                    <Button size="sm" variant="ghost" onClick={()=>setShowVoidConfirm(null)}>{isZh ? '取消' : 'Cancel'}</Button>
-                    <Button size="sm" onClick={()=>handleVoid(showVoidConfirm)} className="bg-red-600 text-white">{isZh ? '确认作废' : 'Confirm Void'}</Button>
-                  </div>
-                </div>
-              )}
             </div>
           </Card>
 
@@ -269,7 +248,7 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
             <CardTitle>{isZh ? '改单说明' : 'Correcting Sales'}</CardTitle>
             <div className="mt-2 text-[11px] text-[#4f7a5c] space-y-1.5 leading-relaxed">
               <p>{isZh ? '• 确认前：直接在左侧购物车点 × 删除或改数量/改价。' : '• Before confirm: Remove via × or adjust qty/price in cart.'}</p>
-              <p>{isZh ? '• 确认后客人改主意：点右侧“作废”作废整单（库存返还），再重新开一单；或联系管理员做部分退货。' : '• After confirm: Void whole sale (stock returns) and re-create, or contact admin for partial return.'}</p>
+              <p>{isZh ? '• 确认后客人改主意：联系管理员作废整单（库存返还），再重新开一单；暂不支持部分退货。' : '• After confirm: Contact admin to void whole sale (stock returns) and re-create; partial returns not yet supported.'}</p>
               <p>{isZh ? '• 清仓/赠送（代号 Sales）：加入购物车后直接在单价框改价即可，系统按改后价开票。' : '• Clearance/gift (code Sales): Edit price in cart, invoice uses edited price.'}</p>
             </div>
           </Card>
