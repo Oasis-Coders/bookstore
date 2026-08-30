@@ -14,13 +14,12 @@ type CartItem = { id: string; title: string; qty: number; price: number; shelf_p
 
 type RecentSale = { id: string; sale_number: string; subtotal: number; payment_method?: string; customer_name?: string; sold_at: string };
 
-export function SalesClient({ books, locations, recentSales, stockMap }: { books?: any[]; locations?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number> } = { books: [], locations: [], recentSales: [], stockMap: {} }) {
+export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number> } = { books: [], recentSales: [], stockMap: {} }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedBookId, setSelectedBookId] = useState('');
   const [scanInput, setScanInput] = useState('');
-  const [locationId, setLocationId] = useState(locations?.[0]?.id || '');
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
   
@@ -71,7 +70,6 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
     setMsg('');
     try {
       const fd = new FormData();
-      fd.set('location_id', locationId || (locations?.[0]?.id || ''));
       fd.set('items_json', JSON.stringify(cart.map(c => ({ 
         book_id: c.id, 
         quantity: c.qty,
@@ -154,20 +152,6 @@ export function SalesClient({ books, locations, recentSales, stockMap }: { books
               <label className="text-[11px] font-medium">{isZh ? '购书人（人名/网单号/教会/团契）' : 'Customer (Name/Order No/Church/Fellowship)'} </label>
               <Input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
             </div>
-
-            <div className="rounded-[12px] bg-[#fcfaf6] border border-[#ece5d6] p-3 text-[11px] text-[#5a7a6a]">
-              <p className="font-medium text-[#0f3d2e]">{isZh ? '出库位置说明' : 'Fulfilment Location'}</p>
-              <p className="mt-1 leading-relaxed">{isZh ? '所有库存都在COCM二楼书房。同一本书少量放在书架供顾客自取，其余在后场库存架。系统默认从总库存扣减，书架位置仅作拣货参考。' : 'All stock is at COCM 2F. A few copies are on the display shelf for customers, the rest on back storage. System deducts from total stock; shelf position is for picking reference.'}</p>
-            </div>
-
-            {locations && locations.length > 0 && (
-              <div>
-                <label className="text-[11px] font-medium">{isZh ? '出库库位' : 'Fulfilment Location'}</label>
-                <select value={locationId} onChange={e => setLocationId(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
-                  {locations.map((l: any) => <option key={l.id} value={l.id}>{l.name} ({l.code})</option>)}
-                </select>
-              </div>
-            )}
 
             <div className="rounded-[16px] border border-dashed border-[#0f3d2e]/20 p-4">
               <label className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>

@@ -9,7 +9,7 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { success: false, error: '系统未配置' };
 
-  const locationId = String(formData.get('location_id') || '');
+  let locationId = String(formData.get('location_id') || '').trim();
   const itemsJson = String(formData.get('items_json') || '[]');
   let items: any[];
   try {
@@ -29,7 +29,22 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   const notes = String(formData.get('notes') || '').trim() || null;
   const shippingCost = Number(formData.get('shipping_cost') || 0);
 
-  if (!locationId) return { success: false, error: '请选择出库库位' };
+  // Auto-pick first active location if not provided (sales location removed from UI)
+  if (!locationId) {
+    try {
+      const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).limit(1).single();
+      if (loc?.id) locationId = loc.id;
+    } catch {}
+    // fallback: any location
+    if (!locationId) {
+      try {
+        const { data: loc2 } = await supabase.from('locations').select('id').limit(1).single();
+        if (loc2?.id) locationId = loc2.id;
+      } catch {}
+    }
+  }
+
+  if (!locationId) return { success: false, error: '系统未配置库位，请先在设置中添加' };
 
   // Only store global discount amount; per-line discount percent stays 0 to avoid double-discount
   // Items keep their edited unit_price for clearance/gift sales
