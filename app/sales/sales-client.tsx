@@ -114,6 +114,9 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
   const handlePrintInvoice = (sale: RecentSale) => {
     window.open(`/sales/${sale.id}/invoice`, '_blank');
   };
+  const handleEdit = (sale: RecentSale) => {
+    window.location.href = `/sales/${sale.id}/edit`;
+  };
 
   return (
     <AppShell title={tt('sales.title')} titleZh={tt('sales.title')} eyebrow={tt('sales.eyebrow')}>
@@ -232,6 +235,7 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
                       <Badge variant="active" className="text-[10px]">{s.payment_method || 'cash'}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#d26a39]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>
                   </div>
                 </div>
               ))}

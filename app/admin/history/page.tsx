@@ -21,6 +21,7 @@ function AuditHistoryInner() {
   const [transactions, setTransactions] = useState<Tx[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [adjustments, setAdjustments] = useState<PO[]>([]);
+  const [edits, setEdits] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -51,6 +52,7 @@ function AuditHistoryInner() {
       let txs: Tx[] = [];
       let sls: Sale[] = [];
       let pos: PO[] = [];
+      let eds: any[] = [];
 
       try {
         if (filter === 'all' || filter === 'inventory') {
@@ -68,6 +70,23 @@ function AuditHistoryInner() {
             .order('sold_at', { ascending: false })
             .limit(30);
           sls = (data as any) || [];
+          try {
+            const { data: ed } = await supabase
+              .from('sale_edits_view')
+              .select('*')
+              .order('edited_at', { ascending: false })
+              .limit(30);
+            eds = (ed as any) || [];
+          } catch {
+            try {
+              const { data: ed2 } = await supabase
+                .from('sale_edits')
+                .select('*, profiles:edited_by(display_name, email)')
+                .order('edited_at', { ascending: false })
+                .limit(30);
+              eds = (ed2 as any) || [];
+            } catch {}
+          }
         }
         if (filter === 'all' || filter === 'po') {
           const { data } = await supabase
@@ -83,6 +102,7 @@ function AuditHistoryInner() {
       setTransactions(txs);
       setSales(sls);
       setAdjustments(pos);
+      setEdits(eds);
       setLoading(false);
     };
     run();
@@ -136,6 +156,14 @@ function AuditHistoryInner() {
               {isZh ? '销售' : 'Sales'}
             </button>
             <button
+              onClick={() => setFilter('edits')}
+              className={`rounded-[10px] px-3 py-1.5 text-[12px] ${
+                filter === 'edits' ? 'bg-[#0f3d2e] text-white' : 'bg-[#faf6ee]'
+              }`}
+            >
+              {isZh ? '改单记录' : 'Edits'}
+            </button>
+            <button
               onClick={() => setFilter('po')}
               className={`rounded-[10px] px-3 py-1.5 text-[12px] ${
                 filter === 'po' ? 'bg-[#0f3d2e] text-white' : 'bg-[#faf6ee]'
@@ -145,6 +173,25 @@ function AuditHistoryInner() {
             </button>
           </div>
         </Card>
+
+        {(filter === 'all' || filter === 'edits') && (
+          <Card>
+            <CardTitle>{isZh ? '改单记录（销售信息更正）' : 'Sale Edit History'}</CardTitle>
+            <div className="mt-3 space-y-2">
+              {edits.map((ed: any) => (
+                <div key={ed.id} className="rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[11px] border border-[#d26a39]/20">
+                  <p className="font-medium">{new Date(ed.edited_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • {ed.editor_name || ed.profiles?.display_name || ed.edited_by?.slice(0,6)} {ed.profiles?.email ? `(${ed.profiles.email})` : ed.editor_email ? `(${ed.editor_email})` : ''} • {ed.sale_number || ed.sale_id?.slice(0,8)}</p>
+                  {ed.reason && <p className="text-[#4f7a5c]">原因：{ed.reason}</p>}
+                  <div className="mt-1 grid grid-cols-2 gap-2 text-[10px] font-mono">
+                    <div>改前 {JSON.stringify(ed.old_values)}</div>
+                    <div className="text-[#0f3d2e]">改后 {JSON.stringify(ed.new_values)}</div>
+                  </div>
+                </div>
+              ))}
+              {edits.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无改单' : 'No edits'}</p>}
+            </div>
+          </Card>
+        )}
 
         {(filter === 'all' || filter === 'inventory') && (
           <Card>
