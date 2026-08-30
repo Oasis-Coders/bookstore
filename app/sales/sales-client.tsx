@@ -40,14 +40,18 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
     const found = books?.find((b: any) => b.id === bookId);
     if (!found) return;
     const stock = stockMap?.[found.id] ?? (found as any).quantity_on_hand ?? 999;
-    // zero stock blocking - Luke requested warning and prevent adding
+    // zero / insufficient stock blocking
     if (stock <= 0) {
-      alert(isZh ? `《${found.title}》当前库存为 0，无法加入销售单。请先盘点/进货。` : `"${found.title}" has 0 stock and cannot be added. Please check inventory.`);
+      alert(isZh ? `《${found.title}》当前库存为 0，加不上。请先盘点或进货。` : `"${found.title}" has 0 stock and cannot be added. Please check inventory.`);
       return;
     }
     // check existing
     const existing = cart.find(c=>c.id===found.id);
     if (existing) {
+      if (existing.qty + 1 > stock) {
+        alert(isZh ? `《${found.title}》库存只有 ${stock} 本，已加了 ${existing.qty} 本，加不上更多了。` : `"${found.title}" only has ${stock} in stock, you already added ${existing.qty}. Cannot add more.`);
+        return;
+      }
       setCart(cart.map(c=>c.id===found.id ? {...c, qty: c.qty+1} : c));
     } else {
       setCart([...cart, { id: found.id, title: found.title, qty: 1, price: Number(found.current_price || 10), shelf_position: found.shelf_position, sku: found.sku, stock }]);
@@ -58,6 +62,12 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
   const removeItem = (id: string) => setCart(cart.filter(c => c.id !== id));
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) { setCart(cart.filter(c => c.id !== id)); return; }
+    const item = cart.find(c => c.id === id);
+    const stock = item?.stock ?? 999;
+    if (qty > stock) {
+      alert(isZh ? `《${item?.title}》库存只有 ${stock} 本，加不上 ${qty} 本。` : `"${item?.title}" only has ${stock} in stock, cannot set to ${qty}.`);
+      return;
+    }
     setCart(cart.map(c => c.id === id ? { ...c, qty } : c));
   };
   const updatePrice = (id: string, price: number) => {
@@ -201,7 +211,7 @@ export function SalesClient({ books, recentSales, stockMap }: { books?: any[]; r
               </div>
 
               <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing...') : tt('sales.confirmSale')}</Button>
-              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存不足时整笔销售取消（原子操作）。零库存已阻止加入。' : 'Sale is atomic - cancelled if any item insufficient. Zero-stock blocked.'}</p>
+              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存为 0 的书加不上，会弹窗提醒。' : 'Books with 0 stock cannot be added — you will see an alert.'}</p>
             </div>
           </div>
         </Card>
