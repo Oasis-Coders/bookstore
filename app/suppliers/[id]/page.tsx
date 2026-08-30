@@ -11,7 +11,8 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
 type Supplier = any;
-type PO = { po_number: string; status: string; created_at: string };
+type PO = { id: string; po_number: string; status: string; created_at: string; order_date?: string };
+const statusZh: Record<string,string> = { draft:'草稿', approved:'已批准', ordered:'已下单', partially_received:'部分收货', received:'已收货', cancelled:'已取消' };
 
 export default function SupplierDetailPage() {
   const { id } = useParams() as { id: string };
@@ -34,10 +35,11 @@ export default function SupplierDetailPage() {
       if (s) setSupplier(s);
       const { data: poData } = await supabase
         .from('purchase_orders')
-        .select('po_number, status, created_at')
+        .select('id, po_number, status, created_at, order_date')
         .eq('supplier_id', id)
+        .order('order_date', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(8);
       if (poData) setPos(poData as any);
       setLoading(false);
     })();
@@ -90,9 +92,13 @@ export default function SupplierDetailPage() {
           <CardTitle>{isZh ? '最近采购单' : 'Recent Purchase Orders'}</CardTitle>
           <div className="mt-3 space-y-2">
             {(pos || []).map((po: any) => (
-              <div key={po.po_number} className="flex justify-between rounded-[10px] bg-[#faf6ee]/60 px-3 py-2 text-[12px]">
-                <span className="font-mono">{po.po_number}</span><Badge>{po.status}</Badge>
-              </div>
+              <Link key={po.po_number} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[10px] bg-[#faf6ee]/60 px-3 py-2.5 text-[12px] hover:bg-[#f5eedf] transition">
+                <div className="flex flex-col">
+                  <span className="font-mono font-medium">{po.po_number}</span>
+                  <span className="text-[11px] text-[#6b8a7a]">{po.order_date ? (isZh ? `下单 ${po.order_date}` : `Ordered ${po.order_date}`) : new Date(po.created_at).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}</span>
+                </div>
+                <Badge>{isZh ? (statusZh[po.status] || po.status) : po.status}</Badge>
+              </Link>
             ))}
             {(!pos || pos.length === 0) && <p className="text-[12px] text-[#4f7a5c]">{isZh ? '暂无采购单' : 'No purchase orders'}</p>}
           </div>

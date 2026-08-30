@@ -113,22 +113,22 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     let filename = '';
     if (type === 'valuation') {
       filename = `inventory_valuation_${new Date().toISOString().slice(0,10)}.csv`;
-      csv = `${isZh ? '代号' : 'Code'},Title,Location,${isZh ? '数量' : 'Quantity'},${isZh ? '均价' : 'Average Cost'},Cost Value,Retail Value\n` + valuation.map(r => 
+      csv = 'SKU,Title,Location,Qty,WAC,Cost Value,Retail Value\n' + valuation.map(r => 
         `${r.sku},"${r.title}",${r.location_name},${r.quantity_on_hand},${r.weighted_average_cost},${r.inventory_value},${r.retail_value}`
       ).join('\n');
     } else if (type === 'lowstock') {
       filename = `low_stock_${new Date().toISOString().slice(0,10)}.csv`;
-      csv = `${isZh ? '代号' : 'Code'},Title,${isZh ? '阈值' : 'Threshold'},On Hand,Shortage\n` + lowStock.map(r =>
+      csv = 'SKU,Title,Threshold,On Hand,Shortage\n' + lowStock.map(r =>
         `${r.sku},"${r.title}",${r.low_stock_threshold},${r.quantity_on_hand},${r.reorder_shortage}`
       ).join('\n');
     } else if (type === 'sales') {
       filename = `sales_${fromDate}_to_${toDate}.csv`;
-      csv = 'Date,Sale Number,Payment Method,Status,Subtotal,Discount,Net Total,Customer\n' + salesList.map(r =>
-        `${r.sale_date},${r.sale_number},${r.payment_method},${r.payment_status},${r.subtotal},${r.discount_amount || 0},${r.net_total},${r.customer_name || ''}`
+      csv = 'Date,Sale Number,Payment Method,Status,Subtotal,Discount,Net Total,Customer,Staff\n' + salesList.map(r =>
+        `${r.sale_date},${r.sale_number},${r.payment_method},${r.payment_status},${r.subtotal},${r.discount_amount || 0},${r.net_total},${r.customer_name || ''},${r.created_by_name || r.staff_name || ''}`
       ).join('\n');
     } else if (type === 'salesBooks') {
       filename = `sales_books_${fromDate}_to_${toDate}.csv`;
-      csv = `Date,Sale Number,${isZh ? '代号' : 'Code'},Title,${isZh ? '数量' : 'Quantity'},Unit Price,Payment Method,Customer,Shelf\n` + salesBooksList.map(r =>
+      csv = 'Date,Sale Number,SKU,Title,Qty,Unit Price,Payment Method,Customer,Shelf\n' + salesBooksList.map(r =>
         `${r.sale_date},${r.sale_number},${r.sku},"${r.title}",${r.quantity},${r.unit_price},${r.payment_method},${r.customer_name || ''},${r.shelf_position || ''}`
       ).join('\n');
     }
@@ -287,7 +287,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           </div>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
-              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th></tr></thead>
+              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
               <tbody>
                 {salesList.map((r, i) => (
                   <tr key={i} className="border-b border-[#0f3d2e]/5">
@@ -312,10 +312,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <CardTitle className="text-[14px]">{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('salesBooks')} className="rounded-[10px]">{isZh ? '导出CSV 手动改Shopify库存' : 'Export CSV for Shopify'}</Button>
           </div>
-          <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, Code, shelf hint for picking.'}</p>
+          <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[11px]">
-              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '代号' : 'Code'}</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Quantity'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th></tr></thead>
+              <thead><tr className="border-b border-[#0f3d2e]/10 text-left text-[#4f7a5c]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
               <tbody>
                 {salesBooksList.map((r, i) => (
                   <tr key={i} className="border-b border-[#0f3d2e]/5">

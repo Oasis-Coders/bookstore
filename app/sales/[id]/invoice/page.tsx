@@ -89,7 +89,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         <div className="flex justify-between items-start border-b-2 border-[#0f3d2e] pb-5">
           <div>
             <h1 className="text-[22px] font-bold tracking-tight">COCM Bookshop</h1>
-            <p className="text-[11px] text-[#5a7a6a] mt-1">活水书房 • Chinese Christian Bookshop</p>
+            <p className="text-[11px] text-[#5a7a6a] mt-1">活水书房</p>
           </div>
           <div className="text-right">
             <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">Invoice No</p>

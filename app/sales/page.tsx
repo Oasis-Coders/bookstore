@@ -3,9 +3,10 @@ import { SalesClient } from './sales-client';
 
 export default async function SalesPage() {
   const supabase = await createSupabaseServerClient();
-  let books: any[] = [];
-  let locations: any[] = [];
-  let recentSales: any[] = [];
+  let books: any[] = [] as any[];
+  let locations: any[] = [] as any[];
+  let recentSales: any[] = [] as any[];
+  let stockMap: Record<string, number> = {};
   
   if (supabase) {
     try {
@@ -33,7 +34,26 @@ export default async function SalesPage() {
     } catch (e) {
       console.error('sales fetch error', e);
     }
+    try {
+      const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
+      if (val) {
+        for (const r of val as any[]) {
+          const bid = (r as any).book_id;
+          const q = Number((r as any).quantity_on_hand || 0);
+          stockMap[bid] = (stockMap[bid] || 0) + q;
+        }
+      }
+    } catch {
+      try {
+        const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').gt('quantity_remaining', 0).limit(500);
+        if (batches) {
+          for (const b of batches as any[]) {
+            stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
+          }
+        }
+      } catch {}
+    }
   }
 
-  return <SalesClient books={books} locations={locations} recentSales={recentSales} />;
+  return <SalesClient books={books} locations={locations} recentSales={recentSales} stockMap={stockMap} />;
 }

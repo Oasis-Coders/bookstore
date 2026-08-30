@@ -36,13 +36,15 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       // Fetch sales for date range if provided
       if (from || to) {
         try {
-          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status').order('sold_at', { ascending: false });
+          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by, profiles(display_name)').order('sold_at', { ascending: false });
           if (from) query = query.gte('sale_date', from);
           if (to) query = query.lte('sale_date', to);
           const { data } = await query.limit(100);
           salesList = (data || []).map((s: any) => ({
             ...s,
             net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
+            created_by_name: s.profiles?.display_name || s.created_by?.slice(0,8) || '-',
+            staff_name: s.profiles?.display_name || '-',
           }));
         } catch {}
 

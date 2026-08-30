@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,13 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
-import { createSale } from './actions';
+import { createSale, voidSale } from './actions';
 
-type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string };
+type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string; stock?: number };
 
 type RecentSale = { id: string; sale_number: string; subtotal: number; payment_method?: string; customer_name?: string; sold_at: string };
 
-export function SalesClient({ books, locations, recentSales }: { books?: any[]; locations?: any[]; recentSales?: RecentSale[] } = { books: [], locations: [], recentSales: [] }) {
+export function SalesClient({ books, locations, recentSales, stockMap }: { books?: any[]; locations?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number> } = { books: [], locations: [], recentSales: [], stockMap: {} }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -23,35 +23,47 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
   const [locationId, setLocationId] = useState(locations?.[0]?.id || '');
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
+  const [showVoidConfirm, setShowVoidConfirm] = useState<string | null>(null);
   
   const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0,10));
-  const [discount, setDiscount] = useState('0');
+  const [discountPercent, setDiscountPercent] = useState('0');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
 
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
-  const discountNum = Number(discount || 0);
-  const netTotal = Math.max(0, total - discountNum);
+  const discountPctNum = Math.min(100, Math.max(0, Number(discountPercent || 0)));
+  const discountAmount = total * discountPctNum / 100;
+  const netTotal = Math.max(0, total - discountAmount);
+  const totalQty = cart.reduce((s,i)=>s+i.qty,0);
 
   const addBookById = (bookId: string) => {
     const found = books?.find((b: any) => b.id === bookId);
-    if (found) {
-      setCart([...cart, { id: found.id, title: found.title, qty: 1, price: Number(found.current_price || 10), shelf_position: found.shelf_position, sku: found.sku }]);
-      setSelectedBookId('');
+    if (!found) return;
+    const stock = stockMap?.[found.id] ?? (found as any).quantity_on_hand ?? 999;
+    // zero stock warning
+    if (stock <= 0) {
+      const proceed = confirm(isZh ? `《${found.title}》当前库存为 0，可能与实际库存不符。仍要加入销售单？\n\n（建议先盘点库存）` : `"${found.title}" has 0 stock, may be out of sync. Add anyway?`);
+      if (!proceed) return;
     }
-  };
-
-  const addToCart = () => {
-    if (!selectedBookId) return;
-    addBookById(selectedBookId);
+    // check existing
+    const existing = cart.find(c=>c.id===found.id);
+    if (existing) {
+      setCart(cart.map(c=>c.id===found.id ? {...c, qty: c.qty+1} : c));
+    } else {
+      setCart([...cart, { id: found.id, title: found.title, qty: 1, price: Number(found.current_price || 10), shelf_position: found.shelf_position, sku: found.sku, stock }]);
+    }
+    setSelectedBookId('');
   };
 
   const removeItem = (id: string) => setCart(cart.filter(c => c.id !== id));
   const updateQty = (id: string, qty: number) => {
     if (qty <= 0) { setCart(cart.filter(c => c.id !== id)); return; }
     setCart(cart.map(c => c.id === id ? { ...c, qty } : c));
+  };
+  const updatePrice = (id: string, price: number) => {
+    setCart(cart.map(c => c.id === id ? { ...c, price: Math.max(0, price) } : c));
   };
 
   const handleConfirm = async () => {
@@ -67,7 +79,8 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
         unit_price: c.price,
       }))));
       fd.set('sale_date', saleDate);
-      fd.set('discount', discount);
+      fd.set('discount', String(discountAmount));
+      fd.set('discount_percent', String(discountPctNum));
       fd.set('payment_method', paymentMethod);
       fd.set('payment_status', paymentStatus);
       fd.set('customer_name', customerName);
@@ -75,21 +88,29 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
       fd.set('shipping_cost', '0');
       const result = await createSale(fd);
       if ((result as any)?.success) {
-        setMsg(isZh ? '销售成功' : 'Sale completed');
+        setMsg(isZh ? `销售成功 ${totalQty}本/${cart.length}种 已出库` : `Sale completed ${totalQty} pcs/${cart.length} titles`);
         setCart([]);
         setCustomerName('');
         setNotes('');
+        setDiscountPercent('0');
         window.location.reload();
       } else {
         setMsg((result as any)?.error || (isZh ? '销售失败' : 'Sale failed'));
       }
     } catch (e: any) {
-      if (false) {
-      } else {
-        setMsg(e.message || (isZh ? '销售失败' : 'Sale failed'));
-      }
+      setMsg(e.message || (isZh ? '销售失败' : 'Sale failed'));
     } finally {
       setSelling(false);
+    }
+  };
+
+  const handleVoid = async (saleId: string) => {
+    try {
+      await voidSale(saleId);
+      setShowVoidConfirm(null);
+      window.location.reload();
+    } catch (e:any) {
+      alert(e.message);
     }
   };
 
@@ -113,8 +134,11 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
                 <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '折扣 £' : 'Discount £'}</label>
-                <Input type="number" step="0.01" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="0.00" className="mt-1" />
+                <label className="text-[11px] font-medium">{isZh ? '折扣 %（如20=八折）' : 'Discount % (e.g. 20=20% off)'}</label>
+                <div className="mt-1 flex gap-2">
+                  <Input type="number" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" className="flex-1" />
+                  <span className="flex h-10 items-center rounded-[12px] bg-[#faf6ee] px-3 text-[11px] text-[#4f7a5c]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
+                </div>
               </div>
             </div>
 
@@ -142,9 +166,14 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
               <Input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
             </div>
 
-            {locations && locations.length > 1 && (
+            <div className="rounded-[12px] bg-[#fcfaf6] border border-[#ece5d6] p-3 text-[11px] text-[#5a7a6a]">
+              <p className="font-medium text-[#0f3d2e]">{isZh ? '出库位置说明' : 'Fulfilment Location'}</p>
+              <p className="mt-1 leading-relaxed">{isZh ? '所有库存都在COCM二楼书房。同一本书少量放在书架供顾客自取，其余在后场库存架。系统默认从总库存扣减，书架位置仅作拣货参考。' : 'All stock is at COCM 2F. A few copies are on the display shelf for customers, the rest on back storage. System deducts from total stock; shelf position is for picking reference.'}</p>
+            </div>
+
+            {locations && locations.length > 0 && (
               <div>
-                <label className="text-[12px] font-medium">{tt('sales.location')}</label>
+                <label className="text-[11px] font-medium">{isZh ? '出库库位' : 'Fulfilment Location'}</label>
                 <select value={locationId} onChange={e => setLocationId(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
                   {locations.map((l: any) => <option key={l.id} value={l.id}>{l.name} ({l.code})</option>)}
                 </select>
@@ -153,28 +182,40 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
 
             <div className="rounded-[16px] border border-dashed border-[#0f3d2e]/20 p-4">
               <label className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
-              <BookAutocomplete books={books || []} value={selectedBookId} onChange={(id) => { setSelectedBookId(id); if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
+              <BookAutocomplete books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
               <div className="mt-2 flex gap-2">
                 <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q) || b.sku.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } } }} />
                 <Button variant="secondary" size="sm" onClick={() => { const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } }}>{tt('sales.add')}</Button>
               </div>
 
-              <div className="mt-3 space-y-2">
-                {cart.map(item => (
+              <div className="mt-3 flex items-center justify-between text-[11px] text-[#4f7a5c]">
+                <span>{isZh ? `已选 ${cart.length} 种 / 共 ${totalQty} 本` : `${cart.length} titles / ${totalQty} pcs selected`}</span>
+                {cart.length>0 && <button onClick={()=>setCart([])} className="text-red-500 hover:text-red-700">{isZh ? '清空' : 'Clear'}</button>}
+              </div>
+
+              <div className="mt-2 space-y-2 max-h-[360px] overflow-y-auto pr-1">
+                {cart.map((item, idx) => (
                   <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2 text-[12px]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3d2e] text-[10px] text-white">{idx+1}</span>
                       <button onClick={() => removeItem(item.id)} className="text-[14px] text-red-400 hover:text-red-600">×</button>
                       <div className="flex-1 min-w-0">
-                        <span className="truncate">{item.title} <span className="text-[#4f7a5c] text-[10px]">({item.sku})</span></span>
-                        {item.shelf_position && <span className="ml-2 inline-flex text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
+                        <span className="truncate font-medium">{item.title} <span className="text-[#4f7a5c] text-[10px]">({item.sku})</span></span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {item.shelf_position && <span className="inline-flex text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
+                          {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : `${item.stock} left`}</span>}
+                        </div>
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2">
                       <div className="flex items-center gap-1">
                         <button onClick={() => updateQty(item.id, item.qty - 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">-</button>
                         <span className="w-6 text-center">{item.qty}</span>
                         <button onClick={() => updateQty(item.id, item.qty + 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">+</button>
                       </div>
+                      <Input value={String(item.price)} onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
+                      <span className="w-[60px] text-right">£{(item.qty * item.price).toFixed(2)}</span>
                     </div>
-                    <span className="ml-2">£{(item.qty * item.price).toFixed(2)}</span>
                   </div>
                 ))}
                 {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">{isZh ? '购物车为空，选书添加' : 'Cart empty, select books to add'}</p>}
@@ -182,12 +223,12 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
 
               <div className="mt-4 space-y-1 border-t border-[#0f3d2e]/10 pt-3">
                 <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{total.toFixed(2)}</span></div>
-                {discountNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#d26a39]"><span>{isZh ? '折扣' : 'Discount'}</span><span>-£{discountNum.toFixed(2)}</span></div>}
+                {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#d26a39]"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
                 <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{tt('sales.total')}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
               </div>
 
               <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing...') : tt('sales.confirmSale')}</Button>
-              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{tt('sales.confirmHint')}</p>
+              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存不足时整笔销售取消（原子操作）。零库存会弹窗提醒，可手动确认。' : 'Sale is atomic - cancelled if any item insufficient. Zero-stock triggers warning.'}</p>
             </div>
           </div>
         </Card>
@@ -208,18 +249,28 @@ export function SalesClient({ books, locations, recentSales }: { books?: any[]; 
                       <Badge variant="active" className="text-[10px]">{s.payment_method || 'cash'}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
+                    <Button size="sm" variant="ghost" className="h-7 text-[10px] text-red-500" onClick={()=>setShowVoidConfirm(s.id)}>{isZh ? '作废' : 'Void'}</Button>
                   </div>
                 </div>
               ))}
+              {showVoidConfirm && (
+                <div className="rounded-[12px] bg-red-50 p-3 text-[12px] text-red-700">
+                  <p>{isZh ? '确定作废该销售单？库存将返还，操作不可逆。' : 'Void this sale? Stock will be returned, irreversible.'}</p>
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" variant="ghost" onClick={()=>setShowVoidConfirm(null)}>{isZh ? '取消' : 'Cancel'}</Button>
+                    <Button size="sm" onClick={()=>handleVoid(showVoidConfirm)} className="bg-red-600 text-white">{isZh ? '确认作废' : 'Confirm Void'}</Button>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
 
           <Card>
-            <CardTitle>{isZh ? '打印发票' : 'Print Invoice'}</CardTitle>
-            <p className="mt-2 text-[11px] text-[#4f7a5c]">{isZh ? '含单号、日期、书名、数量、售价、折扣、付款方式、购书人。点击上方最近销售的发票按钮可预览打印。' : 'Includes sale no, date, books, qty, price, discount, payment, customer. Click invoice button above to preview.'}</p>
-            <div className="mt-3 rounded-[10px] bg-[#faf6ee] p-3 text-[11px]">
-              <p className="font-semibold">COCM Bookshop Invoice</p>
-              <p className="mt-1 text-[#4f7a5c]">Includes: Logo, Sale Number (C-format), Date, Customer (Name/Order/Church), Payment Method/Status, Books (Title/Code/Quantity/Price), Shelf Location for picking, Subtotal, Discount, Net Total</p>
+            <CardTitle>{isZh ? '改单说明' : 'Correcting Sales'}</CardTitle>
+            <div className="mt-2 text-[11px] text-[#4f7a5c] space-y-1.5 leading-relaxed">
+              <p>{isZh ? '• 确认前：直接在左侧购物车点 × 删除或改数量/改价。' : '• Before confirm: Remove via × or adjust qty/price in cart.'}</p>
+              <p>{isZh ? '• 确认后客人改主意：点右侧“作废”作废整单（库存返还），再重新开一单；或联系管理员做部分退货。' : '• After confirm: Void whole sale (stock returns) and re-create, or contact admin for partial return.'}</p>
+              <p>{isZh ? '• 清仓/赠送（代号 Sales）：加入购物车后直接在单价框改价即可，系统按改后价开票。' : '• Clearance/gift (code Sales): Edit price in cart, invoice uses edited price.'}</p>
             </div>
           </Card>
         </div>

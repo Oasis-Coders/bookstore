@@ -31,6 +31,7 @@ export default function NewPOPage() {
     quantity: '',
     unit_cost: '',
     notes: '',
+    order_date: new Date().toISOString().slice(0,10),
   });
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function NewPOPage() {
           notes: form.notes || null,
           created_by: createdBy,
           status: 'draft',
+          order_date: form.order_date || new Date().toISOString().slice(0,10),
         })
         .select('id')
         .single();
@@ -102,7 +104,7 @@ export default function NewPOPage() {
   }
 
   return (
-    <AppShell title={isZh ? '新建采购单' : 'New Purchase Order'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
+    <AppShell title={isZh ? '新建采购单' : 'New PO'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
       <div className="mx-auto max-w-[640px]">
         <Link href="/purchase-orders" className="mb-4 inline-flex text-[13px] text-[#4f7a5c] hover:text-[#0f3d2e]">
           ← {isZh ? '返回采购单' : 'Back to Purchase Orders'}
@@ -157,6 +159,10 @@ export default function NewPOPage() {
                 placeholder={isZh ? '单本成本' : 'Cost per unit'}
                 className="mt-1"
               />
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold">{isZh ? '下单日期 *' : 'Order Date *'}</label>
+              <Input value={form.order_date} onChange={(e) => setForm((f) => ({ ...f, order_date: e.target.value }))} type="date" className="mt-1" required />
             </div>
             <div>
               <label className="text-[12px] font-semibold">{isZh ? '备注' : 'Notes'}</label>
