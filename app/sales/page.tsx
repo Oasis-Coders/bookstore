@@ -4,7 +4,6 @@ import { SalesClient } from './sales-client';
 export default async function SalesPage() {
   const supabase = await createSupabaseServerClient();
   let books: any[] = [] as any[];
-  let locations: any[] = [] as any[];
   let recentSales: any[] = [] as any[];
   let stockMap: Record<string, number> = {};
   
@@ -14,12 +13,6 @@ export default async function SalesPage() {
       books = bRes.data || [];
     } catch (e) {
       console.error('books fetch error', e);
-    }
-    try {
-      const lRes = await supabase.from('locations').select('id, name, code').eq('is_active', true).limit(10);
-      locations = lRes.data || [];
-    } catch (e) {
-      console.error('locations fetch error', e);
     }
     try {
       const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
@@ -55,5 +48,5 @@ export default async function SalesPage() {
     }
   }
 
-  return <SalesClient books={books} locations={locations} recentSales={recentSales} stockMap={stockMap} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} />;
 }
