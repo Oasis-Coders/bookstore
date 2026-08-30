@@ -2,8 +2,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditSaleClient } from './edit-client';
 import { notFound, redirect } from 'next/navigation';
 
-export default async function EditSalePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default async function EditSalePage(props: { params: Promise<{ id: string }>, searchParams?: Promise<any> }) {
+  const { id } = await props.params;
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect('/auth?redirectTo=/sales');
