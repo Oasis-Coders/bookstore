@@ -7,12 +7,13 @@ import { Button } from './button';
 
 type Props = {
   name: string;
+  id?: string;
   defaultValue?: string | null;
   required?: boolean;
   className?: string;
 };
 
-export function CategorySelect({ name, defaultValue, required, className }: Props) {
+export function CategorySelect({ name, id, defaultValue, required, className }: Props) {
   const { lang } = useT();
   const isZh = lang === 'zh';
   const [categories, setCategories] = useState<string[]>([]);
@@ -70,9 +71,10 @@ export function CategorySelect({ name, defaultValue, required, className }: Prop
     <div className={className}>
       {!showAdd ? (
         <select
+          id={id}
           value={selected}
           onChange={handleSelectChange}
-          className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/10 bg-white px-3 py-2 text-[13px] ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f3d2e]/20"
+          className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/10 bg-white px-3 py-2 text-[13px] text-[#0f3d2e] ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f3d2e]/20"
           required={required}
         >
           <option value="">{isZh ? '选择分类' : 'Select category'}</option>
@@ -88,7 +90,7 @@ export function CategorySelect({ name, defaultValue, required, className }: Prop
             value={customCat}
             onChange={(e) => setCustomCat(e.target.value)}
             className="flex-1"
-            autoFocus
+            aria-label={isZh ? '新分类名称' : 'New category name'}
           />
           <Button type="button" size="sm" onClick={handleAdd} disabled={!customCat.trim()}>
             {isZh ? '添加' : 'Add'}

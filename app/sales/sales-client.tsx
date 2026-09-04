@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,7 +33,9 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
   
-  const [saleDate, setSaleDate] = useState(() => new Date().toISOString().slice(0,10));
+  // Default to today, set in an effect to avoid hydration mismatch (server/client date may differ)
+  const [saleDate, setSaleDate] = useState('');
+  useEffect(() => { setSaleDate(new Date().toISOString().slice(0,10)); }, []);
   const [discountPercent, setDiscountPercent] = useState('0');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
@@ -135,18 +137,18 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
           <CardTitle>{tt('sales.newSale')}</CardTitle>
           <p className="mt-1 text-[12px] text-[#4f7a5c]">{tt('sales.newSaleHint')}</p>
 
-          {msg && <div className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
+          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
 
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'} *</label>
-                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
+                <label htmlFor="sale-date" className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'} *</label>
+                <Input id="sale-date" type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '折扣 %（如20=八折）' : 'Discount % (e.g. 20=20% off)'}</label>
+                <label htmlFor="discount-pct" className="text-[11px] font-medium">{isZh ? '折扣 %（如20=八折）' : 'Discount % (e.g. 20=20% off)'}</label>
                 <div className="mt-1 flex gap-2">
-                  <Input type="number" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" className="flex-1" />
+                  <Input id="discount-pct" type="number" inputMode="decimal" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" className="flex-1" />
                   <span className="flex h-10 items-center rounded-[12px] bg-[#faf6ee] px-3 text-[11px] text-[#4f7a5c]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
                 </div>
               </div>
@@ -154,8 +156,8 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment Method'}</label>
-                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
+                <label htmlFor="payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment Method'}</label>
+                <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
                   <option value="cash">{isZh ? '现金' : 'Cash'}</option>
                   <option value="card">{isZh ? '刷卡' : 'Card'}</option>
                   <option value="bank_transfer">{isZh ? '银行转账' : 'Bank Transfer'}</option>
@@ -163,8 +165,8 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
+                <label htmlFor="payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
+                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
@@ -172,13 +174,13 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
             </div>
 
             <div>
-              <label className="text-[11px] font-medium">{isZh ? '购书人（人名/网单号/教会/团契）' : 'Customer (Name/Order No/Church/Fellowship)'} </label>
-              <Input value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
+              <label htmlFor="customer-name" className="text-[11px] font-medium">{isZh ? '购书人（人名/网单号/教会/团契）' : 'Customer (Name/Order No/Church/Fellowship)'} </label>
+              <Input id="customer-name" name="customer" autoComplete="off" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
             </div>
 
             <div className="rounded-[16px] border border-dashed border-[#0f3d2e]/20 p-4">
-              <label className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
-              <BookAutocomplete books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
+              <label htmlFor="sales-book-picker" className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
+              <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
               <div className="mt-2 flex gap-2">
                 <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q) || b.sku.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } } }} />
                 <Button variant="secondary" size="sm" onClick={() => { const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } }}>{tt('sales.add')}</Button>
@@ -186,7 +188,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
               <div className="mt-3 flex items-center justify-between text-[11px] text-[#4f7a5c]">
                 <span>{isZh ? `已选 ${cart.length} 种 / 共 ${totalQty} 本` : `${cart.length} titles / ${totalQty} pcs selected`}</span>
-                {cart.length>0 && <button onClick={()=>setCart([])} className="text-red-500 hover:text-red-700">{isZh ? '清空' : 'Clear'}</button>}
+                {cart.length>0 && <button onClick={()=>{ if (window.confirm(isZh ? '确定要清空购物车吗？' : 'Clear the cart?')) setCart([]); }} className="text-red-500 hover:text-red-700">{isZh ? '清空' : 'Clear'}</button>}
               </div>
 
               <div className="mt-2 space-y-2 max-h-[360px] overflow-y-auto pr-1">
@@ -194,22 +196,22 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                   <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2 text-[12px]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3d2e] text-[10px] text-white">{idx+1}</span>
-                      <button onClick={() => removeItem(item.id)} className="text-[14px] text-red-400 hover:text-red-600">×</button>
+                      <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                       <div className="flex-1 min-w-0">
                         <span className="truncate font-medium">{item.title} <span className="text-[#4f7a5c] text-[10px]">({item.sku})</span></span>
                         <div className="flex items-center gap-2 mt-0.5">
                           {item.shelf_position && <span className="inline-flex text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
-                          {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : `${item.stock} left`}</span>}
+                          {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : (isZh ? `还剩 ${item.stock} 本` : `${item.stock} left`)}</span>}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => updateQty(item.id, item.qty - 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">-</button>
+                        <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">-</button>
                         <span className="w-6 text-center">{item.qty}</span>
-                        <button onClick={() => updateQty(item.id, item.qty + 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">+</button>
+                        <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">+</button>
                       </div>
-                      <Input value={String(item.price)} onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
+                      <Input value={String(item.price)} inputMode="decimal" onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
                       <span className="w-[60px] text-right">£{(item.qty * item.price).toFixed(2)}</span>
                     </div>
                   </div>
@@ -223,7 +225,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{tt('sales.total')}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
               </div>
 
-              <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing...') : tt('sales.confirmSale')}</Button>
+              <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing…') : tt('sales.confirmSale')}</Button>
               <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存为 0 的书加不上，会弹窗提醒。' : 'Books with 0 stock cannot be added — you will see an alert.'}</p>
             </div>
           </div>

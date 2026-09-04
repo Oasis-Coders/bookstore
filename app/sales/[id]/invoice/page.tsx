@@ -10,6 +10,18 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Follow the UI language (same source as lib/i18n context): zh -> zh-CN, en -> en-GB
+  const uiLocale: 'zh-CN' | 'en-GB' = (() => {
+    if (typeof document === 'undefined') return 'zh-CN';
+    const cookie = document.cookie.split('; ').find((r) => r.trim().startsWith('lang='))?.split('=')[1];
+    if (cookie === 'en') return 'en-GB';
+    if (cookie === 'zh') return 'zh-CN';
+    const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('lang') : null;
+    if (stored === 'en') return 'en-GB';
+    return 'zh-CN';
+  })();
+  const fmtGBP = (n: number) => new Intl.NumberFormat(uiLocale, { style: 'currency', currency: 'GBP' }).format(n);
+
   useEffect(() => {
     params.then(p => setId(p.id));
   }, [params]);
@@ -36,12 +48,12 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     })();
   }, [id]);
 
-  if (loading) return <div className="p-10 text-[12px] text-[#6b8a7a]">Loading invoice...</div>;
+  if (loading) return <div className="p-10 text-[12px] text-[#6b8a7a]">Loading invoice…</div>;
   if (error) return <div className="p-10 text-[12px] text-red-600">{error}</div>;
   if (!sale) return <div className="p-10 text-[12px]">Not found</div>;
 
   const invoiceNo = sale.sale_number?.replace(/^C/, '').replace(/^SAL-/, '') || sale.id.slice(0,6);
-  const purchaseDate = sale.sale_date ? new Date(sale.sale_date).toLocaleDateString('en-GB') : new Date(sale.sold_at).toLocaleDateString('en-GB');
+  const purchaseDate = sale.sale_date ? new Date(sale.sale_date).toLocaleDateString(uiLocale) : new Date(sale.sold_at).toLocaleDateString(uiLocale);
   const customerName = sale.customer_name || '';
   const paymentMethod = sale.payment_method || 'cash';
 
@@ -128,9 +140,9 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                   <td className="py-2.5 px-2 font-mono text-[11px]">{e.cat}</td>
                   <td className="py-2.5 px-3">{e.title}</td>
                   <td className="py-2.5 px-2 text-right">{e.qty}</td>
-                  <td className="py-2.5 px-2 text-right tabular-nums">{e.unit.toFixed(2)}</td>
-                  <td className="py-2.5 px-2 text-right tabular-nums">{e.discPct>0 ? `${e.discPct}%` : (e.discAmt>0 ? `£${e.discAmt.toFixed(2)}` : '-')}</td>
-                  <td className="py-2.5 px-3 text-right tabular-nums font-medium">£{e.net.toFixed(2)}</td>
+                  <td className="py-2.5 px-2 text-right tabular-nums">{fmtGBP(e.unit)}</td>
+                  <td className="py-2.5 px-2 text-right tabular-nums">{e.discPct>0 ? `${e.discPct}%` : (e.discAmt>0 ? fmtGBP(e.discAmt) : '-')}</td>
+                  <td className="py-2.5 px-3 text-right tabular-nums font-medium">{fmtGBP(e.net)}</td>
                 </tr>
               ))}
             </tbody>
@@ -139,12 +151,12 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
 
         <div className="mt-4 flex justify-end">
           <div className="w-[280px] text-[12.5px] space-y-2">
-            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">Book Subtotal</span><span className="font-medium tabular-nums">£{displayBookSubtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">Book Subtotal</span><span className="font-medium tabular-nums">{fmtGBP(displayBookSubtotal)}</span></div>
             {globalDisc > 0 && enriched.every((e:any)=>e.discAmt===0) && (
-              <div className="flex justify-between py-1 text-[#d26a39]"><span>Discount {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-£{globalDisc.toFixed(2)}</span></div>
+              <div className="flex justify-between py-1 text-[#d26a39]"><span>Discount {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-{fmtGBP(globalDisc)}</span></div>
             )}
-            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">P & P Cost</span><span className="tabular-nums">£{shipping.toFixed(2)}</span></div>
-            <div className="flex justify-between py-2 border-t-2 border-[#0f3d2e] font-bold text-[14px] mt-2 pt-2"><span>Total:</span><span className="tabular-nums">£{total.toFixed(2)}</span></div>
+            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">P & P Cost</span><span className="tabular-nums">{fmtGBP(shipping)}</span></div>
+            <div className="flex justify-between py-2 border-t-2 border-[#0f3d2e] font-bold text-[14px] mt-2 pt-2"><span>Total:</span><span className="tabular-nums">{fmtGBP(total)}</span></div>
           </div>
         </div>
 

@@ -25,14 +25,26 @@ export default function NewPOPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState(() => ({
     supplier_id: '',
     book_id: '',
     quantity: '',
     unit_cost: '',
     notes: '',
     order_date: new Date().toISOString().slice(0,10),
-  });
+  }));
+
+  // Warn before leaving with unsaved input
+  useEffect(() => {
+    const dirty = form.supplier_id !== '' || form.book_id !== '' || form.quantity !== '' || form.unit_cost !== '' || form.notes !== '';
+    if (!dirty || submitting) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = isZh ? '表单尚未保存，确定要离开吗？' : 'You have unsaved changes. Leave anyway?';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [form.supplier_id, form.book_id, form.quantity, form.unit_cost, form.notes, submitting, isZh]);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -56,6 +68,7 @@ export default function NewPOPage() {
     setError(null);
     if (!form.supplier_id) {
       setError(isZh ? '请选择供应商' : 'Please select a supplier');
+      document.getElementById('po-supplier')?.focus();
       return;
     }
     setSubmitting(true);
@@ -115,11 +128,13 @@ export default function NewPOPage() {
             {isZh ? ' 要采购新书？先去书库添加新书，再来填采购单。支持扫码枪扫ISBN快速添加。' : ' New book to purchase? Add it to Books first, then fill PO. Barcode scanner supported for ISBN.'}
             <Link href="/books/new" className="ml-2 text-[#0f3d2e] underline font-medium">{isZh ? '去添加新书' : 'Add new book'}</Link>
           </div>
-          {error && <div className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
+          {error && <div aria-live="polite" className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label className="text-[12px] font-semibold">{isZh ? '供应商 *' : 'Supplier *'}</label>
+              <label htmlFor="po-supplier" className="text-[12px] font-semibold">{isZh ? '供应商 *' : 'Supplier *'}</label>
               <select
+                id="po-supplier"
+                name="supplier_id"
                 value={form.supplier_id}
                 onChange={(e) => setForm((f) => ({ ...f, supplier_id: e.target.value }))}
                 required
@@ -135,38 +150,44 @@ export default function NewPOPage() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2">
-                <label className="text-[12px] font-semibold">{isZh ? '图书 (输入缩小范围)' : 'Book (type to filter)'}</label>
-                <BookAutocomplete books={books} value={form.book_id} onChange={(id) => setForm(f => ({...f, book_id: id}))} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku to filter...'} />
+                <label htmlFor="po-book-picker" className="text-[12px] font-semibold">{isZh ? '图书 (输入缩小范围)' : 'Book (type to filter)'}</label>
+                <BookAutocomplete id="po-book-picker" books={books} value={form.book_id} onChange={(id) => setForm(f => ({...f, book_id: id}))} isZh={isZh} placeholder={isZh ? '输入书名/代号…' : 'Type title/sku to filter…'} />
               </div>
               <div>
-                <label className="text-[12px] font-semibold">{isZh ? '数量' : 'Quantity'}</label>
+                <label htmlFor="po-quantity" className="text-[12px] font-semibold">{isZh ? '数量' : 'Quantity'}</label>
                 <Input
+                  id="po-quantity"
+                  name="quantity"
                   value={form.quantity}
                   onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
                   type="number"
+                  inputMode="decimal"
                   min="1"
                   className="mt-1"
                 />
               </div>
             </div>
             <div>
-              <label className="text-[12px] font-semibold">{isZh ? '进货价' : 'Unit Cost'}</label>
+              <label htmlFor="po-unit-cost" className="text-[12px] font-semibold">{isZh ? '进货价' : 'Unit Cost'}</label>
               <Input
+                id="po-unit-cost"
+                name="unit_cost"
                 value={form.unit_cost}
                 onChange={(e) => setForm((f) => ({ ...f, unit_cost: e.target.value }))}
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 placeholder={isZh ? '单本成本' : 'Cost per unit'}
                 className="mt-1"
               />
             </div>
             <div>
-              <label className="text-[12px] font-semibold">{isZh ? '下单日期 *' : 'Order Date *'}</label>
-              <Input value={form.order_date} onChange={(e) => setForm((f) => ({ ...f, order_date: e.target.value }))} type="date" className="mt-1" required />
+              <label htmlFor="po-order-date" className="text-[12px] font-semibold">{isZh ? '下单日期 *' : 'Order Date *'}</label>
+              <Input id="po-order-date" name="order_date" value={form.order_date} onChange={(e) => setForm((f) => ({ ...f, order_date: e.target.value }))} type="date" className="mt-1" required />
             </div>
             <div>
-              <label className="text-[12px] font-semibold">{isZh ? '备注' : 'Notes'}</label>
-              <Input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
+              <label htmlFor="po-notes" className="text-[12px] font-semibold">{isZh ? '备注' : 'Notes'}</label>
+              <Input id="po-notes" name="notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
             </div>
             <div className="flex gap-2 pt-2">
               <Link href="/purchase-orders" className="flex-1">
@@ -175,7 +196,7 @@ export default function NewPOPage() {
                 </Button>
               </Link>
               <Button type="submit" className="flex-1" disabled={submitting}>
-                {submitting ? (isZh ? '创建中...' : 'Creating...') : isZh ? '创建草稿' : 'Create Draft'}
+                {submitting ? (isZh ? '创建中…' : 'Creating…') : isZh ? '创建草稿' : 'Create Draft'}
               </Button>
             </div>
           </form>

@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,29 @@ import Link from 'next/link';
 export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
+  const router = useRouter();
   const [q, setQ] = useState('');
+  const urlSynced = useRef(false);
+
+  // Restore filter from ?q= on mount (effect: no SSR/hydration mismatch)
+  useEffect(() => {
+    const v = new URLSearchParams(window.location.search).get('q') || '';
+    if (v) setQ(v);
+    urlSynced.current = true;
+  }, []);
+
+  // Keep ?q= in sync so refresh/share keeps the filter (debounced)
+  useEffect(() => {
+    if (!urlSynced.current) return;
+    const t = setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      if (q) params.set('q', q);
+      else params.delete('q');
+      const qs = params.toString();
+      router.replace(qs ? `/suppliers?${qs}` : '/suppliers', { scroll: false });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [q, router]);
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -29,12 +52,12 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
       <Link href="/suppliers/new"><Button>{tt('suppliers.add')}</Button></Link>
     }>
       <div className="mb-4 flex gap-2">
-        <Input value={q} onChange={e=>setQ(e.target.value)} placeholder={isZh ? '搜索供应商（中英/代号）...' : 'Search supplier (name/code)...'} className="flex-1" />
+        <Input value={q} onChange={e=>setQ(e.target.value)} placeholder={isZh ? '搜索供应商（中英/代号）…' : 'Search supplier (name/code)…'} aria-label={isZh ? '搜索供应商' : 'Search suppliers'} className="flex-1" />
         {q && <Button variant="ghost" onClick={()=>setQ('')}>{isZh ? '清除' : 'Clear'}</Button>}
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {filtered.map((s) => (
-          <Card key={s.id} className="group transition-all hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5">
+          <Card key={s.id} className="group transition-[box-shadow,transform] hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-serif text-[16px]">{s.name_zh}</p>

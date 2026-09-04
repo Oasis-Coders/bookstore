@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useT } from '@/lib/i18n/use-t';
 import { AppShell } from '@/components/layout/app-shell';
@@ -19,12 +19,25 @@ export default function NewBookPage() {
   const [saving, setSaving] = useState(false);
   const [isbnLookup, setIsbnLookup] = useState('');
   const [scanning, setScanning] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const skuRef = useRef<HTMLInputElement>(null);
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
+  // Warn before leaving with unsaved changes
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = isZh ? '有未保存的内容，确定要离开吗？' : 'You have unsaved changes. Leave anyway?';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty, isZh]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setDirty(false);
     setSaving(true);
     setError('');
     const fd = new FormData(e.currentTarget);
@@ -95,7 +108,8 @@ export default function NewBookPage() {
                 value={isbnLookup}
                 onChange={e => setIsbnLookup(e.target.value)}
                 onKeyDown={handleScanInput}
-                placeholder={isZh ? '扫码或输入ISBN/条码后回车...' : 'Scan or type ISBN/barcode then Enter...'} 
+                aria-label={isZh ? '扫码或输入 ISBN/条码' : 'Scan or type ISBN/barcode'}
+                placeholder={isZh ? '扫码或输入ISBN/条码后回车…' : 'Scan or type ISBN/barcode then Enter…'} 
                 className="flex-1 h-9 text-[12px]"
               />
               <Button type="button" size="sm" variant="secondary" className="h-9" onClick={() => { if (isbnLookup) handleBarcodeScan(isbnLookup); setScanning(true); setTimeout(()=>setScanning(false), 2000); }}>
@@ -115,66 +129,66 @@ export default function NewBookPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} onChange={() => setDirty(true)} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 * (扫码自动生成)' : 'Code * (auto from scan)'}</label>
-                <Input ref={skuRef} name="sku" placeholder={isZh ? '如 BOOK-001 或扫码生成' : 'e.g. BOOK-001 or auto from scan'} required className="mt-1" />
+                <label htmlFor="new-sku" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '代号 * (扫码自动生成)' : 'Code * (auto from scan)'}</label>
+                <Input ref={skuRef} id="new-sku" name="sku" spellCheck={false} placeholder={isZh ? '如 BOOK-001 或扫码生成' : 'e.g. BOOK-001 or auto from scan'} required className="mt-1" />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '分类' : 'Category'}</label>
-                <CategorySelect name="category" />
+                <label htmlFor="new-category" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '分类' : 'Category'}</label>
+                <CategorySelect id="new-category" name="category" />
               </div>
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '书架位置' : 'Shelf Position'}</label>
-              <Input name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
+              <label htmlFor="new-shelf" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '书架位置' : 'Shelf Position'}</label>
+              <Input id="new-shelf" name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
-              <Input ref={titleRef} name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
+              <label htmlFor="new-title" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
+              <Input ref={titleRef} id="new-title" name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
-              <Input name="title_en" placeholder={isZh ? '如 The Way of Victory' : 'English title for display'} className="mt-1" />
+              <label htmlFor="new-title-en" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
+              <Input id="new-title-en" name="title_en" placeholder={isZh ? '如 The Way of Victory' : 'English title for display'} className="mt-1" />
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '简体标题 (可选)' : 'Simplified (optional)'}</label>
-                <Input name="title_simplified" placeholder={isZh ? '简体' : 'Simplified Chinese'} className="mt-1" />
+                <label htmlFor="new-title-s" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '简体标题 (可选)' : 'Simplified (optional)'}</label>
+                <Input id="new-title-s" name="title_simplified" placeholder={isZh ? '简体' : 'Simplified Chinese'} className="mt-1" />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '繁体标题 (可选)' : 'Traditional (optional)'}</label>
-                <Input name="title_traditional" placeholder={isZh ? '繁體' : 'Traditional Chinese'} className="mt-1" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '出版社' : 'Publisher'}</label>
-                <Input name="publisher" placeholder={isZh ? '出版社' : 'Publisher'} className="mt-1" />
-              </div>
-              <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '作者' : 'Author'}</label>
-                <Input name="author" placeholder={isZh ? '作者' : 'Author'} className="mt-1" />
+                <label htmlFor="new-title-t" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '繁体标题 (可选)' : 'Traditional (optional)'}</label>
+                <Input id="new-title-t" name="title_traditional" placeholder={isZh ? '繁體' : 'Traditional Chinese'} className="mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '现售价 (GBP)' : 'Current Price (GBP)'}</label>
-                <Input name="current_price" type="number" step="0.01" placeholder="12.50" className="mt-1" />
+                <label htmlFor="new-publisher" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '出版社' : 'Publisher'}</label>
+                <Input id="new-publisher" name="publisher" placeholder={isZh ? '出版社' : 'Publisher'} className="mt-1" />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
-                <Input name="low_stock_threshold" type="number" placeholder="5" defaultValue="5" className="mt-1" />
+                <label htmlFor="new-author" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '作者' : 'Author'}</label>
+                <Input id="new-author" name="author" placeholder={isZh ? '作者' : 'Author'} className="mt-1" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label htmlFor="new-price" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '现售价 (GBP)' : 'Current Price (GBP)'}</label>
+                <Input id="new-price" name="current_price" type="number" step="0.01" placeholder="12.50" className="mt-1" />
+              </div>
+              <div>
+                <label htmlFor="new-threshold" className="block text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
+                <Input id="new-threshold" name="low_stock_threshold" type="number" placeholder="5" defaultValue="5" className="mt-1" />
               </div>
             </div>
 
             <div>
-              <label className="block text-[12px] font-semibold text-[#0f3d2e]">ISBN-13 {isZh ? '(扫码自动填)' : '(auto from scan)'}</label>
-              <Input ref={isbnRef} name="isbn13" placeholder={isZh ? '扫ISBN条码自动填' : 'Auto from ISBN scan'} className="mt-1" />
+              <label htmlFor="new-isbn13" className="block text-[12px] font-semibold text-[#0f3d2e]">ISBN-13 {isZh ? '(扫码自动填)' : '(auto from scan)'}</label>
+              <Input ref={isbnRef} id="new-isbn13" name="isbn13" spellCheck={false} inputMode="numeric" placeholder={isZh ? '扫ISBN条码自动填' : 'Auto from ISBN scan'} className="mt-1" />
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -184,7 +198,7 @@ export default function NewBookPage() {
                 </Button>
               </Link>
               <Button type="submit" className="flex-1" disabled={saving}>
-                {saving ? (isZh ? '创建中...' : 'Creating...') : isZh ? '创建' : 'Create'}
+                {saving ? (isZh ? '创建中…' : 'Creating…') : isZh ? '创建' : 'Create'}
               </Button>
             </div>
           </form>

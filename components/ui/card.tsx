@@ -4,7 +4,7 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
   return (
     <div
       className={cn(
-        'group/card rounded-[20px] border border-[#0f3d2e]/[0.06] bg-white p-6 shadow-[0_1px_2px_rgba(15,61,46,0.04),0_4px_12px_rgba(15,61,46,0.04),0_16px_48px_rgba(15,61,46,0.06)] transition-all hover:shadow-[0_2px_8px_rgba(15,61,46,0.06),0_8px_24px_rgba(15,61,46,0.08),0_24px_64px_rgba(15,61,46,0.10)] hover:border-[#0f3d2e]/[0.10] lg:p-6',
+        'group/card rounded-[20px] border border-[#0f3d2e]/[0.06] bg-white p-6 shadow-[0_1px_2px_rgba(15,61,46,0.04),0_4px_12px_rgba(15,61,46,0.04),0_16px_48px_rgba(15,61,46,0.06)] transition-[box-shadow,border-color,transform] hover:shadow-[0_2px_8px_rgba(15,61,46,0.06),0_8px_24px_rgba(15,61,46,0.08),0_24px_64px_rgba(15,61,46,0.10)] hover:border-[#0f3d2e]/[0.10] lg:p-6',
         className
       )}
       {...props}

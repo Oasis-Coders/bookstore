@@ -59,67 +59,68 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 *' : 'Code *'}</label>
-                <Input name="sku" defaultValue={book.sku} required className="mt-1" />
+                <label htmlFor="edit-sku" className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 *' : 'Code *'}</label>
+                <Input id="edit-sku" name="sku" defaultValue={book.sku} required spellCheck={false} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '现售价 £' : 'Price £'}</label>
-                <Input name="current_price" type="number" step="0.01" defaultValue={book.current_price} className="mt-1" />
+                <label htmlFor="edit-price" className="text-[11px] text-[#4f7a5c]">{isZh ? '现售价 (GBP)' : 'Current Price (GBP)'}</label>
+                <Input id="edit-price" name="current_price" type="number" step="0.01" defaultValue={book.current_price} className="mt-1" />
               </div>
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '书名 *' : 'Title *'}</label>
-              <Input name="title" defaultValue={book.title} required className="mt-1" />
+              <label htmlFor="edit-title" className="text-[11px] text-[#4f7a5c]">{isZh ? '书名 *' : 'Title *'}</label>
+              <Input id="edit-title" name="title" defaultValue={book.title} required className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
-              <Input name="title_en" defaultValue={book.title_en || book.metadata?.title_en || ''} placeholder={isZh ? '如 The Way of Victory' : 'English title'} className="mt-1" />
+              <label htmlFor="edit-title-en" className="text-[11px] text-[#4f7a5c]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
+              <Input id="edit-title-en" name="title_en" defaultValue={book.title_en || book.metadata?.title_en || ''} placeholder={isZh ? '如 The Way of Victory' : 'English title'} className="mt-1" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '简体标题' : 'Simplified'}</label>
-                <Input name="title_simplified" defaultValue={book.title_simplified || book.metadata?.title_simplified || ''} className="mt-1" />
+                <label htmlFor="edit-title-s" className="text-[11px] text-[#4f7a5c]">{isZh ? '简体标题' : 'Simplified'}</label>
+                <Input id="edit-title-s" name="title_simplified" defaultValue={book.title_simplified || book.metadata?.title_simplified || ''} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '繁体标题' : 'Traditional'}</label>
-                <Input name="title_traditional" defaultValue={book.title_traditional || book.metadata?.title_traditional || ''} className="mt-1" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '作者' : 'Author'}</label>
-                <Input name="author" defaultValue={book.author || ''} className="mt-1" />
-              </div>
-              <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '出版社' : 'Publisher'}</label>
-                <Input name="publisher" defaultValue={book.publisher || ''} className="mt-1" />
+                <label htmlFor="edit-title-t" className="text-[11px] text-[#4f7a5c]">{isZh ? '繁体标题' : 'Traditional'}</label>
+                <Input id="edit-title-t" name="title_traditional" defaultValue={book.title_traditional || book.metadata?.title_traditional || ''} className="mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">ISBN13</label>
-                <Input name="isbn13" defaultValue={book.isbn13 || ''} className="mt-1" />
+                <label htmlFor="edit-author" className="text-[11px] text-[#4f7a5c]">{isZh ? '作者' : 'Author'}</label>
+                <Input id="edit-author" name="author" defaultValue={book.author || ''} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '分类' : 'Category'}</label>
-                <CategorySelect name="category" defaultValue={book.category || ''} />
-              </div>
-              <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '书架位置' : 'Shelf Position'}</label>
-                <Input name="shelf_position" defaultValue={book.shelf_position || book.metadata?.shelf_position || ''} placeholder={isZh ? '如 A-3-2' : 'e.g. A-3-2'} className="mt-1" />
+                <label htmlFor="edit-publisher" className="text-[11px] text-[#4f7a5c]">{isZh ? '出版社' : 'Publisher'}</label>
+                <Input id="edit-publisher" name="publisher" defaultValue={book.publisher || ''} className="mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
-                <Input name="low_stock_threshold" type="number" defaultValue={book.low_stock_threshold} className="mt-1" />
+                <label htmlFor="edit-isbn13" className="text-[11px] text-[#4f7a5c]">ISBN13</label>
+                <Input id="edit-isbn13" name="isbn13" defaultValue={book.isbn13 || ''} spellCheck={false} inputMode="numeric" className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '状态' : 'Status'}</label>
+                <label htmlFor="edit-category" className="text-[11px] text-[#4f7a5c]">{isZh ? '分类' : 'Category'}</label>
+                <CategorySelect id="edit-category" name="category" defaultValue={book.category || ''} />
+              </div>
+              <div>
+                <label htmlFor="edit-shelf" className="text-[11px] text-[#4f7a5c]">{isZh ? '书架位置' : 'Shelf Position'}</label>
+                <Input id="edit-shelf" name="shelf_position" defaultValue={book.shelf_position || book.metadata?.shelf_position || ''} placeholder={isZh ? '如 A-3-2' : 'e.g. A-3-2'} className="mt-1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="edit-threshold" className="text-[11px] text-[#4f7a5c]">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
+                <Input id="edit-threshold" name="low_stock_threshold" type="number" defaultValue={book.low_stock_threshold} className="mt-1" />
+              </div>
+              <div>
+                <label htmlFor="edit-active" className="text-[11px] text-[#4f7a5c]">{isZh ? '状态' : 'Status'}</label>
                 <select
+                  id="edit-active"
                   name="is_active"
                   defaultValue={String(book.is_active)}
-                  className="mt-1 w-full rounded-[10px] border border-[#0f3d2e]/15 px-3 py-2 text-[13px]"
+                  className="mt-1 w-full rounded-[10px] border border-[#0f3d2e]/15 bg-white text-[#0f3d2e] px-3 py-2 text-[13px]"
                 >
                   <option value="true">{isZh ? '启用' : 'Active'}</option>
                   <option value="false">{isZh ? '停用' : 'Inactive'}</option>
