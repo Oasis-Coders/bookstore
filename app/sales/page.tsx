@@ -47,7 +47,7 @@ export default async function SalesPage() {
         net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
         payment_method: s.payment_method,
         customer_name: s.customer_name,
-        sold_at: s.sale_date || new Date(s.sold_at).toLocaleString(),
+        sold_at: s.sale_date || new Date(s.sold_at).toLocaleString('en-GB'),
       }));
     } catch (e) {
       console.error('sales fetch error', e);

@@ -114,7 +114,7 @@ export function RouteProgress() {
   return (
     <div className="pointer-events-none fixed left-0 right-0 top-0 z-[100] h-[3px]">
       <div
-        className="h-full bg-[#d26a39] transition-all duration-200 ease-out"
+        className="h-full bg-[#d26a39] transition-[width,opacity] duration-200 ease-out motion-reduce:transition-none"
         style={{ width: `${progress}%`, opacity: visible ? 1 : 0 }}
       />
     </div>

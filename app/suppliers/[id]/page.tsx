@@ -47,9 +47,9 @@ export default function SupplierDetailPage() {
 
   if (loading) {
     return (
-      <AppShell title={isZh ? '加载中...' : 'Loading...'} titleZh={isZh ? '加载中...' : 'Loading...'} eyebrow={isZh ? '供应商' : 'Supplier'}>
+      <AppShell title={isZh ? '加载中…' : 'Loading…'} titleZh={isZh ? '加载中…' : 'Loading…'} eyebrow={isZh ? '供应商' : 'Supplier'}>
         <div className="mx-auto max-w-[640px] space-y-4">
-          <Card><div className="h-32 animate-pulse bg-[#faf6ee]/60 rounded-[12px]" /></Card>
+          <Card><div className="h-32 animate-pulse motion-reduce:animate-none bg-[#faf6ee]/60 rounded-[12px]" /></Card>
         </div>
       </AppShell>
     );

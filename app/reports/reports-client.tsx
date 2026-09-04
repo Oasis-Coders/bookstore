@@ -168,7 +168,8 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
-              <input type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-[36px] w-[168px] rounded-full bg-white border border-[#e9e2d4] px-3.5 pr-9 text-[12.5px] text-[#0f3d2e] focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/10" />
+              <label htmlFor="report-month" className="sr-only">{isZh ? '选择月份' : 'Select month'}</label>
+              <input id="report-month" type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-[36px] w-[168px] rounded-full bg-white border border-[#e9e2d4] px-3.5 pr-9 text-[12.5px] text-[#0f3d2e] focus:outline-none focus:ring-2 focus:ring-[#0f3d2e]/10" />
             </div>
             <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-[36px] rounded-full text-[12px] px-4 border border-[#e9e2d4] bg-white hover:bg-[#fcfaf6]">{isZh ? '导出' : 'Export'}</Button>
           </div>
@@ -198,9 +199,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
             {/* Opening */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#f6f1e8] items-center">
-              <span className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#8a9a8e]">opening stock</span></span>
+              <label htmlFor="opening-stock" className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#8a9a8e]">opening stock</span></label>
               <div className="flex justify-end">
-                <input type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
+                <input id="opening-stock" type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
               </div>
               <span className="text-right"></span>
             </div>
@@ -221,9 +222,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
             {/* Closing */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#ece5d6] items-center">
-              <span className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#8a9a8e]">closing stock</span></span>
+              <label htmlFor="closing-stock" className="text-[12.5px] text-[#3d5a4e] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#8a9a8e]">closing stock</span></label>
               <div className="flex justify-end">
-                <input type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
+                <input id="closing-stock" type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#0f3d2e]/30 focus:ring-1 focus:ring-[#0f3d2e]/10" />
               </div>
               <span className="text-right text-[12.5px] font-medium tabular-nums text-[#0f3d2e]">{formatCurrency(finalCogs)}</span>
             </div>
@@ -242,7 +243,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <div className="flex items-center gap-2">
               <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-[#0f3d2e] text-white text-[11.5px] px-4 font-medium hover:bg-[#163a2d] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
               <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#5a7a6a] hover:text-[#0f3d2e] underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
-              {snapshotMsg && <span className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
+              {snapshotMsg && <span aria-live="polite" className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
             </div>
           </div>
           <p className="mt-2 text-[10.5px] leading-relaxed text-[#8a9a8e]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本按批次更精确' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO, COGS from batch allocations'}</p>
@@ -266,14 +267,14 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
         <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '选择时间段查看销售列表和书目列表，用于财务对账和Shopify库存同步' : 'Select date range to view sales list and books list for accounting and Shopify stock sync'}</p>
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <div>
-            <label className="text-[11px] font-medium">{isZh ? '开始日期' : 'From'}</label>
-            <Input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
+            <label htmlFor="report-from" className="text-[11px] font-medium">{isZh ? '开始日期' : 'From'}</label>
+            <Input id="report-from" type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
           <div>
-            <label className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
-            <Input type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
+            <label htmlFor="report-to" className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
+            <Input id="report-to" type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
-          <Button size="sm" onClick={handleDateFilter} disabled={filtering} className="h-9 rounded-[10px] min-w-[64px]">{filtering ? <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin inline-block" />{isZh ? '查询中' : 'Loading'}</span> : (isZh ? '查询' : 'Filter')}</Button>
+          <Button size="sm" onClick={handleDateFilter} disabled={filtering} className="h-9 rounded-[10px] min-w-[64px]">{filtering ? <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin motion-reduce:animate-none inline-block" />{isZh ? '查询中' : 'Loading'}</span> : (isZh ? '查询' : 'Filter')}</Button>
           <span className="text-[11px] text-[#4f7a5c]">{isZh ? '附件财务月报表格参考：日期、单号、付款方式/状态、合计' : 'Ref attachment financial monthly report: Date, Sale No, Payment/Status, Total'}</span>
         </div>
       </Card>

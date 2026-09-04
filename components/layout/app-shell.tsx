@@ -75,6 +75,12 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
 
   return (
     <div className="min-h-screen bg-[#faf6ee]">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] focus:rounded-[10px] focus:bg-white focus:px-4 focus:py-2 focus:text-[13px] focus:font-medium focus:text-[#0f3d2e] focus:shadow-lg"
+      >
+        {isZh ? '跳到主内容' : 'Skip to main content'}
+      </a>
       <MobileSidebar items={filteredNav} avatarIcon={avatarIcon} avatarColor={avatarColor} displayName={displayName} userRole={userRole} />
       <div className="mx-auto flex max-w-[1600px] gap-0 px-0 py-0 lg:gap-6 lg:px-6 lg:py-4">
         <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[260px] shrink-0 flex-col rounded-[24px] bg-[#0f3d2e] text-white lg:flex shadow-[0_20px_60px_rgba(15,61,46,0.25)]">
@@ -105,7 +111,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
               <p className="text-[12px] font-medium text-white/90 capitalize mt-0.5">{userRole || '...'}</p>
             </div>
             <form action={signOut}>
-              <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-[12px] font-medium text-white/60 hover:bg-white/10 hover:text-white transition-all group">
+              <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-[12px] font-medium text-white/60 hover:bg-white/10 hover:text-white transition-[background-color,color] group">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" className="group-hover:translate-x-0.5 transition-transform"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M11 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 {isZh ? '退出登录' : 'Logout'}
               </button>
@@ -116,7 +122,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
           </div>
         </aside>
 
-        <main className="min-w-0 flex-1">
+        <main id="main-content" className="min-w-0 flex-1">
           <div className="sticky top-0 z-10 backdrop-blur-xl bg-[#faf6ee]/80 border-b border-[#0f3d2e]/5 lg:rounded-t-[20px] lg:border lg:mt-0 -mt-px">
             <div className="flex items-center justify-between px-4 py-4 lg:px-8 lg:py-6">
               <div className="min-w-0 flex-1">

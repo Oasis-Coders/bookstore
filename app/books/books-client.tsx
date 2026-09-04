@@ -52,7 +52,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
           <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '批量导入' : 'Import'}</Button>
         </Link>
         <Link href="/books/new">
-          <Button variant="secondary" className="rounded-[12px] shadow-[0_2px_8px_rgba(15,61,46,0.15)] hover:shadow-[0_4px_12px_rgba(15,61,46,0.25)] transition-all hover:scale-[1.02]">+ {tt('books.addBook')}</Button>
+          <Button variant="secondary" className="rounded-[12px] shadow-[0_2px_8px_rgba(15,61,46,0.15)] hover:shadow-[0_4px_12px_rgba(15,61,46,0.25)] transition-[box-shadow,transform] hover:scale-[1.02]">+ {tt('books.addBook')}</Button>
         </Link>
       </div>
     }>
@@ -64,7 +64,8 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 ref={searchInputRef}
                 name="q" 
                 defaultValue={q} 
-                placeholder={isZh ? '中英文搜：书名/英文/简繁/代号/作者/书架' : 'Search EN/ZH: title, Code, author, shelf...'} 
+                aria-label={isZh ? '搜索图书' : 'Search books'}
+                placeholder={isZh ? '中英文搜：书名/英文/简繁/代号/作者/书架…' : 'Search EN/ZH: title, Code, author, shelf…'} 
                 className="pr-10 rounded-[12px] h-10 border-[#0f3d2e]/10 focus:border-[#0f3d2e]/20 bg-white shadow-sm" 
                 onKeyDown={handleScanKeyDown}
               />
@@ -73,7 +74,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
             <Button type="submit" variant="ghost" className="rounded-[12px] h-10">{tt('books.search')}</Button>
             {q && <Link href="/books"><Button variant="ghost" type="button" className="rounded-[12px] h-10">{tt('books.clear')}</Button></Link>}
             <Button type="button" variant="ghost" size="sm" onClick={handleStartScan} className={`rounded-[10px] h-9 ${scanning ? 'bg-[#0f3d2e] text-white' : ''}`} title={isZh ? '外接扫码枪直接扫，支持USB扫码器' : 'Supports USB barcode scanner'}>
-              {scanning ? (isZh ? '等待扫码...' : 'Scanning...') : `${isZh ? '扫码' : 'Scan'}`}
+              {scanning ? (isZh ? '等待扫码…' : 'Scanning…') : `${isZh ? '扫码' : 'Scan'}`}
             </Button>
           </form>
           <p className="text-[11px] text-[#4f7a5c]">
@@ -84,7 +85,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
 
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
-            <Card key={book.id} className="group p-5 hover:shadow-[0_8px_24px_rgba(15,61,46,0.08),0_2px_8px_rgba(15,61,46,0.04)] hover:-translate-y-[1px] hover:border-[#0f3d2e]/10 transition-all duration-300">
+            <Card key={book.id} className="cv-auto group p-5 hover:shadow-[0_8px_24px_rgba(15,61,46,0.08),0_2px_8px_rgba(15,61,46,0.04)] hover:-translate-y-[1px] hover:border-[#0f3d2e]/10 transition-[box-shadow,border-color,transform] duration-300">
               <div className="flex items-start justify-between gap-2">
                 <Badge className="rounded-[8px] bg-[#0f3d2e]/5 text-[#0f3d2e] border-[#0f3d2e]/10 text-[10.5px] font-semibold tracking-wide">{book.sku}</Badge>
                 <div className="flex items-center gap-1.5">

@@ -204,7 +204,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         <Card>
           <CardTitle>{isZh ? '原订单' : 'Original Sale'}</CardTitle>
           <div className="mt-2 text-[12px] text-[#4f7a5c] space-y-1">
-            <p>{sale.sale_number} • {new Date(sale.sold_at).toLocaleString()} • £{Number(sale.subtotal || 0).toFixed(2)} {Number(sale.discount_amount || 0) > 0 ? `(-£${Number(sale.discount_amount).toFixed(2)} → £${(Number(sale.subtotal||0)-Number(sale.discount_amount||0)).toFixed(2)})` : ''}</p>
+            <p>{sale.sale_number} • {new Date(sale.sold_at).toLocaleString('en-GB')} • £{Number(sale.subtotal || 0).toFixed(2)} {Number(sale.discount_amount || 0) > 0 ? `(-£${Number(sale.discount_amount).toFixed(2)} → £${(Number(sale.subtotal||0)-Number(sale.discount_amount||0)).toFixed(2)})` : ''}</p>
             <div className="flex flex-wrap gap-2">
               {(lines || []).map((l: any) => (
                 <span key={l.id} className="rounded-full bg-[#faf6ee] px-2 py-0.5">{l.books?.title || l.book_id.slice(0,6)} ×{l.quantity} @£{Number(l.unit_price).toFixed(2)}</span>
@@ -216,23 +216,23 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         <Card>
           <CardTitle>{isZh ? '编辑书目和数量' : 'Edit Books & Quantities'}</CardTitle>
           <div className="mt-3">
-            <label className="text-[11px] font-semibold">{isZh ? '添加图书（输入缩小范围）' : 'Add Book (type to filter)'}</label>
-            <BookAutocomplete books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
+            <label htmlFor="edit-book-picker" className="text-[11px] font-semibold">{isZh ? '添加图书（输入缩小范围）' : 'Add Book (type to filter)'}</label>
+            <BookAutocomplete id="edit-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
             <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto pr-1">
               {cart.map((item, idx) => (
                 <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2 text-[12px]">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3d2e] text-[10px] text-white">{idx+1}</span>
-                    <button onClick={() => removeItem(item.id)} className="text-[14px] text-red-400 hover:text-red-600">×</button>
+                    <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                     <span className="truncate font-medium">{item.title} <span className="text-[#4f7a5c] text-[10px]">({item.sku})</span></span>
                   </div>
                   <div className="flex items-center gap-2 ml-2">
                     <div className="flex items-center gap-1">
-                      <button onClick={() => updateQty(item.id, item.qty - 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">-</button>
+                      <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">-</button>
                       <span className="w-6 text-center">{item.qty}</span>
-                      <button onClick={() => updateQty(item.id, item.qty + 1)} className="h-6 w-6 rounded-[6px] bg-white text-[12px]">+</button>
+                      <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">+</button>
                     </div>
-                    <Input value={String(item.price)} onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" />
+                    <Input value={String(item.price)} inputMode="decimal" onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" />
                     <span className="w-[60px] text-right">£{(item.qty * item.price).toFixed(2)}</span>
                   </div>
                 </div>
@@ -249,22 +249,22 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
 
         <Card>
           <CardTitle>{isZh ? '编辑信息' : 'Edit Info'}</CardTitle>
-          {msg && <div className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') || msg.includes('不足') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
+          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') || msg.includes('不足') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
           <div className="mt-3 space-y-3">
             <div>
-              <label className="text-[11px] font-medium">{isZh ? '购书人' : 'Customer'}</label>
-              <Input value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-1" placeholder={isZh ? '人名/网单号/教会...' : 'Name / order no / church...'} />
+              <label htmlFor="edit-customer" className="text-[11px] font-medium">{isZh ? '购书人' : 'Customer'}</label>
+              <Input id="edit-customer" name="customer" autoComplete="off" value={customerName} onChange={e => setCustomerName(e.target.value)} className="mt-1" placeholder={isZh ? '人名/网单号/教会...' : 'Name / order no / church...'} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
-                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
+                <label htmlFor="edit-payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
+                <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
                   {Object.entries(PAYMENT_LABELS).map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px]">
+                <label htmlFor="edit-payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
+                <select id="edit-payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
@@ -272,21 +272,21 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '折扣 %' : 'Discount %'}</label>
-                <Input type="number" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="mt-1" />
+                <label htmlFor="edit-discount" className="text-[11px] font-medium">{isZh ? '折扣 %' : 'Discount %'}</label>
+                <Input id="edit-discount" type="number" inputMode="decimal" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'}</label>
-                <Input type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
+                <label htmlFor="edit-sale-date" className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'}</label>
+                <Input id="edit-sale-date" type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-medium">{isZh ? '备注' : 'Notes'}</label>
-              <Input value={notes} onChange={e => setNotes(e.target.value)} className="mt-1" />
+              <label htmlFor="edit-notes" className="text-[11px] font-medium">{isZh ? '备注' : 'Notes'}</label>
+              <Input id="edit-notes" value={notes} onChange={e => setNotes(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] font-medium text-[#d26a39]">{isZh ? '改动原因 *（写入操作记录）' : 'Reason * (audit log)'}</label>
-              <Input value={reason} onChange={e => setReason(e.target.value)} placeholder={isZh ? '例：客人改要一本，折扣写错' : 'e.g. customer changed qty, discount typo'} className="mt-1 border-[#d26a39]/30" />
+              <label htmlFor="edit-reason" className="text-[11px] font-medium text-[#d26a39]">{isZh ? '改动原因 *（写入操作记录）' : 'Reason * (audit log)'}</label>
+              <Input id="edit-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder={isZh ? '例：客人改要一本，折扣写错' : 'e.g. customer changed qty, discount typo'} className="mt-1 border-[#d26a39]/30" />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存改动' : 'Save Changes')}</Button>
@@ -304,7 +304,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
                 const diffs = readableDiff(ed.old_values, ed.new_values);
                 return (
                   <div key={ed.id} className="rounded-[12px] bg-[#faf6ee]/60 px-3 py-2 text-[11px]">
-                    <p className="font-medium">{new Date(ed.edited_at).toLocaleString()} • {ed.editor_name || ed.edited_by?.slice(0,6)} • {ed.change_type === 'content' ? (isZh ? '改书/改量' : 'Content') : (isZh ? '信息' : 'Metadata')}</p>
+                    <p className="font-medium">{new Date(ed.edited_at).toLocaleString('en-GB')} • {ed.editor_name || ed.edited_by?.slice(0,6)} • {ed.change_type === 'content' ? (isZh ? '改书/改量' : 'Content') : (isZh ? '信息' : 'Metadata')}</p>
                     {ed.reason && <p className="text-[#4f7a5c]">{isZh ? '原因' : 'Reason'}：{ed.reason}</p>}
                     <ul className="mt-1 list-disc pl-4 space-y-0.5">
                       {diffs?.map((d: string, i: number) => <li key={i} className="text-[#0f3d2e]">{d}</li>)}
