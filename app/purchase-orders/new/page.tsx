@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
+import { useUnsavedGuard } from '@/components/ui/use-unsaved-guard';
 import Link from 'next/link';
 
 type SupplierOpt = { id: string; name_zh: string; code: string };
@@ -34,17 +35,9 @@ export default function NewPOPage() {
     order_date: new Date().toISOString().slice(0,10),
   }));
 
-  // Warn before leaving with unsaved input
-  useEffect(() => {
-    const dirty = form.supplier_id !== '' || form.book_id !== '' || form.quantity !== '' || form.unit_cost !== '' || form.notes !== '';
-    if (!dirty || submitting) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = isZh ? '表单尚未保存，确定要离开吗？' : 'You have unsaved changes. Leave anyway?';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [form.supplier_id, form.book_id, form.quantity, form.unit_cost, form.notes, submitting, isZh]);
+  // Warn before leaving with unsaved input (reload/close + in-app navigation)
+  const poDirty = !submitting && (form.supplier_id !== '' || form.book_id !== '' || form.quantity !== '' || form.unit_cost !== '' || form.notes !== '');
+  useUnsavedGuard(poDirty, isZh);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();

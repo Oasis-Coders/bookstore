@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createBook } from '../actions';
 import { CategorySelect } from '@/components/ui/category-select';
+import { useUnsavedGuard } from '@/components/ui/use-unsaved-guard';
 import Link from 'next/link';
 
 export default function NewBookPage() {
@@ -24,16 +25,8 @@ export default function NewBookPage() {
   const isbnRef = useRef<HTMLInputElement>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
-  // Warn before leaving with unsaved changes
-  useEffect(() => {
-    if (!dirty) return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = isZh ? '有未保存的内容，确定要离开吗？' : 'You have unsaved changes. Leave anyway?';
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [dirty, isZh]);
+  // Warn before leaving with unsaved changes (reload/close + in-app navigation)
+  useUnsavedGuard(dirty, isZh);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
