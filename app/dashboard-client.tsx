@@ -32,6 +32,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
 
+  const poStatusLabel = (status: string) =>
+    status === 'partially_received' ? tt('purchaseOrders.partial') : tt(`purchaseOrders.${status}`);
+
   const salesItems = data.dailySales ? [
     { key: 'cash', label: isZh ? '现金' : 'Cash', labelEn: 'Cash', value: data.dailySales.cash_total, dot: 'bg-emerald-500' },
     { key: 'card', label: isZh ? '刷卡' : 'Card', labelEn: 'Card', value: data.dailySales.card_total, dot: 'bg-blue-500' },
@@ -142,9 +145,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
                   <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[14px] border border-[#0f3d2e]/[0.06] bg-[#faf6ee]/60 px-4 py-3.5 hover:bg-white hover:border-[#0f3d2e]/10 hover:shadow-[0_2px_12px_rgba(15,61,46,0.06)] transition-all group">
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] font-semibold text-[#0f3d2e] group-hover:text-[#0f3d2e]">{po.po_number}</p>
-                      <p className="text-[11px] text-[#4f7a5c] mt-0.5 truncate">{po.suppliers?.name_zh} • {po.status}</p>
+                      <p className="text-[11px] text-[#4f7a5c] mt-0.5 truncate">{po.suppliers?.name_zh}</p>
                     </div>
-                    <Badge className="ml-3 shrink-0">{po.status}</Badge>
+                    <Badge className="ml-3 shrink-0">{poStatusLabel(po.status)}</Badge>
                   </Link>
                 ))}
               </div>
