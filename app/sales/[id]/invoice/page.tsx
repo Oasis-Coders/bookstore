@@ -79,7 +79,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     bookSubtotal += net;
     return {
       idx: idx+1,
-      cat: l.books?.category?.slice(0,8) || l.books?.sku?.slice(0,6) || '-',
+      cat: (isZh && l.books?.category === 'Sales' ? '特价' : l.books?.category?.slice(0,8)) || l.books?.sku?.slice(0,6) || '-',
       title: l.books?.title || 'Unknown Book',
       qty,
       unit,
@@ -133,7 +133,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
             <thead>
               <tr className="bg-[#f6f3ee] text-left text-[11px] text-[#5a7a6a]">
                 <th className="py-2.5 px-3 font-semibold w-[32px]">#</th>
-                <th className="py-2.5 px-2 font-semibold w-[70px]">CAT</th>
+                <th className="py-2.5 px-2 font-semibold w-[70px]">{isZh ? '分类' : 'CAT'}</th>
                 <th className="py-2.5 px-3 font-semibold">{isZh ? '书名' : 'Book Name'}</th>
                 <th className="py-2.5 px-2 font-semibold text-right w-[52px]">{isZh ? '数量' : 'Qty'}</th>
                 <th className="py-2.5 px-2 font-semibold text-right w-[72px]">{isZh ? '单价' : 'Price £'}</th>
@@ -175,7 +175,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
           <p>{isZh ? '请在支票背面注明发票编号' : 'Please quote Invoice No. on the back of the cheque'}</p>
           <p className="mt-2">{isZh ? '银行转账：' : 'By bank transfer:'}</p>
           <p>{isZh ? '账户名：COCM' : 'Account name: COCM'}</p>
-          <p>{isZh ? '账号：00025186；Sort code：40-52-40' : 'Account no: 00025186 ; Sort code: 40-52-40'}</p>
+          <p>{isZh ? '账号：00025186；银行代码：40-52-40' : 'Account no: 00025186 ; Sort code: 40-52-40'}</p>
           <p>{isZh ? '转账时请以发票编号作为备注。' : 'Please quote your invoice number as reference when transferring payment.'}</p>
         </div>
 
