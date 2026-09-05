@@ -77,9 +77,13 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     if (discPct > 0 && discAmt === 0) discount = gross * discPct / 100;
     const net = gross - discount;
     bookSubtotal += net;
+    const catRaw = (l.books?.category || '').trim();
+    const skuRaw = (l.books?.sku || '').trim();
+    // Clearance/gift books use code "Sales" (stored as SKU, category often empty)
+    const isClearance = catRaw.toLowerCase() === 'sales' || skuRaw.toLowerCase() === 'sales';
     return {
       idx: idx+1,
-      cat: (isZh && (l.books?.category || '').trim().toLowerCase() === 'sales' ? '特价' : l.books?.category?.slice(0,8)) || l.books?.sku?.slice(0,6) || '-',
+      cat: isZh && isClearance ? '特价' : (catRaw.slice(0,8) || skuRaw.slice(0,6) || '-'),
       title: l.books?.title || 'Unknown Book',
       qty,
       unit,
