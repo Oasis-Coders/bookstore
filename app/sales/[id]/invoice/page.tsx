@@ -79,7 +79,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     bookSubtotal += net;
     return {
       idx: idx+1,
-      cat: (isZh && l.books?.category === 'Sales' ? '特价' : l.books?.category?.slice(0,8)) || l.books?.sku?.slice(0,6) || '-',
+      cat: (isZh && (l.books?.category || '').trim().toLowerCase() === 'sales' ? '特价' : l.books?.category?.slice(0,8)) || l.books?.sku?.slice(0,6) || '-',
       title: l.books?.title || 'Unknown Book',
       qty,
       unit,
