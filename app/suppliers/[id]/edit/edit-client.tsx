@@ -9,7 +9,7 @@ import { updateSupplier, deleteSupplier } from '@/app/suppliers/actions';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export function EditSupplierClient({ supplier }: { supplier: any }) {
+export function EditSupplierClient({ supplier, canDelete }: { supplier: any; canDelete?: boolean }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -115,9 +115,11 @@ export function EditSupplierClient({ supplier }: { supplier: any }) {
                   {isZh ? '返回' : 'Back'}
                 </Button>
               </Link>
-              <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600">
-                {isZh ? '删除' : 'Delete'}
-              </Button>
+              {canDelete && (
+                <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600">
+                  {isZh ? '删除' : 'Delete'}
+                </Button>
+              )}
             </div>
           </form>
         </Card>

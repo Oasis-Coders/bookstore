@@ -65,7 +65,7 @@ export default function BulkImportPage() {
 
       for (const row of preview) {
         if (!row.sku || !row.title) {
-          errors.push(`${row.sku || '?' }: ${isZh ? '缺少SKU或书名' : 'Missing SKU or title'}`);
+          errors.push(`${row.sku || '?' }: ${isZh ? '缺少代号或书名' : 'Missing Code or title'}`);
           continue;
         }
         const { data: existing } = await supabase.from('books').select('id').eq('sku', row.sku).maybeSingle();
