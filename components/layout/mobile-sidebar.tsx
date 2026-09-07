@@ -16,7 +16,7 @@ type Props = {
   children?: React.ReactNode;
 };
 
-export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarColor = '#d26a39', displayName = '', userRole, children }: Props) {
+export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarColor = '#e5444c', displayName = '', userRole, children }: Props) {
   const [open, setOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const { lang } = useT();
@@ -66,7 +66,7 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-controls="mobile-drawer"
-        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#0f3d2e] text-white shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#2d2f92] text-white shadow-lg lg:hidden"
         aria-label={isZh ? '打开/关闭菜单' : 'Toggle menu'}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -81,12 +81,12 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
           aria-hidden={!open}
           tabIndex={open ? 0 : -1}
           onClick={() => setOpen(false)}
-          className={`absolute inset-0 bg-[#0f3d2e]/40 backdrop-blur-sm transition-opacity cursor-default ${open ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-[#2d2f92]/40 backdrop-blur-sm transition-opacity cursor-default ${open ? 'opacity-100' : 'opacity-0'}`}
         />
         <div
           id="mobile-drawer"
           ref={drawerRef}
-          className={`relative flex w-[280px] flex-col bg-[#0f3d2e] p-5 transition-transform overscroll-contain ${open ? 'translate-x-0' : '-translate-x-full'}`}
+          className={`relative flex w-[280px] flex-col bg-[#2d2f92] p-5 transition-transform overscroll-contain ${open ? 'translate-x-0' : '-translate-x-full'}`}
         >
           {sidebarContent}
         </div>

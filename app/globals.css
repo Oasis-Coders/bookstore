@@ -23,10 +23,10 @@ html {
 body {
   margin: 0;
   font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background-color: #faf6ee;
-  color: #0f3d2e;
+  background-color: #faf7f0;
+  color: #2d2f92;
   -webkit-font-smoothing: antialiased;
-  -webkit-tap-highlight-color: rgba(15, 61, 46, 0.15);
+  -webkit-tap-highlight-color: rgba(45, 47, 146, 0.15);
 }
 
 a {
@@ -40,11 +40,11 @@ a {
 }
 
 .card-shadow {
-  box-shadow: rgba(15,61,46,0.03) 0px 0px 0px 1px, rgba(15,61,46,0.05) 0px 2px 8px, rgba(15,61,46,0.10) 0px 8px 24px;
+  box-shadow: rgba(45,47,146,0.03) 0px 0px 0px 1px, rgba(45,47,146,0.05) 0px 2px 8px, rgba(45,47,146,0.10) 0px 8px 24px;
 }
 
 .card-hover:hover {
-  box-shadow: rgba(15,61,46,0.08) 0px 4px 16px;
+  box-shadow: rgba(45,47,146,0.08) 0px 4px 16px;
   transform: translateY(-2px);
   transition: box-shadow 200ms ease, transform 200ms ease;
 }
@@ -68,7 +68,7 @@ a {
 .loading-orb-1 {
   width: 420px;
   height: 420px;
-  background: radial-gradient(circle, rgba(15,61,46,0.10) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(45,47,146,0.10) 0%, transparent 70%);
   top: -10%;
   left: -8%;
   animation: orbDrift1 12s ease-in-out infinite;
@@ -76,7 +76,7 @@ a {
 .loading-orb-2 {
   width: 340px;
   height: 340px;
-  background: radial-gradient(circle, rgba(210,106,57,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(229,68,76,0.08) 0%, transparent 70%);
   bottom: -5%;
   right: -5%;
   animation: orbDrift2 14s ease-in-out infinite;
@@ -184,7 +184,7 @@ a {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #0f3d2e;
+  background-color: #2d2f92;
   opacity: 0.35;
 }
 .loading-dot-1 { animation: dotFlow 1.6s ease-in-out infinite; }
@@ -227,10 +227,10 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(15,61,46,0.15);
+  background: rgba(45,47,146,0.15);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15,61,46,0.25);
+  background: rgba(45,47,146,0.25);
 }

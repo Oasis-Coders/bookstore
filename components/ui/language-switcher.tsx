@@ -8,13 +8,13 @@ export function LanguageSwitcher({ className = '' }: { className?: string }) {
   return (
     <button
       onClick={toggle}
-      className={`inline-flex h-8 items-center justify-center rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] font-semibold tracking-wide text-[#0f3d2e] shadow-[0_2px_8px_rgba(15,61,46,0.06)] transition hover:bg-[#faf6ee] hover:border-[#0f3d2e]/25 ${className}`}
+      className={`inline-flex h-8 items-center justify-center rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] font-semibold tracking-wide text-[#2d2f92] shadow-[0_2px_8px_rgba(45,47,146,0.06)] transition hover:bg-[#faf7f0] hover:border-[#2d2f92]/25 ${className}`}
       aria-label="Toggle language"
       type="button"
     >
-      <span className={lang === 'en' ? 'text-[#0f3d2e]' : 'text-[#4f7a5c]/60'}>EN</span>
-      <span className="mx-1 text-[#4f7a5c]/30">/</span>
-      <span className={lang === 'zh' ? 'text-[#0f3d2e]' : 'text-[#4f7a5c]/60'}>中</span>
+      <span className={lang === 'en' ? 'text-[#2d2f92]' : 'text-[#5b5f94]/60'}>EN</span>
+      <span className="mx-1 text-[#5b5f94]/30">/</span>
+      <span className={lang === 'zh' ? 'text-[#2d2f92]' : 'text-[#5b5f94]/60'}>中</span>
     </button>
   );
 }

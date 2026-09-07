@@ -9,7 +9,7 @@ import { updateSupplier, deleteSupplier } from '@/app/suppliers/actions';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export function EditSupplierClient({ supplier, canDelete }: { supplier: any; canDelete?: boolean }) {
+export function EditSupplierClient({ supplier }: { supplier: any }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -57,11 +57,11 @@ export function EditSupplierClient({ supplier, canDelete }: { supplier: any; can
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 *' : 'Code *'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '代号 *' : 'Code *'}</label>
                 <Input name="code" defaultValue={supplier.code} required className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '状态' : 'Status'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '状态' : 'Status'}</label>
                 <select
                   name="is_active"
                   defaultValue={String(supplier.is_active)}
@@ -73,37 +73,37 @@ export function EditSupplierClient({ supplier, canDelete }: { supplier: any; can
               </div>
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '中文名 *' : 'Chinese Name *'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '中文名 *' : 'Chinese Name *'}</label>
               <Input name="name_zh" defaultValue={supplier.name_zh} required className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '英文名' : 'English Name'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '英文名' : 'English Name'}</label>
               <Input name="name_en" defaultValue={supplier.name_en || ''} className="mt-1" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '联系人' : 'Contact'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '联系人' : 'Contact'}</label>
                 <Input name="contact_person" defaultValue={supplier.contact_person || ''} className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '电话' : 'Phone'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '电话' : 'Phone'}</label>
                 <Input name="phone" defaultValue={supplier.phone || ''} className="mt-1" />
               </div>
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '邮箱' : 'Email'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '邮箱' : 'Email'}</label>
               <Input name="email" defaultValue={supplier.email || ''} className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '付款条件' : 'Payment Terms'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '付款条件' : 'Payment Terms'}</label>
               <Input name="payment_terms" defaultValue={supplier.payment_terms || ''} className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '地址' : 'Address'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '地址' : 'Address'}</label>
               <Input name="address" defaultValue={supplier.address || ''} className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '备注' : 'Notes'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '备注' : 'Notes'}</label>
               <Input name="notes" defaultValue={supplier.notes || ''} className="mt-1" />
             </div>
             <div className="flex gap-2 pt-2">
@@ -115,11 +115,9 @@ export function EditSupplierClient({ supplier, canDelete }: { supplier: any; can
                   {isZh ? '返回' : 'Back'}
                 </Button>
               </Link>
-              {canDelete && (
-                <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600">
-                  {isZh ? '删除' : 'Delete'}
-                </Button>
-              )}
+              <Button variant="ghost" type="button" onClick={handleDelete} className="ml-auto text-red-600">
+                {isZh ? '删除' : 'Delete'}
+              </Button>
             </div>
           </form>
         </Card>

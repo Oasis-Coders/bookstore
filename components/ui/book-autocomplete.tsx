@@ -94,10 +94,10 @@ export function BookAutocomplete({
   return (
     <div className="relative" ref={wrapRef}>
       {selected ? (
-        <div className="flex items-center gap-2 rounded-[12px] border border-[#0f3d2e]/10 bg-[#faf6ee] px-3 py-2">
+        <div className="flex items-center gap-2 rounded-[12px] border border-[#2d2f92]/10 bg-[#faf7f0] px-3 py-2">
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-medium truncate">{selected.title} <span className="text-[#4f7a5c]">({selected.sku})</span></p>
-            {selected.shelf_position && <p className="text-[10px] text-[#4f7a5c]">{isZh ? '书架' : 'Shelf'}: {selected.shelf_position}</p>}
+            <p className="text-[12px] font-medium truncate">{selected.title} <span className="text-[#5b5f94]">({selected.sku})</span></p>
+            {selected.shelf_position && <p className="text-[10px] text-[#5b5f94]">{isZh ? '书架' : 'Shelf'}: {selected.shelf_position}</p>}
           </div>
           <button
             type="button"
@@ -125,7 +125,7 @@ export function BookAutocomplete({
             className="mt-1"
           />
           {open && filtered.length > 0 && (
-            <div id={listId} role="listbox" className="absolute z-10 mt-1 w-full max-h-[200px] overflow-auto rounded-[12px] border border-[#0f3d2e]/10 bg-white shadow-lg">
+            <div id={listId} role="listbox" className="absolute z-10 mt-1 w-full max-h-[200px] overflow-auto rounded-[12px] border border-[#2d2f92]/10 bg-white shadow-lg">
               {filtered.map((b, i) => (
                 <button
                   key={b.id}
@@ -135,22 +135,22 @@ export function BookAutocomplete({
                   aria-selected={i === activeIndex}
                   onClick={() => handleSelect(b)}
                   onMouseMove={() => setActiveIndex(i)}
-                  className={`w-full text-left px-3 py-2 text-[12px] border-b border-[#0f3d2e]/5 last:border-0 ${i === activeIndex ? 'bg-[#faf6ee]' : 'hover:bg-[#faf6ee]'}`}
+                  className={`w-full text-left px-3 py-2 text-[12px] border-b border-[#2d2f92]/5 last:border-0 ${i === activeIndex ? 'bg-[#faf7f0]' : 'hover:bg-[#faf7f0]'}`}
                 >
-                  <span className="font-medium">{b.title}</span> <span className="text-[#4f7a5c]">({b.sku})</span>
-                  {b.shelf_position && <span className="ml-2 text-[10px] bg-[#faf6ee] px-1.5 py-0.5 rounded-full">{isZh ? '书架' : 'Shelf'} {b.shelf_position}</span>}
+                  <span className="font-medium">{b.title}</span> <span className="text-[#5b5f94]">({b.sku})</span>
+                  {b.shelf_position && <span className="ml-2 text-[10px] bg-[#faf7f0] px-1.5 py-0.5 rounded-full">{isZh ? '书架' : 'Shelf'} {b.shelf_position}</span>}
                 </button>
               ))}
             </div>
           )}
           {showEmpty && (
-            <div className="absolute z-10 mt-1 w-full rounded-[12px] border border-[#0f3d2e]/10 bg-white shadow-lg px-3 py-3 text-[12px] text-[#4f7a5c] text-center">
+            <div className="absolute z-10 mt-1 w-full rounded-[12px] border border-[#2d2f92]/10 bg-white shadow-lg px-3 py-3 text-[12px] text-[#5b5f94] text-center">
               {isZh ? '无结果' : 'No results'}
             </div>
           )}
         </>
       )}
-      <p className="mt-1 text-[10px] text-[#4f7a5c]">{isZh ? '输入时自动缩小范围，避免长列表' : 'Type to narrow down long lists'}</p>
+      <p className="mt-1 text-[10px] text-[#5b5f94]">{isZh ? '输入时自动缩小范围，避免长列表' : 'Type to narrow down long lists'}</p>
     </div>
   );
 }

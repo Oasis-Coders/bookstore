@@ -2,10 +2,10 @@ import { cn } from '@/lib/utils';
 
 export function Badge({ className, variant = 'default', ...props }: React.HTMLAttributes<HTMLSpanElement> & { variant?: 'default' | 'active' | 'warning' | 'danger' }) {
   const variants = {
-    default: 'bg-[#f4e8c1] text-[#0f3d2e]',
-    active: 'bg-[#d26a39] text-white',
+    default: 'bg-[#f2e9d2] text-[#2d2f92]',
+    active: 'bg-[#e5444c] text-white',
     warning: 'bg-[#fef3c7] text-[#92400e]',
-    danger: 'bg-[#f9e0d0] text-[#9c4221]',
+    danger: 'bg-[#fbe4e5] text-[#9c4221]',
   };
   return (
     <span
