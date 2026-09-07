@@ -92,11 +92,9 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
             <div className="absolute inset-0 bg-gradient-to-br from-[#e5444c]/10 via-transparent to-transparent" />
             <div className="relative px-5 py-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-[12px] bg-white/10 backdrop-blur text-[16px] font-bold ring-1 ring-white/20" style={{ backgroundColor: avatarColor }}>
-                  {avatarIcon}
-                </div>
+                <img src="/cocm-logo.png" alt="COCM" className="h-10 w-10 rounded-full ring-1 ring-white/20" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[14px] font-semibold leading-tight tracking-tight">{displayName || (isZh ? '活水书房' : 'COCM Bookshop')}</p>
+                  <p className="truncate text-[14px] font-semibold leading-tight tracking-tight">{isZh ? '活水书房' : 'COCM Bookshop'}</p>
                   <span className="text-[11px] font-sans font-medium tracking-wide opacity-60">{isZh ? '书店管理系统' : 'Bookshop System'}</span>
                 </div>
               </div>
@@ -108,7 +106,15 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
           <div className="border-t border-white/[0.08] px-3 py-3 space-y-2 backdrop-blur-sm">
             <div className="px-3 py-2 rounded-[10px] bg-white/[0.06] border border-white/[0.08]">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-white/50">{isZh ? '当前身份' : 'Role'}</p>
-              <p className="text-[12px] font-medium text-white/90 capitalize mt-0.5">{userRole || '...'}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-[12px] font-bold text-white" style={{ backgroundColor: avatarColor }}>
+                  {avatarIcon}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[12px] font-medium text-white/90">{displayName || '...'}</p>
+                  <p className="text-[10px] text-white/50 capitalize">{userRole || '...'}</p>
+                </div>
+              </div>
             </div>
             <form action={signOut}>
               <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2.5 text-[12px] font-medium text-white/60 hover:bg-white/10 hover:text-white transition-[background-color,color] group">

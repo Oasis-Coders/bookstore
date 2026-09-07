@@ -37,11 +37,9 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
   const sidebarContent = children || (
     <>
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-white/15 text-[14px] font-bold" style={{ backgroundColor: avatarColor }}>
-          {avatarIcon}
-        </div>
+        <img src="/cocm-logo.png" alt="COCM" className="h-9 w-9 rounded-full ring-1 ring-white/20" />
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-white">{displayName || '活水书房'}</p>
+          <p className="truncate text-[13px] font-semibold text-white">活水书房</p>
           <p className="text-[11px] text-white/60">COCM Bookshop</p>
         </div>
       </div>
@@ -49,6 +47,15 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
         <SidebarNav items={items} />
       </div>
       <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-[12px] font-bold text-white" style={{ backgroundColor: avatarColor }}>
+            {avatarIcon}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-[12px] font-medium text-white/90">{displayName || '...'}</p>
+            <p className="text-[10px] text-white/50 capitalize">{userRole || '...'}</p>
+          </div>
+        </div>
         <form action={signOut}>
           <button type="submit" className="flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-[12px] text-white/70 hover:bg-white/10 hover:text-white transition-[background-color,color]">
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3M11 11l3-3-3-3M13 8H6" strokeLinecap="round" strokeLinejoin="round"/></svg>
