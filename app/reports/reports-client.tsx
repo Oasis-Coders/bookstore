@@ -162,14 +162,14 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       <div className="rounded-[20px] border border-[#e9e2d4] bg-white shadow-[0_2px_20px_rgba(45,47,146,0.04)] overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-5 sm:px-6 py-4 bg-[#fcfaf6] border-b border-[#efe8d9]">
           <div className="flex items-center gap-3">
-            <span className="h-[6px] w-[22px] rounded-full bg-[#2d2f92]" />
-            <h2 className="text-[15px] font-semibold tracking-tight text-[#2d2f92]">{isZh ? '每月财务报表' : 'Monthly Financial Report'}</h2>
+            <span className="h-[6px] w-[22px] rounded-full bg-cocm-ink" />
+            <h2 className="text-[15px] font-semibold tracking-tight text-cocm-ink">{isZh ? '每月财务报表' : 'Monthly Financial Report'}</h2>
             <span className="text-[11px] font-medium text-[#6d72a0] bg-white border border-[#e9e2d4] px-2.5 py-1 rounded-full">{monthLabel}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
               <label htmlFor="report-month" className="sr-only">{isZh ? '选择月份' : 'Select month'}</label>
-              <input id="report-month" type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-[36px] w-[168px] rounded-full bg-white border border-[#e9e2d4] px-3.5 pr-9 text-[12.5px] text-[#2d2f92] focus:outline-none focus:ring-2 focus:ring-[#2d2f92]/10" />
+              <input id="report-month" type="month" value={selectedMonth} onChange={e=>{ setSelectedMonth(e.target.value); const p=new URLSearchParams(searchParams.toString()); p.set('month', e.target.value); router.push(`/reports?${p.toString()}`); }} className="h-[36px] w-[168px] rounded-full bg-white border border-[#e9e2d4] px-3.5 pr-9 text-[12.5px] text-cocm-ink focus:outline-none focus:ring-2 focus:ring-cocm-ink/10" />
             </div>
             <Button size="sm" variant="ghost" onClick={exportFinancialCsv} className="h-[36px] rounded-full text-[12px] px-4 border border-[#e9e2d4] bg-white hover:bg-[#fcfaf6]">{isZh ? '导出' : 'Export'}</Button>
           </div>
@@ -180,16 +180,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <div className="rounded-[14px] border border-[#ece5d6] overflow-hidden">
             {/* Header */}
             <div className="grid grid-cols-[1fr_150px_145px] bg-[#fdf8f0] border-b border-[#ece5d6] px-4 py-2.5">
-              <span className="text-[13px] font-semibold text-[#2d2f92]">{monthShort}</span>
+              <span className="text-[13px] font-semibold text-cocm-ink">{monthShort}</span>
               <span className="text-[11px] text-[#9aa0bd] text-right pr-2"></span>
               <span className="text-[11px] text-[#9aa0bd] text-right"></span>
             </div>
 
             {/* Sales */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-3 border-b border-[#f0ebe0] items-center hover:bg-[#fcfaf6]/50 transition">
-              <span className="text-[13px] font-medium text-[#2d2f92]">{isZh ? '销售额' : 'Sales'} <span className="font-normal text-[#7e84ad] ml-1">Sales</span></span>
+              <span className="text-[13px] font-medium text-cocm-ink">{isZh ? '销售额' : 'Sales'} <span className="font-normal text-[#7e84ad] ml-1">Sales</span></span>
               <span className="text-right"></span>
-              <span className="text-right text-[13.5px] font-semibold tabular-nums text-[#2d2f92]">{formatCurrency(financial.sales)}</span>
+              <span className="text-right text-[13.5px] font-semibold tabular-nums text-cocm-ink">{formatCurrency(financial.sales)}</span>
             </div>
 
             {/* Less cost header */}
@@ -201,7 +201,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#f6f1e8] items-center">
               <label htmlFor="opening-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#9aa0bd]">opening stock</span></label>
               <div className="flex justify-end">
-                <input id="opening-stock" type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#2d2f92]/30 focus:ring-1 focus:ring-[#2d2f92]/10" />
+                <input id="opening-stock" type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-cocm-ink/30 focus:ring-1 focus:ring-cocm-ink/10" />
               </div>
               <span className="text-right"></span>
             </div>
@@ -216,7 +216,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             {/* Subtotal */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2 border-b border-[#f0ebe0] items-center bg-[#fdfcfa]">
               <span></span>
-              <span className="text-right text-[12.5px] font-medium tabular-nums text-[#2d2f92] pr-3 border-t border-[#2d2f92]/20 pt-1 mt-1 inline-block">{formatCurrency(stockSubtotal)}</span>
+              <span className="text-right text-[12.5px] font-medium tabular-nums text-cocm-ink pr-3 border-t border-cocm-ink/20 pt-1 mt-1 inline-block">{formatCurrency(stockSubtotal)}</span>
               <span></span>
             </div>
 
@@ -224,16 +224,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#ece5d6] items-center">
               <label htmlFor="closing-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#9aa0bd]">closing stock</span></label>
               <div className="flex justify-end">
-                <input id="closing-stock" type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-[#2d2f92]/30 focus:ring-1 focus:ring-[#2d2f92]/10" />
+                <input id="closing-stock" type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-cocm-ink/30 focus:ring-1 focus:ring-cocm-ink/10" />
               </div>
-              <span className="text-right text-[12.5px] font-medium tabular-nums text-[#2d2f92]">{formatCurrency(finalCogs)}</span>
+              <span className="text-right text-[12.5px] font-medium tabular-nums text-cocm-ink">{formatCurrency(finalCogs)}</span>
             </div>
 
             {/* Gross profit */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-3 items-center bg-[#eef6ee]">
-              <span className="text-[13px] font-semibold text-[#2d2f92]">{isZh ? '毛利' : 'Gross profit'} <span className="font-normal text-[#6d72a0] ml-1">Gross profit</span></span>
+              <span className="text-[13px] font-semibold text-cocm-ink">{isZh ? '毛利' : 'Gross profit'} <span className="font-normal text-[#6d72a0] ml-1">Gross profit</span></span>
               <span></span>
-              <span className="text-right"><span className="inline-block rounded-full bg-[#c8e6c9] px-3.5 py-1 text-[13px] font-bold tabular-nums text-[#2d2f92]">{formatCurrency(grossProfit)}</span></span>
+              <span className="text-right"><span className="inline-block rounded-full bg-[#c8e6c9] px-3.5 py-1 text-[13px] font-bold tabular-nums text-cocm-ink">{formatCurrency(grossProfit)}</span></span>
             </div>
           </div>
 
@@ -241,8 +241,8 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] text-[#7e84ad]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS 按批次成本` : `${monthlyFinancial?.order_count || 0} orders, COGS from batches`}</p>
             <div className="flex items-center gap-2">
-              <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-[#2d2f92] text-white text-[11.5px] px-4 font-medium hover:bg-[#23247a] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
-              <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#6d72a0] hover:text-[#2d2f92] underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
+              <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-cocm-ink text-white text-[11.5px] px-4 font-medium hover:bg-[#23247a] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
+              <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#6d72a0] hover:text-cocm-ink underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
               {snapshotMsg && <span aria-live="polite" className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
             </div>
           </div>
@@ -250,7 +250,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
           {showHistory && (
             <div className="mt-3 rounded-[12px] border border-[#ece5d6] bg-[#fdfcfa] p-3 max-h-[190px] overflow-auto">
-              <p className="text-[11px] font-semibold text-[#2d2f92] mb-2">{isZh ? '历史快照' : 'Snapshot History'}</p>
+              <p className="text-[11px] font-semibold text-cocm-ink mb-2">{isZh ? '历史快照' : 'Snapshot History'}</p>
               {snapshotsHistory.length===0 ? <p className="text-[11px] text-[#9aa0bd] py-3 text-center">{isZh ? '暂无快照，保存当月后会显示在这里' : 'No snapshots yet'}</p> : (
                 <div className="space-y-1">
                   {snapshotsHistory.map((s:any,i:number)=><div key={i} className="flex items-center justify-between text-[11px] py-1.5 px-2 rounded-[8px] hover:bg-white"><span className="font-mono text-[#6d72a0]">{s.month_start?.slice(0,7)}</span><span className="tabular-nums">开 {Number(s.opening_stock).toFixed(2)}</span><span className="tabular-nums">末 {Number(s.closing_stock).toFixed(2)}</span><span className="text-[10px] text-[#9ab0a4]">{s.created_at?.slice(0,10)||''}</span></div>)}
@@ -262,8 +262,8 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       </div>
 
       {/* Date Range Filter */}
-      <Card className="border-[#2d2f92]/10 bg-gradient-to-br from-white to-[#faf7f0]/30">
-        <CardTitle className="flex items-center gap-2 text-[14px]"><span className="h-1 w-5 rounded-full bg-[#e5444c]" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
+      <Card className="border-cocm-ink/10 bg-gradient-to-br from-white to-cocm-paper/30">
+        <CardTitle className="flex items-center gap-2 text-[14px]"><span className="h-1 w-5 rounded-full bg-cocm-red" />{isZh ? '财务月报 / 销售报表 - 按时间筛选' : 'Financial Report - Date Range Filter'}</CardTitle>
         <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '选择时间段查看销售列表和书目列表，用于财务对账和Shopify库存同步' : 'Select date range to view sales list and books list for accounting and Shopify stock sync'}</p>
         <div className="mt-3 flex flex-wrap items-end gap-3">
           <div>
@@ -288,10 +288,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           </div>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
-              <thead><tr className="border-b border-[#2d2f92]/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
+              <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
               <tbody>
                 {salesList.map((r, i) => (
-                  <tr key={i} className="border-b border-[#2d2f92]/5">
+                  <tr key={i} className="border-b border-cocm-ink/5">
                     <td className="py-2">{r.sale_date}</td>
                     <td className="py-2 font-mono font-medium">{r.sale_number}</td>
                     <td className="py-2"><Badge variant="active" className="text-[10px]">{r.payment_method}</Badge></td>
@@ -317,16 +317,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[11px]">
-              <thead><tr className="border-b border-[#2d2f92]/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
+              <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
               <tbody>
                 {salesBooksList.map((r, i) => (
-                  <tr key={i} className="border-b border-[#2d2f92]/5">
+                  <tr key={i} className="border-b border-cocm-ink/5">
                     <td className="py-2">{r.sale_date}</td>
                     <td className="py-2 font-mono text-[10px]">{r.sale_number}</td>
                     <td className="py-2 font-mono">{r.sku}</td>
                     <td className="py-2 max-w-[200px] truncate">{r.title}</td>
                     <td className="py-2 text-center font-medium">{r.quantity}</td>
-                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-[#faf7f0] text-[10px]">{r.shelf_position || '-'}</span></td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.shelf_position || '-'}</span></td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.staff_name || r.created_by_name || '-'}</td>
                   </tr>
@@ -349,7 +349,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
         <div className="mt-4 overflow-auto">
           <table className="w-full text-[12px]">
             <thead>
-              <tr className="border-b border-[#2d2f92]/10 text-left text-[#5b5f94]">
+              <tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]">
                 <th className="pb-2">{tt('reports.sku')}</th>
                 <th className="pb-2">{tt('reports.bookTitle')}</th>
                 <th className="pb-2">{tt('reports.location')}</th>
@@ -361,7 +361,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             </thead>
             <tbody>
               {valuation.map((r, i) => (
-                <tr key={i} className="border-b border-[#2d2f92]/5">
+                <tr key={i} className="border-b border-cocm-ink/5">
                   <td className="py-2 font-mono text-[11px]">{r.sku}</td>
                   <td className="py-2">{r.title}</td>
                   <td className="py-2 text-[#5b5f94]">{r.location_name}</td>

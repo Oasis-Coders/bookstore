@@ -86,15 +86,15 @@ export default function NewBookPage() {
     <AppShell title="New Book" titleZh="添加图书" eyebrow="活水书房">
       <div className="mx-auto max-w-[640px]">
         <div className="mb-4">
-          <Link href="/books" className="inline-flex items-center text-[13px] text-[#5b5f94] hover:text-[#2d2f92]">
+          <Link href="/books" className="inline-flex items-center text-[13px] text-[#5b5f94] hover:text-cocm-ink">
             {isZh ? '← 返回书库' : '← Back to Books'}
           </Link>
         </div>
 
         <Card>
           <CardTitle>{isZh ? '添加新书' : 'Add Book'}</CardTitle>
-          <div className="mt-3 rounded-[12px] border border-dashed border-[#2d2f92]/20 bg-[#faf7f0]/50 p-3">
-            <p className="text-[12px] font-semibold text-[#2d2f92]">{isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
+          <div className="mt-3 rounded-[12px] border border-dashed border-cocm-ink/20 bg-cocm-paper/50 p-3">
+            <p className="text-[12px] font-semibold text-cocm-ink">{isZh ? '扫码添加图书' : 'Scan to Add Book'}</p>
             <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '扫ISBN条码自动填入ISBN和代号，尝试联网获取书名。USB扫码枪即插即用。' : 'Scan ISBN barcode to auto-fill ISBN and Code, tries to fetch title online. USB scanner plug-and-play.'}</p>
             <div className="mt-2 flex gap-2">
               <Input 
@@ -112,7 +112,7 @@ export default function NewBookPage() {
             <p className="mt-1.5 text-[10px] text-[#5b5f94]">{isZh ? '运作：扫码枪 = 键盘，扫出数字字符串如 9781234567890，系统收到后填入ISBN，自动生成 BOOK-xxxx 代号' : 'How: scanner = keyboard, outputs string like 9781234567890, system fills ISBN, auto-generates BOOK-xxxx Code'}</p>
           </div>
 
-          <p className="mt-3 text-[13px] text-[#2d2f92]/70">
+          <p className="mt-3 text-[13px] text-cocm-ink/70">
             {isZh ? '支持中文书名，代号必须唯一' : 'Supports Chinese titles, Code must be unique'}
           </p>
 
@@ -125,62 +125,62 @@ export default function NewBookPage() {
           <form onSubmit={handleSubmit} onChange={() => setDirty(true)} className="mt-6 space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="new-sku" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '代号 * (扫码自动生成)' : 'Code * (auto from scan)'}</label>
+                <label htmlFor="new-sku" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '代号 * (扫码自动生成)' : 'Code * (auto from scan)'}</label>
                 <Input ref={skuRef} id="new-sku" name="sku" spellCheck={false} placeholder={isZh ? '如 BOOK-001 或扫码生成' : 'e.g. BOOK-001 or auto from scan'} required className="mt-1" />
               </div>
               <div>
-                <label htmlFor="new-category" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '分类' : 'Category'}</label>
+                <label htmlFor="new-category" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '分类' : 'Category'}</label>
                 <CategorySelect id="new-category" name="category" />
               </div>
             </div>
             <div>
-              <label htmlFor="new-shelf" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '书架位置' : 'Shelf Position'}</label>
+              <label htmlFor="new-shelf" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '书架位置' : 'Shelf Position'}</label>
               <Input id="new-shelf" name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
             </div>
 
             <div>
-              <label htmlFor="new-title" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
+              <label htmlFor="new-title" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>
               <Input ref={titleRef} id="new-title" name="title" placeholder={isZh ? '如 活水得胜之路' : 'Chinese title'} required className="mt-1" />
             </div>
             <div>
-              <label htmlFor="new-title-en" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
+              <label htmlFor="new-title-en" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '英文书名 (可选)' : 'English Title (optional)'}</label>
               <Input id="new-title-en" name="title_en" placeholder={isZh ? '如 The Way of Victory' : 'English title for display'} className="mt-1" />
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="new-title-s" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '简体标题 (可选)' : 'Simplified (optional)'}</label>
+                <label htmlFor="new-title-s" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '简体标题 (可选)' : 'Simplified (optional)'}</label>
                 <Input id="new-title-s" name="title_simplified" placeholder={isZh ? '简体' : 'Simplified Chinese'} className="mt-1" />
               </div>
               <div>
-                <label htmlFor="new-title-t" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '繁体标题 (可选)' : 'Traditional (optional)'}</label>
+                <label htmlFor="new-title-t" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '繁体标题 (可选)' : 'Traditional (optional)'}</label>
                 <Input id="new-title-t" name="title_traditional" placeholder={isZh ? '繁體' : 'Traditional Chinese'} className="mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="new-publisher" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '出版社' : 'Publisher'}</label>
+                <label htmlFor="new-publisher" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '出版社' : 'Publisher'}</label>
                 <Input id="new-publisher" name="publisher" placeholder={isZh ? '出版社' : 'Publisher'} className="mt-1" />
               </div>
               <div>
-                <label htmlFor="new-author" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '作者' : 'Author'}</label>
+                <label htmlFor="new-author" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '作者' : 'Author'}</label>
                 <Input id="new-author" name="author" placeholder={isZh ? '作者' : 'Author'} className="mt-1" />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="new-price" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '现售价 (GBP)' : 'Current Price (GBP)'}</label>
+                <label htmlFor="new-price" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '现售价 (GBP)' : 'Current Price (GBP)'}</label>
                 <Input id="new-price" name="current_price" type="number" step="0.01" placeholder="12.50" className="mt-1" />
               </div>
               <div>
-                <label htmlFor="new-threshold" className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
+                <label htmlFor="new-threshold" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '低库存阈值' : 'Low Stock Threshold'}</label>
                 <Input id="new-threshold" name="low_stock_threshold" type="number" placeholder="5" defaultValue="5" className="mt-1" />
               </div>
             </div>
 
             <div>
-              <label htmlFor="new-isbn13" className="block text-[12px] font-semibold text-[#2d2f92]">ISBN-13 {isZh ? '(扫码自动填)' : '(auto from scan)'}</label>
+              <label htmlFor="new-isbn13" className="block text-[12px] font-semibold text-cocm-ink">ISBN-13 {isZh ? '(扫码自动填)' : '(auto from scan)'}</label>
               <Input ref={isbnRef} id="new-isbn13" name="isbn13" spellCheck={false} inputMode="numeric" placeholder={isZh ? '扫ISBN条码自动填' : 'Auto from ISBN scan'} className="mt-1" />
             </div>
 

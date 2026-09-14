@@ -149,7 +149,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 <label htmlFor="discount-pct" className="text-[11px] font-medium">{isZh ? '折扣 %（如20=八折）' : 'Discount % (e.g. 20=20% off)'}</label>
                 <div className="mt-1 flex gap-2">
                   <Input id="discount-pct" type="number" inputMode="decimal" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" className="flex-1" />
-                  <span className="flex h-10 items-center rounded-[12px] bg-[#faf7f0] px-3 text-[11px] text-[#5b5f94]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
+                  <span className="flex h-10 items-center rounded-[12px] bg-cocm-paper px-3 text-[11px] text-[#5b5f94]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
                 </div>
               </div>
             </div>
@@ -157,7 +157,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment Method'}</label>
-                <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
+                <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   <option value="cash">{isZh ? '现金' : 'Cash'}</option>
                   <option value="card">{isZh ? '刷卡' : 'Card'}</option>
                   <option value="bank_transfer">{isZh ? '银行转账' : 'Bank Transfer'}</option>
@@ -166,7 +166,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               </div>
               <div>
                 <label htmlFor="payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
+                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
@@ -178,7 +178,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               <Input id="customer-name" name="customer" autoComplete="off" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
             </div>
 
-            <div className="rounded-[16px] border border-dashed border-[#2d2f92]/20 p-4">
+            <div className="rounded-[16px] border border-dashed border-cocm-ink/20 p-4">
               <label htmlFor="sales-book-picker" className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
               <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
               <div className="mt-2 flex gap-2">
@@ -193,9 +193,9 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
               <div className="mt-2 space-y-2 max-h-[360px] overflow-y-auto pr-1">
                 {cart.map((item, idx) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0] px-3 py-2 text-[12px]">
+                  <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2d2f92] text-[10px] text-white">{idx+1}</span>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cocm-ink text-[10px] text-white">{idx+1}</span>
                       <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                       <div className="flex-1 min-w-0">
                         <span className="truncate font-medium">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></span>
@@ -219,9 +219,9 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '购物车为空，选书添加' : 'Cart empty, select books to add'}</p>}
               </div>
 
-              <div className="mt-4 space-y-1 border-t border-[#2d2f92]/10 pt-3">
+              <div className="mt-4 space-y-1 border-t border-cocm-ink/10 pt-3">
                 <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{total.toFixed(2)}</span></div>
-                {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#e5444c]"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+                {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-cocm-red"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
                 <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{tt('sales.total')}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
               </div>
 
@@ -239,7 +239,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
                 const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
                 return (
-                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#2d2f92]/5 px-3 py-2 text-[12px]">
+                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px]">
                   <div>
                     <p className="font-mono font-semibold">{s.sale_number}</p>
                     <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
@@ -250,7 +250,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                       <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
-                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#e5444c]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
+                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-cocm-red" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
                   </div>
                 </div>
               );})}

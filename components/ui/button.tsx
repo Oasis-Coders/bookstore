@@ -7,9 +7,9 @@ export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantStyles = {
-  primary: 'bg-[#e5444c] text-white hover:bg-[#c23340] shadow-[0_2px_8px_rgba(229,68,76,0.25)] focus:ring-[#e5444c]/35',
-  secondary: 'bg-[#2d2f92] text-white hover:bg-[#3f43a8] focus:ring-[#2d2f92]/30',
-  ghost: 'bg-transparent border border-[#2d2f92]/20 text-[#2d2f92] hover:bg-[#2d2f92]/6 hover:border-[#2d2f92]/40',
+  primary: 'bg-cocm-red text-white hover:bg-[#c23340] shadow-[0_2px_8px_rgba(229,68,76,0.25)] focus:ring-cocm-red/35',
+  secondary: 'bg-cocm-ink text-white hover:bg-[#3f43a8] focus:ring-cocm-ink/30',
+  ghost: 'bg-transparent border border-cocm-ink/20 text-cocm-ink hover:bg-cocm-ink/6 hover:border-cocm-ink/40',
   danger: 'bg-[#c13515] text-white hover:bg-[#a52d12]',
 };
 

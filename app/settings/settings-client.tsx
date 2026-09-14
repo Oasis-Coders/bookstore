@@ -97,7 +97,7 @@ export function SettingsClient({ profile, user, role }: Props) {
       <div className="mx-auto max-w-[720px] space-y-6">
         <Card>
           <CardTitle>{isZh ? '个人资料' : 'Profile'}</CardTitle>
-          <p className="mt-2 text-[13px] text-[#2d2f92]/60">{isZh ? '改自己的名字和头像，会在侧边栏和系统里显示' : 'Update your name and avatar, shown in sidebar and system'}</p>
+          <p className="mt-2 text-[13px] text-cocm-ink/60">{isZh ? '改自己的名字和头像，会在侧边栏和系统里显示' : 'Update your name and avatar, shown in sidebar and system'}</p>
 
           {message && (
             <div className={`mt-4 rounded-[12px] px-3 py-2 text-[12px] ${message.includes('失败') || message.includes('不能为空') || message.toLowerCase().includes('fail') || message.toLowerCase().includes('empty') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
@@ -105,7 +105,7 @@ export function SettingsClient({ profile, user, role }: Props) {
             </div>
           )}
 
-          <div className="mt-4 rounded-[12px] bg-[#faf7f0] p-4">
+          <div className="mt-4 rounded-[12px] bg-cocm-paper p-4">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5b5f94]">{isZh ? '当前账号' : 'Current Account'}</p>
             <p className="mt-1 text-[13px] font-mono">{user?.email}</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -130,7 +130,7 @@ export function SettingsClient({ profile, user, role }: Props) {
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[1fr_1.2fr]">
-            <div className="rounded-[16px] border border-[#2d2f92]/10 p-4">
+            <div className="rounded-[16px] border border-cocm-ink/10 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5b5f94]">{isZh ? '预览' : 'Preview'}</p>
               <div className="mt-3 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-[10px] text-[14px] font-bold text-white" style={{ backgroundColor: avatarColor }}>
@@ -153,7 +153,7 @@ export function SettingsClient({ profile, user, role }: Props) {
                 <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '图标 (1-2 字符)' : 'Icon (1-2 chars)'}</label>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {iconOptions.map((o) => (
-                    <button key={o.value} type="button" onClick={() => setAvatarIcon(o.value)} className={`h-8 w-8 rounded-[8px] text-[13px] font-bold transition ${avatarIcon === o.value ? 'bg-[#2d2f92] text-white' : 'bg-[#faf7f0] text-[#2d2f92] hover:bg-[#2d2f92]/10'}`}>
+                    <button key={o.value} type="button" onClick={() => setAvatarIcon(o.value)} className={`h-8 w-8 rounded-[8px] text-[13px] font-bold transition ${avatarIcon === o.value ? 'bg-cocm-ink text-white' : 'bg-cocm-paper text-cocm-ink hover:bg-cocm-ink/10'}`}>
                       {o.label}
                     </button>
                   ))}
@@ -165,7 +165,7 @@ export function SettingsClient({ profile, user, role }: Props) {
                 <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '颜色' : 'Color'}</label>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {colorOptions.map((c) => (
-                    <button key={c.value} type="button" onClick={() => setAvatarColor(c.value)} className={`h-7 w-7 rounded-full border-2 transition ${avatarColor === c.value ? 'border-[#2d2f92] scale-110' : 'border-white shadow-sm'}`} style={{ backgroundColor: c.bg }} title={c.label} />
+                    <button key={c.value} type="button" onClick={() => setAvatarColor(c.value)} className={`h-7 w-7 rounded-full border-2 transition ${avatarColor === c.value ? 'border-cocm-ink scale-110' : 'border-white shadow-sm'}`} style={{ backgroundColor: c.bg }} title={c.label} />
                   ))}
                 </div>
               </div>

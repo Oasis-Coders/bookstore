@@ -49,31 +49,31 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <Card className="mb-5 border-0 bg-white shadow-[0_4px_24px_rgba(45,47,146,0.08)] overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-[10px] bg-[#2d2f92] flex items-center justify-center">
+              <div className="h-9 w-9 rounded-[10px] bg-cocm-ink flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-white"><path d="M8 1.5c-1.5 0-2.5 1-2.5 2.5S6.5 6.5 8 6.5s2.5-1 2.5-2.5S9.5 1.5 8 1.5Zm0 8c-2.2 0-4.5 1.1-4.5 2.5v1h9v-1c0-1.4-2.3-2.5-4.5-2.5Z" fill="currentColor" opacity="0.9"/></svg>
               </div>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5b5f94]">{isZh ? `今日销售 · ${data.dailySales.sale_date}` : `Today · ${data.dailySales.sale_date}`}</p>
-                <p className="text-[13px] font-medium text-[#2d2f92]">{data.dailySales.total_orders} {isZh ? '笔订单' : 'orders'}</p>
+                <p className="text-[13px] font-medium text-cocm-ink">{data.dailySales.total_orders} {isZh ? '笔订单' : 'orders'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <div className="text-right">
                 <p className="text-[11px] text-[#5b5f94]">{isZh ? '今日合计' : 'Grand Total'}</p>
-                <p className="text-[20px] font-serif font-bold text-[#2d2f92] tracking-tight">{formatCurrency(data.dailySales.grand_total)}</p>
+                <p className="text-[20px] font-serif font-bold text-cocm-ink tracking-tight">{formatCurrency(data.dailySales.grand_total)}</p>
               </div>
               <Link href="/sales"><Button size="sm" variant="ghost" className="h-8 rounded-[10px] text-[11px]">{isZh ? '查看' : 'View'}</Button></Link>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {salesItems.map(item => (
-              <div key={item.key} className="rounded-[14px] bg-[#faf7f0]/80 border border-[#2d2f92]/[0.06] px-3.5 py-3 hover:bg-white hover:border-[#2d2f92]/10 hover:shadow-sm transition-all">
+              <div key={item.key} className="rounded-[14px] bg-cocm-paper/80 border border-cocm-ink/[0.06] px-3.5 py-3 hover:bg-white hover:border-cocm-ink/10 hover:shadow-sm transition-all">
                 <div className="flex items-center gap-1.5 mb-1">
                   <span className={`h-1.5 w-1.5 rounded-full ${item.dot}`} />
                   <p className="text-[11px] font-semibold text-[#5b5f94] uppercase tracking-wide">{item.label}</p>
                 </div>
-                <p className="text-[14px] font-semibold text-[#2d2f92] tabular-nums">{formatCurrency(item.value)}</p>
-                <div className="mt-1.5 h-1 w-full rounded-full bg-[#2d2f92]/5 overflow-hidden">
+                <p className="text-[14px] font-semibold text-cocm-ink tabular-nums">{formatCurrency(item.value)}</p>
+                <div className="mt-1.5 h-1 w-full rounded-full bg-cocm-ink/5 overflow-hidden">
                   <div className={`h-full rounded-full ${item.dot} transition-all`} style={{ width: `${Math.min(100, (item.value / Math.max(1, data.dailySales!.grand_total)) * 100)}%` }} />
                 </div>
               </div>
@@ -118,33 +118,33 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <Card className="lg:col-span-2">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
-              <span className="h-1 w-6 rounded-full bg-[#e5444c]" />
+              <span className="h-1 w-6 rounded-full bg-cocm-red" />
               {tt('dashboard.recentPOs')}
             </CardTitle>
             <Link href="/purchase-orders"><Button variant="ghost" size="sm" className="rounded-[10px]">{tt('common.viewAll')}</Button></Link>
           </div>
           <div className="mt-5">
             {false ? (
-              <div className="rounded-[16px] bg-gradient-to-br from-[#faf7f0] to-[#f4efe4] p-8 text-center border border-[#2d2f92]/5">
+              <div className="rounded-[16px] bg-gradient-to-br from-cocm-paper to-[#f4efe4] p-8 text-center border border-cocm-ink/5">
                 <div className="w-12 h-12 mx-auto rounded-[12px] bg-white shadow-sm flex items-center justify-center mb-3">
-                  <span className="h-3 w-3 rounded-full bg-[#2d2f92]/20" />
+                  <span className="h-3 w-3 rounded-full bg-cocm-ink/20" />
                 </div>
-                <p className="text-[14px] font-medium text-[#2d2f92]">{tt('dashboard.demoMode')}</p>
+                <p className="text-[14px] font-medium text-cocm-ink">{tt('dashboard.demoMode')}</p>
                 <p className="mt-1.5 text-[12px] text-[#5b5f94]">{tt('dashboard.demoHint')}</p>
               </div>
             ) : data.recentPOs.length === 0 ? (
               <div className="py-12 text-center">
-                <div className="w-10 h-10 mx-auto rounded-full bg-[#2d2f92]/5 flex items-center justify-center mb-3">
-                  <span className="h-2 w-2 rounded-full bg-[#2d2f92]/30" />
+                <div className="w-10 h-10 mx-auto rounded-full bg-cocm-ink/5 flex items-center justify-center mb-3">
+                  <span className="h-2 w-2 rounded-full bg-cocm-ink/30" />
                 </div>
                 <p className="text-[13px] text-[#5b5f94]">{tt('dashboard.noPOs')}</p>
               </div>
             ) : (
               <div className="space-y-2.5">
                 {data.recentPOs.map((po: any) => (
-                  <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[14px] border border-[#2d2f92]/[0.06] bg-[#faf7f0]/60 px-4 py-3.5 hover:bg-white hover:border-[#2d2f92]/10 hover:shadow-[0_2px_12px_rgba(45,47,146,0.06)] transition-all group">
+                  <Link key={po.id} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[14px] border border-cocm-ink/[0.06] bg-cocm-paper/60 px-4 py-3.5 hover:bg-white hover:border-cocm-ink/10 hover:shadow-[0_2px_12px_rgba(45,47,146,0.06)] transition-all group">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-[#2d2f92] group-hover:text-[#2d2f92]">{po.po_number}</p>
+                      <p className="text-[13px] font-semibold text-cocm-ink group-hover:text-cocm-ink">{po.po_number}</p>
                       <p className="text-[11px] text-[#5b5f94] mt-0.5 truncate">{po.suppliers?.name_zh}</p>
                     </div>
                     <Badge className="ml-3 shrink-0">{poStatusLabel(po.status)}</Badge>
@@ -155,7 +155,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-white to-[#faf7f0]/50">
+        <Card className="bg-gradient-to-br from-white to-cocm-paper/50">
           <CardTitle className="flex items-center gap-2">
             <span className="h-1 w-6 rounded-full bg-[#3f43a8]" />
             {tt('dashboard.guide')}
@@ -163,15 +163,15 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           <div className="mt-5 space-y-3.5 text-[13px] leading-relaxed">
             {[1,2,3,4,5].map((i) => (
               <div key={i} className="flex gap-3 group">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-[#2d2f92]/5 text-[11px] font-bold text-[#2d2f92] group-hover:bg-[#2d2f92] group-hover:text-white transition-colors">{i}</span>
-                <p className="flex-1 text-[#2d2f92]/80 leading-[1.5]"><strong className="text-[#2d2f92] font-semibold">{(tt as any)(`dashboard.guide${i}`)}</strong> {(tt as any)(`dashboard.guide${i}Desc`)}</p>
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[8px] bg-cocm-ink/5 text-[11px] font-bold text-cocm-ink group-hover:bg-cocm-ink group-hover:text-white transition-colors">{i}</span>
+                <p className="flex-1 text-cocm-ink/80 leading-[1.5]"><strong className="text-cocm-ink font-semibold">{(tt as any)(`dashboard.guide${i}`)}</strong> {(tt as any)(`dashboard.guide${i}Desc`)}</p>
               </div>
             ))}
-            <p className="pt-2 text-[11px] text-[#5b5f94] leading-relaxed bg-[#faf7f0]/80 rounded-[10px] px-3 py-2 border border-[#2d2f92]/5">{tt('dashboard.guideHint')}</p>
+            <p className="pt-2 text-[11px] text-[#5b5f94] leading-relaxed bg-cocm-paper/80 rounded-[10px] px-3 py-2 border border-cocm-ink/5">{tt('dashboard.guideHint')}</p>
           </div>
           <div className="mt-5 flex flex-wrap gap-2.5">
-            <Link href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-[#2d2f92] px-4 text-[13px] font-semibold text-white hover:bg-[#3f43a8] transition-colors shadow-[0_2px_8px_rgba(45,47,146,0.2)] hover:shadow-[0_4px_12px_rgba(45,47,146,0.3)]">{tt('dashboard.goBooks')}</Link>
-            <Link href="/purchase-orders/new" className="inline-flex h-9 items-center rounded-[12px] border border-[#2d2f92]/15 bg-white px-4 text-[13px] font-semibold text-[#2d2f92] hover:bg-[#faf7f0] transition-colors">{tt('dashboard.createPO')}</Link>
+            <Link href="/books" className="inline-flex h-9 items-center rounded-[12px] bg-cocm-ink px-4 text-[13px] font-semibold text-white hover:bg-[#3f43a8] transition-colors shadow-[0_2px_8px_rgba(45,47,146,0.2)] hover:shadow-[0_4px_12px_rgba(45,47,146,0.3)]">{tt('dashboard.goBooks')}</Link>
+            <Link href="/purchase-orders/new" className="inline-flex h-9 items-center rounded-[12px] border border-cocm-ink/15 bg-white px-4 text-[13px] font-semibold text-cocm-ink hover:bg-cocm-paper transition-colors">{tt('dashboard.createPO')}</Link>
           </div>
         </Card>
       </div>

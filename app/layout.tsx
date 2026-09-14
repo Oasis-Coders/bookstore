@@ -19,7 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"
         rel="stylesheet"
       />
-      <body className="brand-wash-bg text-[#2d2f92] antialiased">
+      <body className="brand-wash-bg text-cocm-ink antialiased">
         <RouteProgress />
         <I18nProvider>{children}</I18nProvider>
       </body>

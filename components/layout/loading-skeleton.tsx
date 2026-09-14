@@ -1,12 +1,12 @@
 type SkeletonVariant = 'default' | 'dashboard' | 'form' | 'table' | 'books';
 
 function Pulse({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded-lg bg-[#2d2f92]/10 ${className ?? ''}`} />;
+  return <div className={`animate-pulse rounded-lg bg-cocm-ink/10 ${className ?? ''}`} />;
 }
 
 function HeaderSkeleton() {
   return (
-    <div className="rounded-[28px] border border-[#2d2f92]/10 bg-white p-6 shadow-[rgba(45,47,146,0.03)_0px_0px_0px_1px,rgba(45,47,146,0.05)_0px_2px_8px,rgba(45,47,146,0.10)_0px_8px_24px] lg:p-8">
+    <div className="rounded-[28px] border border-cocm-ink/10 bg-white p-6 shadow-[rgba(45,47,146,0.03)_0px_0px_0px_1px,rgba(45,47,146,0.05)_0px_2px_8px,rgba(45,47,146,0.10)_0px_8px_24px] lg:p-8">
       <Pulse className="h-3 w-24" />
       <Pulse className="mt-4 h-9 w-64" />
     </div>
@@ -16,13 +16,13 @@ function HeaderSkeleton() {
 function DefaultContent() {
   return (
     <div className="mt-6 space-y-5">
-      <div className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+      <div className="rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
         <Pulse className="h-5 w-48" />
         <Pulse className="mt-4 h-4 w-full" />
         <Pulse className="mt-2 h-4 w-3/4" />
         <Pulse className="mt-2 h-4 w-5/6" />
       </div>
-      <div className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+      <div className="rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
         <Pulse className="h-5 w-36" />
         <Pulse className="mt-4 h-4 w-full" />
         <Pulse className="mt-2 h-4 w-2/3" />
@@ -36,7 +36,7 @@ function DashboardContent() {
     <>
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+          <div key={i} className="rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
             <Pulse className="h-3 w-20" />
             <Pulse className="mt-3 h-8 w-16" />
             <Pulse className="mt-2 h-3 w-full" />
@@ -44,11 +44,11 @@ function DashboardContent() {
         ))}
       </div>
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm lg:col-span-2">
           <Pulse className="h-5 w-32" />
           <Pulse className="mt-4 h-32 w-full rounded-[12px]" />
         </div>
-        <div className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+        <div className="rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
           <Pulse className="h-5 w-24" />
           <Pulse className="mt-4 h-4 w-full" />
           <Pulse className="mt-2 h-4 w-3/4" />
@@ -62,7 +62,7 @@ function DashboardContent() {
 
 function FormContent() {
   return (
-    <div className="mt-6 rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+    <div className="mt-6 rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
       {[1, 2, 3, 4, 5].map((i) => (
         <div key={i} className={i > 1 ? 'mt-5' : ''}>
           <Pulse className="h-3 w-28" />
@@ -76,7 +76,7 @@ function FormContent() {
 
 function TableContent() {
   return (
-    <div className="mt-6 rounded-[20px] border border-[#2d2f92]/10 bg-white p-6 shadow-sm">
+    <div className="mt-6 rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm">
       <div className="flex gap-2">
         <Pulse className="h-9 w-64 rounded-[12px]" />
         <Pulse className="h-9 w-24 rounded-[12px]" />
@@ -99,7 +99,7 @@ function BooksContent() {
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="rounded-[20px] border border-[#2d2f92]/10 bg-white p-5">
+          <div key={i} className="rounded-[20px] border border-cocm-ink/10 bg-white p-5">
             <Pulse className="h-5 w-3/4" />
             <Pulse className="mt-2 h-3 w-1/2" />
             <Pulse className="mt-4 h-4 w-full" />

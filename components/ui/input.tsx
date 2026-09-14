@@ -7,7 +7,7 @@ export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTML
       <input
         ref={ref}
         className={cn(
-          'flex h-11 w-full rounded-[20px] border border-[#2d2f92]/15 bg-white px-4 py-2 text-[14px] text-[#2d2f92] placeholder:text-[#2d2f92]/40 focus:border-[#5b5f94] focus:outline-none focus:ring-[3px] focus:ring-[#5b5f94]/20',
+          'flex h-11 w-full rounded-[20px] border border-cocm-ink/15 bg-white px-4 py-2 text-[14px] text-cocm-ink placeholder:text-cocm-ink/40 focus:border-[#5b5f94] focus:outline-none focus:ring-[3px] focus:ring-[#5b5f94]/20',
           className
         )}
         {...props}
@@ -21,7 +21,7 @@ export function Textarea({ className, ...props }: React.TextareaHTMLAttributes<H
   return (
     <textarea
       className={cn(
-        'flex min-h-[80px] w-full rounded-[20px] border border-[#2d2f92]/15 bg-white px-4 py-3 text-[14px] text-[#2d2f92] placeholder:text-[#2d2f92]/40 focus:border-[#5b5f94] focus:outline-none focus:ring-[3px] focus:ring-[#5b5f94]/20',
+        'flex min-h-[80px] w-full rounded-[20px] border border-cocm-ink/15 bg-white px-4 py-3 text-[14px] text-cocm-ink placeholder:text-cocm-ink/40 focus:border-[#5b5f94] focus:outline-none focus:ring-[3px] focus:ring-[#5b5f94]/20',
         className
       )}
       {...props}

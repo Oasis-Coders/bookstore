@@ -207,7 +207,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             <p>{sale.sale_number} • {new Date(sale.sold_at).toLocaleString('en-GB')} • £{Number(sale.subtotal || 0).toFixed(2)} {Number(sale.discount_amount || 0) > 0 ? `(-£${Number(sale.discount_amount).toFixed(2)} → £${(Number(sale.subtotal||0)-Number(sale.discount_amount||0)).toFixed(2)})` : ''}</p>
             <div className="flex flex-wrap gap-2">
               {(lines || []).map((l: any) => (
-                <span key={l.id} className="rounded-full bg-[#faf7f0] px-2 py-0.5">{l.books?.title || l.book_id.slice(0,6)} ×{l.quantity} @£{Number(l.unit_price).toFixed(2)}</span>
+                <span key={l.id} className="rounded-full bg-cocm-paper px-2 py-0.5">{l.books?.title || l.book_id.slice(0,6)} ×{l.quantity} @£{Number(l.unit_price).toFixed(2)}</span>
               ))}
             </div>
           </div>
@@ -220,9 +220,9 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             <BookAutocomplete id="edit-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
             <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto pr-1">
               {cart.map((item, idx) => (
-                <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0] px-3 py-2 text-[12px]">
+                <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2d2f92] text-[10px] text-white">{idx+1}</span>
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cocm-ink text-[10px] text-white">{idx+1}</span>
                     <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                     <span className="truncate font-medium">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></span>
                   </div>
@@ -239,9 +239,9 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
               ))}
               {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '至少选一本' : 'Select at least one book'}</p>}
             </div>
-            <div className="mt-4 space-y-1 border-t border-[#2d2f92]/10 pt-3">
+            <div className="mt-4 space-y-1 border-t border-cocm-ink/10 pt-3">
               <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{subtotal.toFixed(2)}</span></div>
-              {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#e5444c]"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+              {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-cocm-red"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
               <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{isZh ? '实付' : 'Payable'}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
             </div>
           </div>
@@ -258,13 +258,13 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
-                <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
+                <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   {Object.entries(PAYMENT_LABELS).map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
                 </select>
               </div>
               <div>
                 <label htmlFor="edit-payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select id="edit-payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
+                <select id="edit-payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
@@ -285,8 +285,8 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
               <Input id="edit-notes" value={notes} onChange={e => setNotes(e.target.value)} className="mt-1" />
             </div>
             <div>
-              <label htmlFor="edit-reason" className="text-[11px] font-medium text-[#e5444c]">{isZh ? '改动原因 *（写入操作记录）' : 'Reason * (audit log)'}</label>
-              <Input id="edit-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder={isZh ? '例：客人改要一本，折扣写错' : 'e.g. customer changed qty, discount typo'} className="mt-1 border-[#e5444c]/30" />
+              <label htmlFor="edit-reason" className="text-[11px] font-medium text-cocm-red">{isZh ? '改动原因 *（写入操作记录）' : 'Reason * (audit log)'}</label>
+              <Input id="edit-reason" value={reason} onChange={e => setReason(e.target.value)} placeholder={isZh ? '例：客人改要一本，折扣写错' : 'e.g. customer changed qty, discount typo'} className="mt-1 border-cocm-red/30" />
             </div>
             <div className="flex gap-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存改动' : 'Save Changes')}</Button>
@@ -303,11 +303,11 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
               {edits.map((ed: any) => {
                 const diffs = readableDiff(ed.old_values, ed.new_values);
                 return (
-                  <div key={ed.id} className="rounded-[12px] bg-[#faf7f0]/60 px-3 py-2 text-[11px]">
+                  <div key={ed.id} className="rounded-[12px] bg-cocm-paper/60 px-3 py-2 text-[11px]">
                     <p className="font-medium">{new Date(ed.edited_at).toLocaleString('en-GB')} • {ed.editor_name || ed.edited_by?.slice(0,6)} • {ed.change_type === 'content' ? (isZh ? '改书/改量' : 'Content') : (isZh ? '信息' : 'Metadata')}</p>
                     {ed.reason && <p className="text-[#5b5f94]">{isZh ? '原因' : 'Reason'}：{ed.reason}</p>}
                     <ul className="mt-1 list-disc pl-4 space-y-0.5">
-                      {diffs?.map((d: string, i: number) => <li key={i} className="text-[#2d2f92]">{d}</li>)}
+                      {diffs?.map((d: string, i: number) => <li key={i} className="text-cocm-ink">{d}</li>)}
                     </ul>
                   </div>
                 );

@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@cocm/theme": "github:Oasis-Coders/cocm-theme#main",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.49.1",
     "clsx": "^2.1.1",

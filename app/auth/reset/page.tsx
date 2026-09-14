@@ -49,7 +49,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
           <p className="mt-3 text-sm text-gray-500">请重新申请一封重置邮件。</p>
           <Link
             href="/auth?mode=reset"
-            className="mt-6 inline-block font-semibold text-[#e5444c] underline underline-offset-2"
+            className="mt-6 inline-block font-semibold text-cocm-red underline underline-offset-2"
           >
             重新申请
           </Link>
@@ -59,7 +59,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#faf7f0] px-4">
+    <main className="flex min-h-screen items-center justify-center bg-cocm-paper px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
         <h1 className="text-xl font-semibold text-gray-900">设置新密码</h1>
         <p className="mt-2 text-sm text-gray-500">请输入你的新密码，至少 6 位字符。</p>
@@ -83,7 +83,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
               required
               minLength={6}
               autoComplete="new-password"
-              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none focus:border-[#2d2f92] focus:ring-2 focus:ring-[#2d2f92]/20"
+              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none focus:border-cocm-ink focus:ring-2 focus:ring-cocm-ink/20"
             />
           </div>
           <div>
@@ -97,12 +97,12 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
               required
               minLength={6}
               autoComplete="new-password"
-              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none focus:border-[#2d2f92] focus:ring-2 focus:ring-[#2d2f92]/20"
+              className="mt-1 w-full rounded-xl border border-gray-200 px-4 py-3 text-base outline-none focus:border-cocm-ink focus:ring-2 focus:ring-cocm-ink/20"
             />
           </div>
           <button
             type="submit"
-            className="w-full rounded-xl bg-[#e5444c] px-6 py-3 font-semibold text-white transition hover:bg-[#c9333b]"
+            className="w-full rounded-xl bg-cocm-red px-6 py-3 font-semibold text-white transition hover:bg-[#c9333b]"
           >
             设置新密码
           </button>
@@ -110,7 +110,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
 
         <p className="mt-6 text-center text-sm text-gray-500">
           链接无效或已过期？{' '}
-          <Link href="/auth?mode=reset" className="font-semibold text-[#e5444c] underline underline-offset-2">
+          <Link href="/auth?mode=reset" className="font-semibold text-cocm-red underline underline-offset-2">
             重新申请
           </Link>
         </p>

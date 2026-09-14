@@ -92,7 +92,7 @@ export default function AuthConfirmPage() {
             <p className="mt-3 text-sm text-gray-500">请重新申请一封重置邮件。</p>
             <Link
               href="/auth?mode=reset"
-              className="mt-6 inline-block font-semibold text-[#e5444c] underline underline-offset-2"
+              className="mt-6 inline-block font-semibold text-cocm-red underline underline-offset-2"
             >
               重新申请
             </Link>

@@ -71,16 +71,16 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <CardTitle>{tt('purchaseOrders.differentCostTitle')}</CardTitle>
-          <p className="mt-2 text-[13px] leading-relaxed text-[#2d2f92]/80">{tt('purchaseOrders.differentCostDesc')}</p>
-          <div className="mt-3 rounded-[12px] bg-[#faf7f0] p-3 text-[11px] text-[#5b5f94]">
-            <p className="font-semibold text-[#2d2f92]">{isZh ? '如何处理不同进价：' : 'How different costs are handled:'}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-cocm-ink/80">{tt('purchaseOrders.differentCostDesc')}</p>
+          <div className="mt-3 rounded-[12px] bg-cocm-paper p-3 text-[11px] text-[#5b5f94]">
+            <p className="font-semibold text-cocm-ink">{isZh ? '如何处理不同进价：' : 'How different costs are handled:'}</p>
             <p className="mt-1">{isZh ? '同一本书第二次进货若进价不同，系统会自动创建新批次，按新进价记成本，销售时按最早进货先出。' : 'If same book purchased again at different cost, system creates new batch with new cost, sells earliest batch first.'}</p>
           </div>
         </Card>
         <Card>
           <CardTitle>{tt('purchaseOrders.receiveTitle')}</CardTitle>
           <p className="mt-2 text-[13px] text-[#5b5f94]">{tt('purchaseOrders.receiveDesc')}</p>
-          <ul className="mt-2 list-disc pl-4 text-[12px] text-[#2d2f92]/80 space-y-1">
+          <ul className="mt-2 list-disc pl-4 text-[12px] text-cocm-ink/80 space-y-1">
             <li>{tt('purchaseOrders.receive1')}</li>
             <li>{tt('purchaseOrders.receive2')}</li>
             <li>{tt('purchaseOrders.receive3')}</li>

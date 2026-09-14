@@ -35,7 +35,7 @@ export default function NewSupplierPage() {
   return (
     <AppShell title="New Supplier" titleZh="添加供应商" eyebrow="活水书房">
       <div className="mx-auto max-w-[640px]">
-        <Link href="/suppliers" className="mb-4 inline-flex text-[13px] text-[#5b5f94] hover:text-[#2d2f92]">
+        <Link href="/suppliers" className="mb-4 inline-flex text-[13px] text-[#5b5f94] hover:text-cocm-ink">
           {isZh ? '← 返回供应商' : '← Back to Suppliers'}
         </Link>
         <Card>
@@ -44,42 +44,42 @@ export default function NewSupplierPage() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '代号 *' : 'Code *'}</label>
+                <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '代号 *' : 'Code *'}</label>
                 <Input name="code" placeholder="SUP-001" required className="mt-1" />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '付款条件' : 'Payment Terms'}</label>
+                <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '付款条件' : 'Payment Terms'}</label>
                 <Input name="payment_terms" placeholder={isZh ? '月结30天' : 'e.g. Net 30'} className="mt-1" />
               </div>
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '中文名称 *' : 'Chinese Name *'}</label>
+              <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '中文名称 *' : 'Chinese Name *'}</label>
               <Input name="name_zh" placeholder={isZh ? '供应商中文名' : 'Chinese Name'} required className="mt-1" />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '英文名称' : 'English Name'}</label>
+              <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '英文名称' : 'English Name'}</label>
               <Input name="name_en" placeholder={isZh ? '英文名称' : 'English Name'} className="mt-1" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '联系人' : 'Contact'}</label>
+                <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '联系人' : 'Contact'}</label>
                 <Input name="contact_person" placeholder={isZh ? '联系人' : 'Contact'} className="mt-1" />
               </div>
               <div>
-                <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '电话' : 'Phone'}</label>
+                <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '电话' : 'Phone'}</label>
                 <Input name="phone" placeholder={isZh ? '电话' : 'Phone'} className="mt-1" />
               </div>
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '邮箱' : 'Email'}</label>
+              <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '邮箱' : 'Email'}</label>
               <Input name="email" type="email" placeholder="email@example.com" className="mt-1" />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '地址' : 'Address'}</label>
+              <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '地址' : 'Address'}</label>
               <Input name="address" placeholder={isZh ? '地址' : 'Address'} className="mt-1" />
             </div>
             <div>
-              <label className="block text-[12px] font-semibold text-[#2d2f92]">{isZh ? '备注' : 'Notes'}</label>
+              <label className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '备注' : 'Notes'}</label>
               <Input name="notes" placeholder={isZh ? '备注' : 'Notes'} className="mt-1" />
             </div>
             <div className="flex gap-2 pt-2">

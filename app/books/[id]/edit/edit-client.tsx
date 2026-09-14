@@ -120,7 +120,7 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
                   id="edit-active"
                   name="is_active"
                   defaultValue={String(book.is_active)}
-                  className="mt-1 w-full rounded-[10px] border border-[#2d2f92]/15 bg-white text-[#2d2f92] px-3 py-2 text-[13px]"
+                  className="mt-1 w-full rounded-[10px] border border-cocm-ink/15 bg-white text-cocm-ink px-3 py-2 text-[13px]"
                 >
                   <option value="true">{isZh ? '启用' : 'Active'}</option>
                   <option value="false">{isZh ? '停用' : 'Inactive'}</option>

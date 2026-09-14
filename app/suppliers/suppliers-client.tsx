@@ -65,7 +65,7 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
               </div>
               <Badge>{s.code}</Badge>
             </div>
-            <div className="mt-3 space-y-1 text-[12px] text-[#2d2f92]/70">
+            <div className="mt-3 space-y-1 text-[12px] text-cocm-ink/70">
               {s.contact_person && <p>{tt('suppliers.contact')}：{s.contact_person}</p>}
               {s.phone && <p>{tt('suppliers.phone')}：{s.phone}</p>}
               {s.email && <p>{tt('suppliers.email')}：{s.email}</p>}

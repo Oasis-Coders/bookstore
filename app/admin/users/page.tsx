@@ -141,11 +141,11 @@ export default function AdminUsersPage() {
               return (
                 <div
                   key={p.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#2d2f92]/10 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-cocm-ink/10 px-4 py-3"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold">{p.display_name || shortId}</p>
-                    <p className="truncate text-[11px] text-[#2d2f92]/70">
+                    <p className="truncate text-[11px] text-cocm-ink/70">
                       {(p as any).email || ''}
                     </p>
                     <p className="truncate text-[10px] text-[#5b5f94]">
@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
 
         <Card>
           <CardTitle>{isZh ? '权限说明' : 'Permissions'}</CardTitle>
-          <div className="mt-3 space-y-2 text-[12px] text-[#2d2f92]/80">
+          <div className="mt-3 space-y-2 text-[12px] text-cocm-ink/80">
             <p>
               <Badge>staff</Badge>{' '}
               {isZh ? '只能操作日常：图书、采购、销售、库存' : 'Daily ops only: books, POs, sales, inventory'}
@@ -213,7 +213,7 @@ export default function AdminUsersPage() {
               {isZh ? '可改所有人员角色，是最高权限' : 'Can change all roles, highest privilege'}
             </p>
           </div>
-          <div className="mt-4 rounded-[12px] bg-[#faf7f0] p-3 text-[11px] text-[#5b5f94]">
+          <div className="mt-4 rounded-[12px] bg-cocm-paper p-3 text-[11px] text-[#5b5f94]">
             <p>
               {isZh
                 ? '首位注册用户自动 super_admin，后续需 super_admin 分配。'

@@ -74,7 +74,7 @@ export function CategorySelect({ name, id, defaultValue, required, className }: 
           id={id}
           value={selected}
           onChange={handleSelectChange}
-          className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/10 bg-white px-3 py-2 text-[13px] text-[#2d2f92] ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d2f92]/20"
+          className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/10 bg-white px-3 py-2 text-[13px] text-cocm-ink ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cocm-ink/20"
           required={required}
         >
           <option value="">{isZh ? '选择分类' : 'Select category'}</option>

@@ -109,7 +109,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     <div className="min-h-screen bg-white text-[#1a1c40] print:bg-white">
       <style>{`@media print { .no-print { display:none } body { -webkit-print-color-adjust: exact } }`}</style>
       <div className="mx-auto max-w-[820px] p-6 sm:p-10 font-serif">
-        <div className="flex justify-between items-start border-b-2 border-[#2d2f92] pb-5">
+        <div className="flex justify-between items-start border-b-2 border-cocm-ink pb-5">
           <div>
             <h1 className="text-[22px] font-bold tracking-tight">COCM Bookshop</h1>
             <p className="text-[11px] text-[#6d72a0] mt-1">活水书房</p>
@@ -132,7 +132,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
 
-        <div className="mt-8 border border-[#2d2f92]/20 rounded-[8px] overflow-hidden">
+        <div className="mt-8 border border-cocm-ink/20 rounded-[8px] overflow-hidden">
           <table className="w-full text-[12px] border-collapse">
             <thead>
               <tr className="bg-[#f6f3ee] text-left text-[11px] text-[#6d72a0]">
@@ -166,15 +166,15 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
           <div className="w-[280px] text-[12.5px] space-y-2">
             <div className="flex justify-between py-1"><span className="text-[#6d72a0]">{isZh ? '图书小计' : 'Book Subtotal'}</span><span className="font-medium tabular-nums">{fmtGBP(displayBookSubtotal)}</span></div>
             {globalDisc > 0 && enriched.every((e:any)=>e.discAmt===0) && (
-              <div className="flex justify-between py-1 text-[#e5444c]"><span>{isZh ? '折扣' : 'Discount'} {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-{fmtGBP(globalDisc)}</span></div>
+              <div className="flex justify-between py-1 text-cocm-red"><span>{isZh ? '折扣' : 'Discount'} {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-{fmtGBP(globalDisc)}</span></div>
             )}
             <div className="flex justify-between py-1"><span className="text-[#6d72a0]">{isZh ? '邮费' : 'P & P Cost'}</span><span className="tabular-nums">{fmtGBP(shipping)}</span></div>
-            <div className="flex justify-between py-2 border-t-2 border-[#2d2f92] font-bold text-[14px] mt-2 pt-2"><span>{isZh ? '总计：' : 'Total:'}</span><span className="tabular-nums">{fmtGBP(total)}</span></div>
+            <div className="flex justify-between py-2 border-t-2 border-cocm-ink font-bold text-[14px] mt-2 pt-2"><span>{isZh ? '总计：' : 'Total:'}</span><span className="tabular-nums">{fmtGBP(total)}</span></div>
           </div>
         </div>
 
-        <div className="mt-10 rounded-[10px] bg-[#faf7f0] border border-[#ece5d6] p-4 text-[11.5px] leading-relaxed text-[#3c4070]">
-          <p className="font-semibold text-[#2d2f92] mb-1">{isZh ? '付款方式' : 'Payment Method'}</p>
+        <div className="mt-10 rounded-[10px] bg-cocm-paper border border-[#ece5d6] p-4 text-[11.5px] leading-relaxed text-[#3c4070]">
+          <p className="font-semibold text-cocm-ink mb-1">{isZh ? '付款方式' : 'Payment Method'}</p>
           <p>{isZh ? '支票付款：抬头请写 COCM' : 'By cheque: Please make cheque payable to COCM'}</p>
           <p>{isZh ? '请在支票背面注明发票编号' : 'Please quote Invoice No. on the back of the cheque'}</p>
           <p className="mt-2">{isZh ? '银行转账：' : 'By bank transfer:'}</p>
@@ -184,8 +184,8 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         </div>
 
         <div className="no-print mt-8 flex gap-2">
-          <button onClick={()=>window.print()} className="rounded-full bg-[#2d2f92] text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
-          <a href="/sales" className="rounded-full border border-[#2d2f92]/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
+          <button onClick={()=>window.print()} className="rounded-full bg-cocm-ink text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
+          <a href="/sales" className="rounded-full border border-cocm-ink/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
         </div>
       </div>
     </div>
