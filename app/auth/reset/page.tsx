@@ -43,7 +43,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
   // password update would fail, so ask for a fresh link instead.
   if (!hasSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#faf7f0] px-4">
+      <main className="brand-wash-bg flex min-h-screen items-center justify-center px-4">
         <div className="w-full max-w-md rounded-2xl bg-white p-8 text-center shadow-lg">
           <h1 className="text-xl font-semibold text-gray-900">链接无效或已过期</h1>
           <p className="mt-3 text-sm text-gray-500">请重新申请一封重置邮件。</p>

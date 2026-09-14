@@ -74,7 +74,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
   const displayTitle = isZh ? titleZh : title;
 
   return (
-    <div className="min-h-screen bg-[#faf7f0]">
+    <div className="brand-wash-bg min-h-screen">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] focus:rounded-[10px] focus:bg-white focus:px-4 focus:py-2 focus:text-[13px] focus:font-medium focus:text-[#2d2f92] focus:shadow-lg"
@@ -129,7 +129,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
         </aside>
 
         <main id="main-content" className="min-w-0 flex-1">
-          <div className="sticky top-0 z-10 backdrop-blur-xl bg-[#faf7f0]/80 border-b border-[#2d2f92]/5 lg:rounded-t-[20px] lg:border lg:mt-0 -mt-px">
+          <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/70 border-b border-[#2d2f92]/5 lg:rounded-t-[20px] lg:border lg:mt-0 -mt-px">
             <div className="flex items-center justify-between px-4 py-4 lg:px-8 lg:py-6">
               <div className="min-w-0 flex-1">
                 {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-[#e5444c] mb-1">{eyebrow}</p>}

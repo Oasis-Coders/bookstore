@@ -83,7 +83,7 @@ export function AuthClient({
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-[#faf7f0]">
+      <div className="brand-wash-bg flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">

@@ -23,7 +23,7 @@ html {
 body {
   margin: 0;
   font-family: 'Inter', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background-color: #faf7f0;
+  background-color: #eef0fd;
   color: #2d2f92;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: rgba(45, 47, 146, 0.15);
@@ -41,6 +41,15 @@ a {
 
 .card-shadow {
   box-shadow: rgba(45,47,146,0.03) 0px 0px 0px 1px, rgba(45,47,146,0.05) 0px 2px 8px, rgba(45,47,146,0.10) 0px 8px 24px;
+}
+
+/* ── Brand-wash gradient background: soft indigo/red washes, not a flat color ── */
+.brand-wash-bg {
+  background:
+    radial-gradient(640px 420px at 88% 8%, rgba(45, 47, 146, 0.10), transparent 62%),
+    radial-gradient(560px 420px at 6% 94%, rgba(229, 68, 76, 0.07), transparent 60%),
+    radial-gradient(420px 300px at 50% 50%, rgba(255, 255, 255, 0.55), transparent 70%),
+    linear-gradient(165deg, #eef0fd 0%, #f7f8ff 48%, #eceffa 100%);
 }
 
 .card-hover:hover {
