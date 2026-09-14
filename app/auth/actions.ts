@@ -191,17 +191,21 @@ export async function resetPassword(formData: FormData) {
   }
 
   const cookieStore = await cookies();
+  // Implicit flow (no PKCE code challenge): the emailed link carries a
+  // self-contained token that /auth/confirm verifies directly, so it works
+  // even when clicked on a different device/browser.
   const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
     cookies: {
       getAll() { return cookieStore.getAll(); },
       setAll() {},
     },
+    auth: { flowType: 'implicit' },
   });
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cocm-bookstor.vercel.app';
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://cocm-bookstore.vercel.app').replace(/\/$/, '');
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/reset`,
+    redirectTo: `${siteUrl}/auth/confirm`,
   });
 
   if (error) {
