@@ -135,7 +135,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card>
           <CardTitle>{tt('sales.newSale')}</CardTitle>
-          <p className="mt-1 text-[12px] text-[#4f7a5c]">{tt('sales.newSaleHint')}</p>
+          <p className="mt-1 text-[12px] text-[#5b5f94]">{tt('sales.newSaleHint')}</p>
 
           {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
 
@@ -149,7 +149,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 <label htmlFor="discount-pct" className="text-[11px] font-medium">{isZh ? '折扣 %（如20=八折）' : 'Discount % (e.g. 20=20% off)'}</label>
                 <div className="mt-1 flex gap-2">
                   <Input id="discount-pct" type="number" inputMode="decimal" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} placeholder="0" className="flex-1" />
-                  <span className="flex h-10 items-center rounded-[12px] bg-[#faf6ee] px-3 text-[11px] text-[#4f7a5c]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
+                  <span className="flex h-10 items-center rounded-[12px] bg-[#faf7f0] px-3 text-[11px] text-[#5b5f94]">{discountPctNum>0 ? `-£${discountAmount.toFixed(2)}` : '0%'}</span>
                 </div>
               </div>
             </div>
@@ -157,7 +157,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment Method'}</label>
-                <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
+                <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
                   <option value="cash">{isZh ? '现金' : 'Cash'}</option>
                   <option value="card">{isZh ? '刷卡' : 'Card'}</option>
                   <option value="bank_transfer">{isZh ? '银行转账' : 'Bank Transfer'}</option>
@@ -166,7 +166,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               </div>
               <div>
                 <label htmlFor="payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 bg-white px-3 text-[12px] text-[#0f3d2e]">
+                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 bg-white px-3 text-[12px] text-[#2d2f92]">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
@@ -178,7 +178,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               <Input id="customer-name" name="customer" autoComplete="off" value={customerName} onChange={e => setCustomerName(e.target.value)} placeholder={isZh ? '人名、网单号、教会...' : 'Name, order no, church...'} className="mt-1" />
             </div>
 
-            <div className="rounded-[16px] border border-dashed border-[#0f3d2e]/20 p-4">
+            <div className="rounded-[16px] border border-dashed border-[#2d2f92]/20 p-4">
               <label htmlFor="sales-book-picker" className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
               <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
               <div className="mt-2 flex gap-2">
@@ -186,19 +186,19 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 <Button variant="secondary" size="sm" onClick={() => { const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } }}>{tt('sales.add')}</Button>
               </div>
 
-              <div className="mt-3 flex items-center justify-between text-[11px] text-[#4f7a5c]">
+              <div className="mt-3 flex items-center justify-between text-[11px] text-[#5b5f94]">
                 <span>{isZh ? `已选 ${cart.length} 种 / 共 ${totalQty} 本` : `${cart.length} titles / ${totalQty} pcs selected`}</span>
                 {cart.length>0 && <button onClick={()=>{ if (window.confirm(isZh ? '确定要清空购物车吗？' : 'Clear the cart?')) setCart([]); }} className="text-red-500 hover:text-red-700">{isZh ? '清空' : 'Clear'}</button>}
               </div>
 
               <div className="mt-2 space-y-2 max-h-[360px] overflow-y-auto pr-1">
                 {cart.map((item, idx) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2 text-[12px]">
+                  <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0] px-3 py-2 text-[12px]">
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0f3d2e] text-[10px] text-white">{idx+1}</span>
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2d2f92] text-[10px] text-white">{idx+1}</span>
                       <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                       <div className="flex-1 min-w-0">
-                        <span className="truncate font-medium">{item.title} <span className="text-[#4f7a5c] text-[10px]">({item.sku})</span></span>
+                        <span className="truncate font-medium">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></span>
                         <div className="flex items-center gap-2 mt-0.5">
                           {item.shelf_position && <span className="inline-flex text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
                           {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : (isZh ? `还剩 ${item.stock} 本` : `${item.stock} left`)}</span>}
@@ -207,42 +207,42 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                     </div>
                     <div className="flex items-center gap-2 ml-2">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">-</button>
+                        <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">-</button>
                         <span className="w-6 text-center">{item.qty}</span>
-                        <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#eef4ef]">+</button>
+                        <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">+</button>
                       </div>
                       <Input value={String(item.price)} inputMode="decimal" onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
                       <span className="w-[60px] text-right">£{(item.qty * item.price).toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
-                {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">{isZh ? '购物车为空，选书添加' : 'Cart empty, select books to add'}</p>}
+                {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '购物车为空，选书添加' : 'Cart empty, select books to add'}</p>}
               </div>
 
-              <div className="mt-4 space-y-1 border-t border-[#0f3d2e]/10 pt-3">
+              <div className="mt-4 space-y-1 border-t border-[#2d2f92]/10 pt-3">
                 <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{total.toFixed(2)}</span></div>
-                {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#d26a39]"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+                {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-[#e5444c]"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
                 <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{tt('sales.total')}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
               </div>
 
               <Button className="mt-3 w-full" onClick={handleConfirm} disabled={selling || cart.length === 0}>{selling ? (isZh ? '处理中…' : 'Processing…') : tt('sales.confirmSale')}</Button>
-              <p className="mt-2 text-center text-[11px] text-[#4f7a5c]">{isZh ? '库存为 0 的书加不上，会弹窗提醒。' : 'Books with 0 stock cannot be added — you will see an alert.'}</p>
+              <p className="mt-2 text-center text-[11px] text-[#5b5f94]">{isZh ? '库存为 0 的书加不上，会弹窗提醒。' : 'Books with 0 stock cannot be added — you will see an alert.'}</p>
             </div>
           </div>
         </Card>
 
         <div className="space-y-4">
           <Card>
-            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#4f7a5c]">{isZh ? '按时间倒序' : 'Latest first'}</span></CardTitle>
+            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按时间倒序' : 'Latest first'}</span></CardTitle>
             <div className="mt-3 space-y-2">
               {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => {
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
                 const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
                 return (
-                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 px-3 py-2 text-[12px]">
+                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#2d2f92]/5 px-3 py-2 text-[12px]">
                   <div>
                     <p className="font-mono font-semibold">{s.sale_number}</p>
-                    <p className="text-[11px] text-[#4f7a5c]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
+                    <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
                   </div>
                   <div className="text-right flex items-center gap-2">
                     <div>
@@ -250,7 +250,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                       <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
-                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#d26a39]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
+                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-[#e5444c]" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
                   </div>
                 </div>
               );})}
@@ -259,7 +259,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
           <Card>
             <CardTitle>{isZh ? '改单说明' : 'Correcting Sales'}</CardTitle>
-            <div className="mt-2 text-[11px] text-[#4f7a5c] space-y-1.5 leading-relaxed">
+            <div className="mt-2 text-[11px] text-[#5b5f94] space-y-1.5 leading-relaxed">
               <p>{isZh ? '• 确认前：直接在左侧购物车点 × 删除或改数量/改价。' : '• Before confirm: Remove via × or adjust qty/price in cart.'}</p>
               <p>{isZh ? '• 确认后改单：点最近销售的改单，改书/数量/价格/客户/付款，填原因保存，库存会原子返还重扣，失败回滚。' : '• After confirm: Click Edit, change books/qty/price/customer/payment, enter reason, stock restores atomically, rollback on failure.'}</p>
               <p>{isZh ? '• 清仓/赠送（代号 Sales）：加入购物车后直接在单价框改价即可，系统按改后价开票。' : '• Clearance/gift (code Sales): Edit price in cart, invoice uses edited price.'}</p>

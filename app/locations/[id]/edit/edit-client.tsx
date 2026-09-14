@@ -57,11 +57,11 @@ export function EditLocationClient({ location }: { location: any }) {
           <form onSubmit={handleSubmit} className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '代号 *' : 'Code *'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '代号 *' : 'Code *'}</label>
                 <Input name="code" defaultValue={location.code} required className="mt-1" />
               </div>
               <div>
-                <label className="text-[11px] text-[#4f7a5c]">{isZh ? '类型' : 'Type'}</label>
+                <label className="text-[11px] text-[#5b5f94]">{isZh ? '类型' : 'Type'}</label>
                 <select
                   name="location_type"
                   defaultValue={location.location_type}
@@ -73,15 +73,15 @@ export function EditLocationClient({ location }: { location: any }) {
               </div>
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '名称 *' : 'Name *'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '名称 *' : 'Name *'}</label>
               <Input name="name" defaultValue={location.name} required className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '地址' : 'Address'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '地址' : 'Address'}</label>
               <Input name="address" defaultValue={location.address || ''} className="mt-1" />
             </div>
             <div>
-              <label className="text-[11px] text-[#4f7a5c]">{isZh ? '状态' : 'Status'}</label>
+              <label className="text-[11px] text-[#5b5f94]">{isZh ? '状态' : 'Status'}</label>
               <select
                 name="is_active"
                 defaultValue={String(location.is_active)}

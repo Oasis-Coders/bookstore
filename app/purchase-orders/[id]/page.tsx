@@ -132,7 +132,7 @@ export default function PODetailPage() {
     return (
       <AppShell title={isZh ? '加载中...' : 'Loading...'} titleZh={isZh ? '加载中...' : 'Loading...'} eyebrow={isZh ? '采购单详情' : 'Purchase Order'}>
         <div className="mx-auto max-w-[720px] space-y-4">
-          <Card><div className="h-24 animate-pulse bg-[#faf6ee]/60 rounded-[12px]" /></Card>
+          <Card><div className="h-24 animate-pulse bg-[#faf7f0]/60 rounded-[12px]" /></Card>
         </div>
       </AppShell>
     );
@@ -142,7 +142,7 @@ export default function PODetailPage() {
     return (
       <AppShell title={isZh ? '未找到' : 'Not Found'} titleZh={isZh ? '未找到' : 'Not Found'} eyebrow={isZh ? '采购单' : 'Purchase Order'}>
         <div className="mx-auto max-w-[720px] text-center py-10">
-          <p className="text-[13px] text-[#4f7a5c]">{isZh ? '未找到采购单' : 'Purchase order not found'}</p>
+          <p className="text-[13px] text-[#5b5f94]">{isZh ? '未找到采购单' : 'Purchase order not found'}</p>
           <Link href="/purchase-orders" className="mt-3 inline-flex"><Button variant="ghost">{isZh ? '返回采购单' : 'Back to Purchase Orders'}</Button></Link>
         </div>
       </AppShell>
@@ -163,7 +163,7 @@ export default function PODetailPage() {
   return (
     <AppShell title={po.po_number} titleZh={po.po_number} eyebrow={isZh ? '采购单详情' : 'Purchase Order Details'}>
       <div className="mx-auto max-w-[720px] space-y-4">
-        <Link href="/purchase-orders" className="inline-flex text-[13px] text-[#4f7a5c] hover:text-[#0f3d2e]">
+        <Link href="/purchase-orders" className="inline-flex text-[13px] text-[#5b5f94] hover:text-[#2d2f92]">
           ← {isZh ? '返回采购单' : 'Back to Purchase Orders'}
         </Link>
 
@@ -173,7 +173,7 @@ export default function PODetailPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="font-mono text-[18px] font-semibold">{po.po_number}</p>
-              <p className="text-[13px] text-[#4f7a5c]">{po.suppliers?.name_zh} • {po.order_date}</p>
+              <p className="text-[13px] text-[#5b5f94]">{po.suppliers?.name_zh} • {po.order_date}</p>
             </div>
             <Badge>{statusLabel[po.status] || po.status}</Badge>
           </div>
@@ -195,28 +195,28 @@ export default function PODetailPage() {
           <CardTitle>{isZh ? '行项目' : 'Line Items'}</CardTitle>
           <div className="mt-3 space-y-2">
             {(lines || []).map((l: any) => (
-              <div key={l.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee] px-3 py-2 text-[12px]">
+              <div key={l.id} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0] px-3 py-2 text-[12px]">
                 <span>{l.books?.title} ({l.books?.sku})</span>
                 <span>{l.quantity_ordered} × £{l.unit_cost} = £{(l.quantity_ordered * Number(l.unit_cost)).toFixed(2)}</span>
               </div>
             ))}
-            {(!lines || lines.length === 0) && <p className="text-[12px] text-[#4f7a5c]">{isZh ? '暂无行项目' : 'No line items'}</p>}
+            {(!lines || lines.length === 0) && <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无行项目' : 'No line items'}</p>}
           </div>
         </Card>
 
         {canReceive && (
           <Card>
             <CardTitle>{isZh ? '收货入库' : 'Receive Stock'}</CardTitle>
-            <p className="mt-2 text-[12px] text-[#4f7a5c]">
+            <p className="mt-2 text-[12px] text-[#5b5f94]">
               {isZh ? '选择库位，确认数量，系统会自动按每批进货价创建库存批次' : 'Select location and confirm quantity — system auto-creates inventory batches per cost'}
             </p>
             <form onSubmit={handleReceive} className="mt-3 space-y-3">
               <div>
-                <label className="text-[11px] font-semibold text-[#4f7a5c]">{isZh ? '库位' : 'Location'}</label>
+                <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '库位' : 'Location'}</label>
                 <select
                   value={receiveForm.location_id}
                   onChange={(e) => setReceiveForm((f) => ({ ...f, location_id: e.target.value }))}
-                  className="mt-1 flex h-10 w-full rounded-[12px] border border-[#0f3d2e]/15 px-3 text-[12px]"
+                  className="mt-1 flex h-10 w-full rounded-[12px] border border-[#2d2f92]/15 px-3 text-[12px]"
                 >
                   {(locations || []).map((loc: any) => (
                     <option key={loc.id} value={loc.id}>
@@ -227,7 +227,7 @@ export default function PODetailPage() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] font-semibold text-[#4f7a5c]">{isZh ? '行' : 'Line'}</label>
+                  <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '行' : 'Line'}</label>
                   <select
                     value={receiveForm.line_id}
                     onChange={(e) => setReceiveForm((f) => ({ ...f, line_id: e.target.value }))}
@@ -242,7 +242,7 @@ export default function PODetailPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] font-semibold text-[#4f7a5c]">{isZh ? '收货数量' : 'Qty Received'}</label>
+                  <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '收货数量' : 'Qty Received'}</label>
                   <Input
                     value={receiveForm.qty}
                     onChange={(e) => setReceiveForm((f) => ({ ...f, qty: e.target.value }))}

@@ -38,7 +38,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
       actions={<Link href="/purchase-orders/new"><Button>{tt('purchaseOrders.newPO')}</Button></Link>}
     >
       <Card>
-        <div className="flex flex-wrap gap-2 text-[12px] text-[#4f7a5c] items-center">
+        <div className="flex flex-wrap gap-2 text-[12px] text-[#5b5f94] items-center">
           <span>{tt('purchaseOrders.statusFlow')}</span>
           <Badge>{tt('purchaseOrders.draft')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.approved')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.ordered')}</Badge><span className="text-[10px]">→</span>
           <Badge variant="active">{tt('purchaseOrders.partial')}</Badge><span className="text-[10px]">→</span><Badge variant="active">{tt('purchaseOrders.received')}</Badge>
@@ -47,10 +47,10 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
 
       <div className="mt-4 space-y-3">
         {pos.map((po) => (
-          <Card key={po.id} className="flex flex-wrap items-center justify-between gap-3 hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] transition-all">
+          <Card key={po.id} className="flex flex-wrap items-center justify-between gap-3 hover:shadow-[rgba(45,47,146,0.08)_0px_4px_16px] transition-all">
             <div>
               <p className="font-mono text-[13px] font-semibold">{po.po_number}</p>
-              <p className="text-[12px] text-[#4f7a5c]">
+              <p className="text-[12px] text-[#5b5f94]">
                 {po.suppliers?.name_zh} • {po.order_date} • {formatCurrency(Number(po.subtotal || 0))}
               </p>
             </div>
@@ -64,23 +64,23 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
           </Card>
         ))}
         {pos.length === 0 && (
-          <Card className="py-10 text-center"><p className="text-[14px] text-[#4f7a5c]">{isZh ? '暂无采购单' : 'No purchase orders yet'}</p><Link href="/purchase-orders/new" className="mt-3 inline-flex"><Button size="sm">{isZh ? '新建第一个' : 'Create first order'}</Button></Link></Card>
+          <Card className="py-10 text-center"><p className="text-[14px] text-[#5b5f94]">{isZh ? '暂无采购单' : 'No purchase orders yet'}</p><Link href="/purchase-orders/new" className="mt-3 inline-flex"><Button size="sm">{isZh ? '新建第一个' : 'Create first order'}</Button></Link></Card>
         )}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card>
           <CardTitle>{tt('purchaseOrders.differentCostTitle')}</CardTitle>
-          <p className="mt-2 text-[13px] leading-relaxed text-[#0f3d2e]/80">{tt('purchaseOrders.differentCostDesc')}</p>
-          <div className="mt-3 rounded-[12px] bg-[#faf6ee] p-3 text-[11px] text-[#4f7a5c]">
-            <p className="font-semibold text-[#0f3d2e]">{isZh ? '如何处理不同进价：' : 'How different costs are handled:'}</p>
+          <p className="mt-2 text-[13px] leading-relaxed text-[#2d2f92]/80">{tt('purchaseOrders.differentCostDesc')}</p>
+          <div className="mt-3 rounded-[12px] bg-[#faf7f0] p-3 text-[11px] text-[#5b5f94]">
+            <p className="font-semibold text-[#2d2f92]">{isZh ? '如何处理不同进价：' : 'How different costs are handled:'}</p>
             <p className="mt-1">{isZh ? '同一本书第二次进货若进价不同，系统会自动创建新批次，按新进价记成本，销售时按最早进货先出。' : 'If same book purchased again at different cost, system creates new batch with new cost, sells earliest batch first.'}</p>
           </div>
         </Card>
         <Card>
           <CardTitle>{tt('purchaseOrders.receiveTitle')}</CardTitle>
-          <p className="mt-2 text-[13px] text-[#4f7a5c]">{tt('purchaseOrders.receiveDesc')}</p>
-          <ul className="mt-2 list-disc pl-4 text-[12px] text-[#0f3d2e]/80 space-y-1">
+          <p className="mt-2 text-[13px] text-[#5b5f94]">{tt('purchaseOrders.receiveDesc')}</p>
+          <ul className="mt-2 list-disc pl-4 text-[12px] text-[#2d2f92]/80 space-y-1">
             <li>{tt('purchaseOrders.receive1')}</li>
             <li>{tt('purchaseOrders.receive2')}</li>
             <li>{tt('purchaseOrders.receive3')}</li>

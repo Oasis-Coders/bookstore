@@ -137,7 +137,7 @@ function AuditHistoryInner() {
   if (loading) {
     return (
       <AppShell title="Audit Log" titleZh="操作记录" eyebrow={eyebrow}>
-        <div className="mx-auto max-w-[840px]"><Card><p className="text-[12px] text-[#4f7a5c]">{isZh ? '加载中…' : 'Loading…'}</p></Card></div>
+        <div className="mx-auto max-w-[840px]"><Card><p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p></Card></div>
       </AppShell>
     );
   }
@@ -154,7 +154,7 @@ function AuditHistoryInner() {
               { k: 'edits', zh: '改单记录', en: 'Edits' },
               { k: 'po', zh: '采购单', en: 'POs' },
             ].map(f => (
-              <button key={f.k} onClick={() => setFilter(f.k)} className={`rounded-[10px] px-3 py-1.5 text-[12px] ${filter===f.k ? 'bg-[#0f3d2e] text-white' : 'bg-[#faf6ee] text-[#4f7a5c]'}`}>{isZh ? f.zh : f.en}</button>
+              <button key={f.k} onClick={() => setFilter(f.k)} className={`rounded-[10px] px-3 py-1.5 text-[12px] ${filter===f.k ? 'bg-[#2d2f92] text-white' : 'bg-[#faf7f0] text-[#5b5f94]'}`}>{isZh ? f.zh : f.en}</button>
             ))}
           </div>
         </Card>
@@ -166,16 +166,16 @@ function AuditHistoryInner() {
               {edits.map((ed: any) => {
                 const diffs = readableDiff(isZh, ed.old_values, ed.new_values);
                 return (
-                  <div key={ed.id} className="rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[11px] border border-[#d26a39]/20">
+                  <div key={ed.id} className="rounded-[12px] bg-[#fff7ed] px-3 py-2 text-[11px] border border-[#e5444c]/20">
                     <p className="font-medium">{new Date(ed.edited_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • {ed.editor_name || ed.profiles?.display_name || ed.edited_by?.slice(0,6)} {ed.profiles?.email ? `(${ed.profiles.email})` : ed.editor_email ? `(${ed.editor_email})` : ''} • {ed.sale_number || ed.sale_id?.slice(0,8)} • {ed.change_type === 'content' ? (isZh ? '改书/改量' : 'Content change') : (isZh ? '信息更正' : 'Info fix')}</p>
-                    {ed.reason && <p className="text-[#4f7a5c]">{isZh ? '原因' : 'Reason'}：{ed.reason}</p>}
+                    {ed.reason && <p className="text-[#5b5f94]">{isZh ? '原因' : 'Reason'}：{ed.reason}</p>}
                     <ul className="mt-1 list-disc pl-4 space-y-0.5">
-                      {diffs.map((d: string, i: number) => <li key={i} className="text-[#0f3d2e]">{d}</li>)}
+                      {diffs.map((d: string, i: number) => <li key={i} className="text-[#2d2f92]">{d}</li>)}
                     </ul>
                   </div>
                 );
               })}
-              {edits.length === 0 && <p className="py-4 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无改单' : 'No edits'}</p>}
+              {edits.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无改单' : 'No edits'}</p>}
             </div>
           </Card>
         )}
@@ -193,16 +193,16 @@ function AuditHistoryInner() {
                   : t.transaction_type === 'transfer' ? (isZh ? '调拨' : 'Transfer')
                   : t.transaction_type;
                 return (
-                  <div key={t.id} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee]/60 px-3 py-2 text-[12px]">
+                  <div key={t.id} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0]/60 px-3 py-2 text-[12px]">
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate">{t.books?.title || t.book_id?.slice(0,8)} <span className="text-[#4f7a5c]">{t.books?.sku}</span></p>
-                      <p className="text-[11px] text-[#4f7a5c] truncate">{new Date(t.occurred_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • <span className="font-medium text-[#0f3d2e]">{t.profiles?.display_name || t.actor_profile_id?.slice(0,6)}</span>{t.profiles?.email ? <span className="text-[#4f7a5c]/70"> ({t.profiles.email})</span> : null} {t.reason ? `• ${t.reason}` : ''}</p>
+                      <p className="font-medium truncate">{t.books?.title || t.book_id?.slice(0,8)} <span className="text-[#5b5f94]">{t.books?.sku}</span></p>
+                      <p className="text-[11px] text-[#5b5f94] truncate">{new Date(t.occurred_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • <span className="font-medium text-[#2d2f92]">{t.profiles?.display_name || t.actor_profile_id?.slice(0,6)}</span>{t.profiles?.email ? <span className="text-[#5b5f94]/70"> ({t.profiles.email})</span> : null} {t.reason ? `• ${t.reason}` : ''}</p>
                     </div>
                     <div className="text-right"><Badge variant={t.transaction_type==='sale' ? 'danger' : 'active'}>{typeLabel}</Badge><p className="mt-1">{t.quantity > 0 ? `+${t.quantity}` : t.quantity} {t.unit_cost ? `@ £${t.unit_cost}` : ''}</p></div>
                   </div>
                 );
               })}
-              {transactions.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无流水' : 'No transactions'}</p>}
+              {transactions.length === 0 && <p className="py-6 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无流水' : 'No transactions'}</p>}
             </div>
           </Card>
         )}
@@ -215,13 +215,13 @@ function AuditHistoryInner() {
                 const net = Number(s.subtotal || 0) - Number(s.discount_amount || 0);
                 const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method, en: s.payment_method };
                 return (
-                  <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#0f3d2e]/5 px-3 py-2 text-[12px]">
-                    <div className="min-w-0 flex-1"><p className="font-mono">{s.sale_number || s.external_reference || s.id.slice(0,8)}</p><p className="text-[11px] text-[#4f7a5c] truncate">{new Date(s.sold_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • <span className="font-medium text-[#0f3d2e]">{s.profiles?.display_name || ''}</span>{s.profiles?.email ? <span className="text-[#4f7a5c]/70"> ({s.profiles.email})</span> : null} • {isZh ? pm.zh : pm.en}</p></div>
+                  <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-[#2d2f92]/5 px-3 py-2 text-[12px]">
+                    <div className="min-w-0 flex-1"><p className="font-mono">{s.sale_number || s.external_reference || s.id.slice(0,8)}</p><p className="text-[11px] text-[#5b5f94] truncate">{new Date(s.sold_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB')} • <span className="font-medium text-[#2d2f92]">{s.profiles?.display_name || ''}</span>{s.profiles?.email ? <span className="text-[#5b5f94]/70"> ({s.profiles.email})</span> : null} • {isZh ? pm.zh : pm.en}</p></div>
                     <div className="text-right"><p>£{net.toFixed(2)}</p><Badge variant="active">{isZh ? '已结算' : 'Settled'}</Badge></div>
                   </div>
                 );
               })}
-              {sales.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无销售' : 'No sales'}</p>}
+              {sales.length === 0 && <p className="py-6 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无销售' : 'No sales'}</p>}
             </div>
           </Card>
         )}
@@ -231,24 +231,24 @@ function AuditHistoryInner() {
             <CardTitle>{isZh ? '采购单变动' : 'PO Changes'}</CardTitle>
             <div className="mt-3 space-y-2">
               {adjustments.map((po: any) => (
-                <div key={po.po_number} className="flex items-center justify-between rounded-[12px] bg-[#faf6ee]/50 px-3 py-2 text-[12px]">
-                  <div className="min-w-0"><span className="font-mono font-medium">{po.po_number}</span><span className="ml-2 text-[11px] text-[#4f7a5c]">{(po as any).profiles?.display_name || ''}{(po as any).profiles?.email ? ` (${(po as any).profiles.email})` : ''}</span></div>
-                  <div className="flex items-center gap-2 shrink-0"><Badge>{po.status === 'draft' ? (isZh ? '草稿' : 'Draft') : po.status === 'approved' ? (isZh ? '已批准' : 'Approved') : po.status === 'ordered' ? (isZh ? '已下单' : 'Ordered') : po.status === 'partially_received' ? (isZh ? '部分收货' : 'Partial') : po.status === 'received' ? (isZh ? '已收货' : 'Received') : po.status}</Badge><span className="text-[#4f7a5c]">{po.suppliers?.name_zh}</span></div>
+                <div key={po.po_number} className="flex items-center justify-between rounded-[12px] bg-[#faf7f0]/50 px-3 py-2 text-[12px]">
+                  <div className="min-w-0"><span className="font-mono font-medium">{po.po_number}</span><span className="ml-2 text-[11px] text-[#5b5f94]">{(po as any).profiles?.display_name || ''}{(po as any).profiles?.email ? ` (${(po as any).profiles.email})` : ''}</span></div>
+                  <div className="flex items-center gap-2 shrink-0"><Badge>{po.status === 'draft' ? (isZh ? '草稿' : 'Draft') : po.status === 'approved' ? (isZh ? '已批准' : 'Approved') : po.status === 'ordered' ? (isZh ? '已下单' : 'Ordered') : po.status === 'partially_received' ? (isZh ? '部分收货' : 'Partial') : po.status === 'received' ? (isZh ? '已收货' : 'Received') : po.status}</Badge><span className="text-[#5b5f94]">{po.suppliers?.name_zh}</span></div>
                 </div>
               ))}
-              {adjustments.length === 0 && <p className="py-6 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无采购单' : 'No POs'}</p>}
+              {adjustments.length === 0 && <p className="py-6 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无采购单' : 'No POs'}</p>}
             </div>
           </Card>
         )}
 
-        <div className="rounded-[12px] bg-[#0f3d2e]/5 p-3 text-[11px] text-[#4f7a5c]"><p>{isZh ? '所有流水表都有触发器禁止随意改动，保证审计可信。改单会记录操作人、原因和前后对比，库存原子返还重扣，失败整单回滚。' : 'All logs are immutable. Edits log actor, reason, before/after, with atomic stock restore and rollback on failure.'}</p></div>
+        <div className="rounded-[12px] bg-[#2d2f92]/5 p-3 text-[11px] text-[#5b5f94]"><p>{isZh ? '所有流水表都有触发器禁止随意改动，保证审计可信。改单会记录操作人、原因和前后对比，库存原子返还重扣，失败整单回滚。' : 'All logs are immutable. Edits log actor, reason, before/after, with atomic stock restore and rollback on failure.'}</p></div>
       </div>
     </AppShell>
   );
 }
 
 function AuditHistoryWrapper() {
-  return <Suspense fallback={<div className="p-6 text-[12px] text-[#6b8a7a]">Loading...</div>}><AuditHistoryInner /></Suspense>;
+  return <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}><AuditHistoryInner /></Suspense>;
 }
 
 export default AuditHistoryWrapper;

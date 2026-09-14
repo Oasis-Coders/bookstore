@@ -169,7 +169,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
 
   return (
-    <Suspense fallback={<div className="p-6 text-[12px] text-[#6b8a7a]">Loading...</div>}>
+    <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
       <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />
     </Suspense>
   );

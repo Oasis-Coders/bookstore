@@ -49,7 +49,7 @@ export default function SupplierDetailPage() {
     return (
       <AppShell title={isZh ? '加载中…' : 'Loading…'} titleZh={isZh ? '加载中…' : 'Loading…'} eyebrow={isZh ? '供应商' : 'Supplier'}>
         <div className="mx-auto max-w-[640px] space-y-4">
-          <Card><div className="h-32 animate-pulse motion-reduce:animate-none bg-[#faf6ee]/60 rounded-[12px]" /></Card>
+          <Card><div className="h-32 animate-pulse motion-reduce:animate-none bg-[#faf7f0]/60 rounded-[12px]" /></Card>
         </div>
       </AppShell>
     );
@@ -59,7 +59,7 @@ export default function SupplierDetailPage() {
     return (
       <AppShell title={isZh ? '未找到' : 'Not Found'} titleZh={isZh ? '未找到' : 'Not Found'} eyebrow={isZh ? '供应商' : 'Supplier'}>
         <div className="mx-auto max-w-[640px] text-center py-10">
-          <p className="text-[13px] text-[#4f7a5c]">{isZh ? '未找到该供应商' : 'Supplier not found'}</p>
+          <p className="text-[13px] text-[#5b5f94]">{isZh ? '未找到该供应商' : 'Supplier not found'}</p>
           <Link href="/suppliers" className="mt-3 inline-flex"><Button variant="ghost">{isZh ? '返回列表' : 'Back to List'}</Button></Link>
         </div>
       </AppShell>
@@ -92,15 +92,15 @@ export default function SupplierDetailPage() {
           <CardTitle>{isZh ? '最近采购单' : 'Recent Purchase Orders'}</CardTitle>
           <div className="mt-3 space-y-2">
             {(pos || []).map((po: any) => (
-              <Link key={po.po_number} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[10px] bg-[#faf6ee]/60 px-3 py-2.5 text-[12px] hover:bg-[#f5eedf] transition">
+              <Link key={po.po_number} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[10px] bg-[#faf7f0]/60 px-3 py-2.5 text-[12px] hover:bg-[#f5eedf] transition">
                 <div className="flex flex-col">
                   <span className="font-mono font-medium">{po.po_number}</span>
-                  <span className="text-[11px] text-[#6b8a7a]">{po.order_date ? (isZh ? `下单 ${po.order_date}` : `Ordered ${po.order_date}`) : new Date(po.created_at).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}</span>
+                  <span className="text-[11px] text-[#7e84ad]">{po.order_date ? (isZh ? `下单 ${po.order_date}` : `Ordered ${po.order_date}`) : new Date(po.created_at).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}</span>
                 </div>
                 <Badge>{isZh ? (statusZh[po.status] || po.status) : po.status}</Badge>
               </Link>
             ))}
-            {(!pos || pos.length === 0) && <p className="text-[12px] text-[#4f7a5c]">{isZh ? '暂无采购单' : 'No purchase orders'}</p>}
+            {(!pos || pos.length === 0) && <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无采购单' : 'No purchase orders'}</p>}
           </div>
         </Card>
         <div className="flex gap-2">

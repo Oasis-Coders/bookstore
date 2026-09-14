@@ -39,18 +39,16 @@ export function AuthClient({
   const Shell = ({ children, title, subtitle }: { children: React.ReactNode; title: string; subtitle?: string }) => (
     <div className="min-h-screen w-full flex">
       {/* Left - Branding */}
-      <div className="hidden lg:flex flex-1 bg-[#0f3d2e] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-[#2d2f92] relative overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#1a5c46] blur-[80px] opacity-60" />
-          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-[#d26a39] blur-[100px] opacity-30" />
-          <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] rounded-full bg-[#4f7a5c] blur-[60px] opacity-40" />
+          <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[#3f43a8] blur-[80px] opacity-60" />
+          <div className="absolute bottom-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-[#e5444c] blur-[100px] opacity-30" />
+          <div className="absolute top-[30%] right-[10%] w-[40%] h-[40%] rounded-full bg-[#5b5f94] blur-[60px] opacity-40" />
         </div>
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-[12px] bg-white/10 flex items-center justify-center backdrop-blur">
-                <span className="h-6 w-6 rounded-full bg-white/20 block" />
-              </div>
+              <img src="/cocm-logo.png" alt="COCM" className="w-10 h-10 rounded-full ring-1 ring-white/20" />
               <span className="font-serif text-[20px] text-white tracking-tight">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
             </div>
           </div>
@@ -70,7 +68,7 @@ export function AuthClient({
             <div className="flex gap-3 pt-4">
               <div className="flex -space-x-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#0f3d2e] bg-white/20 backdrop-blur flex items-center justify-center text-[11px] text-white">
+                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#2d2f92] bg-white/20 backdrop-blur flex items-center justify-center text-[11px] text-white">
                     {String.fromCharCode(64 + i)}
                   </div>
                 ))}
@@ -85,24 +83,22 @@ export function AuthClient({
       </div>
 
       {/* Right - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-[#faf6ee]">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-[#faf7f0]">
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-            <div className="w-9 h-9 rounded-[12px] bg-[#0f3d2e] flex items-center justify-center">
-              <span className="h-5 w-5 rounded-full bg-[#0f3d2e]/20 block" />
-            </div>
-            <span className="font-serif text-[18px] text-[#0f3d2e]">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
+            <img src="/cocm-logo.png" alt="COCM" className="w-9 h-9 rounded-full ring-1 ring-[#2d2f92]/10" />
+            <span className="font-serif text-[18px] text-[#2d2f92]">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
           </div>
 
           <div className="mb-8">
-            <h2 className="font-serif text-[28px] tracking-tight text-[#0f3d2e]">{title}</h2>
-            {subtitle && <p className="mt-2 text-[13px] text-[#4f7a5c]">{subtitle}</p>}
+            <h2 className="font-serif text-[28px] tracking-tight text-[#2d2f92]">{title}</h2>
+            {subtitle && <p className="mt-2 text-[13px] text-[#5b5f94]">{subtitle}</p>}
           </div>
 
           {children}
 
-          <div className="mt-8 text-center text-[11px] text-[#4f7a5c]/60">
+          <div className="mt-8 text-center text-[11px] text-[#5b5f94]/60">
             {isZh ? '安全登录 · 数据加密' : 'Secure login · Encrypted data'}
           </div>
         </div>
@@ -118,12 +114,12 @@ export function AuthClient({
         <form action={resetAction} className="space-y-3">
           <input type="hidden" name="redirectTo" value={redirectTo} />
           <Input name="email" placeholder={isZh ? '邮箱' : 'Email'} type="email" required className="h-11" />
-          <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#0f3d2e] hover:bg-[#1a5c46] text-white">
+          <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#2d2f92] hover:bg-[#3f43a8] text-white">
             {isZh ? '发送重置邮件' : 'Send Reset Email'}
           </Button>
         </form>
         <div className="mt-4 text-center">
-          <a href={`/auth?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[12px] text-[#4f7a5c] hover:text-[#0f3d2e] underline">
+          <a href={`/auth?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[12px] text-[#5b5f94] hover:text-[#2d2f92] underline">
             {isZh ? '返回登录' : 'Back to Login'}
           </a>
         </div>
@@ -149,23 +145,23 @@ export function AuthClient({
         <Input name="email" placeholder={tt('auth.email')} type="email" required className="h-11" />
         <Input name="password" placeholder={tt('auth.password')} type="password" required className="h-11" />
         {isSignUp && <Input name="confirmPassword" placeholder={tt('auth.confirmPassword')} type="password" required className="h-11" />}
-        <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#0f3d2e] hover:bg-[#1a5c46] text-white font-semibold">
+        <Button type="submit" className="w-full h-11 rounded-[12px] bg-[#2d2f92] hover:bg-[#3f43a8] text-white font-semibold">
           {isSignUp ? tt('auth.signUp') : tt('auth.login')}
         </Button>
       </form>
 
       <div className="mt-6 flex flex-col gap-3 text-center">
         {isSignUp ? (
-          <a href={`/auth?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[12px] text-[#4f7a5c] hover:text-[#0f3d2e] underline">
+          <a href={`/auth?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[12px] text-[#5b5f94] hover:text-[#2d2f92] underline">
             {tt('auth.hasAccount')}
           </a>
         ) : (
           <>
-            <a href={`/auth?mode=signup&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[13px] font-medium text-[#0f3d2e] hover:underline">
+            <a href={`/auth?mode=signup&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[13px] font-medium text-[#2d2f92] hover:underline">
               {tt('auth.noAccount')}
             </a>
             <div className="flex items-center justify-center gap-3 pt-2">
-              <a href={`/auth?mode=reset&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[11px] text-[#4f7a5c]/70 hover:text-[#0f3d2e] underline">
+              <a href={`/auth?mode=reset&redirectTo=${encodeURIComponent(redirectTo)}`} className="text-[11px] text-[#5b5f94]/70 hover:text-[#2d2f92] underline">
                 {isZh ? '忘记密码？' : 'Forgot password?'}
               </a>
             </div>

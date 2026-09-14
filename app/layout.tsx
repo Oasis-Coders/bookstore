@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: '活水书房 | COCM Bookshop',
   description: 'COCM Bookshop 活水书房 - Bookstore inventory, purchasing, and accounting',
   applicationName: '活水书房 | COCM Bookshop',
-  themeColor: '#faf6ee',
+  themeColor: '#faf7f0',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap"
         rel="stylesheet"
       />
-      <body className="bg-[#faf6ee] text-[#0f3d2e] antialiased">
+      <body className="bg-[#faf7f0] text-[#2d2f92] antialiased">
         <RouteProgress />
         <I18nProvider>{children}</I18nProvider>
       </body>

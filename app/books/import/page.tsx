@@ -136,14 +136,14 @@ export default function BulkImportPage() {
   return (
     <AppShell title={isZh ? '批量导入' : 'Bulk Import'} titleZh="批量导入" eyebrow={isZh ? '从表格导入图书' : 'Import from Spreadsheet'}>
       <div className="mx-auto max-w-[800px] space-y-4">
-        <Link href="/books" className="inline-flex items-center text-[13px] text-[#4f7a5c] hover:text-[#0f3d2e]">{isZh ? '← 返回书库' : '← Back to Books'}</Link>
+        <Link href="/books" className="inline-flex items-center text-[13px] text-[#5b5f94] hover:text-[#2d2f92]">{isZh ? '← 返回书库' : '← Back to Books'}</Link>
         
         <Card>
           <CardTitle>{isZh ? '从表格批量导入图书' : 'Bulk Import from Spreadsheet'}</CardTitle>
           <div className="mt-4 space-y-4 text-[13px]">
-            <div className="rounded-[12px] bg-[#faf6ee] p-4">
-              <p className="font-semibold text-[#0f3d2e]">{isZh ? '步骤：' : 'Steps:'}</p>
-              <ol className="mt-2 list-decimal list-inside space-y-1 text-[#4f7a5c]">
+            <div className="rounded-[12px] bg-[#faf7f0] p-4">
+              <p className="font-semibold text-[#2d2f92]">{isZh ? '步骤：' : 'Steps:'}</p>
+              <ol className="mt-2 list-decimal list-inside space-y-1 text-[#5b5f94]">
                 <li>{isZh ? '在表格中整理好书库，按模板格式保存为CSV' : 'Organize books in spreadsheet, save as CSV per template'}</li>
                 <li>{isZh ? '点击下载模板查看必填字段' : 'Download template to see required fields'}</li>
                 <li>{isZh ? '上传CSV文件，预览后确认导入' : 'Upload CSV, preview, then confirm import'}</li>
@@ -154,7 +154,7 @@ export default function BulkImportPage() {
 
             <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="secondary" onClick={downloadTemplate}>{isZh ? '下载模板' : 'Download Template'}</Button>
-              <label className="inline-flex h-9 items-center rounded-[12px] border border-[#0f3d2e]/15 px-4 text-[13px] font-semibold cursor-pointer hover:bg-[#faf6ee]">
+              <label className="inline-flex h-9 items-center rounded-[12px] border border-[#2d2f92]/15 px-4 text-[13px] font-semibold cursor-pointer hover:bg-[#faf7f0]">
                 {isZh ? '选择文件' : 'Choose File'}
                 <input type="file" accept=".csv" onChange={handleFile} className="hidden" />
               </label>
@@ -169,7 +169,7 @@ export default function BulkImportPage() {
                 <p className="font-semibold mb-2">{isZh ? `预览前 ${Math.min(20, preview.length)} 条（共 ${preview.length} 条）：` : `Preview first ${Math.min(20, preview.length)} rows (total ${preview.length}):`}</p>
                 <div className="overflow-auto border rounded-[12px]">
                   <table className="w-full text-[11px]">
-                    <thead className="bg-[#faf6ee]">
+                    <thead className="bg-[#faf7f0]">
                       <tr>{Object.keys(preview[0] || {}).map(k => <th key={k} className="px-2 py-1 text-left font-semibold">{k}</th>)}</tr>
                     </thead>
                     <tbody>{preview.slice(0,20).map((r, i) => <tr key={i} className="border-t">{Object.values(r).map((v: any, j) => <td key={j} className="px-2 py-1 truncate max-w-[120px]">{v}</td>)}</tr>)}</tbody>
@@ -178,14 +178,14 @@ export default function BulkImportPage() {
               </div>
             )}
 
-            <div className="rounded-[12px] border border-[#0f3d2e]/10 bg-white p-3">
-              <p className="text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '扫码枪支持' : 'Barcode Scanner Support'}</p>
-              <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '系统支持标准USB扫码器（键盘模式）。扫码枪扫出的条码会自动输入到搜索框并回车搜索，无需额外驱动。建议扫码枪设置为以回车结尾。' : 'System supports standard USB barcode scanners (keyboard mode). Scanner input auto-enters search box and submits. No driver needed. Set scanner to suffix with Enter.'}</p>
+            <div className="rounded-[12px] border border-[#2d2f92]/10 bg-white p-3">
+              <p className="text-[12px] font-semibold text-[#2d2f92]">{isZh ? '扫码枪支持' : 'Barcode Scanner Support'}</p>
+              <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '系统支持标准USB扫码器（键盘模式）。扫码枪扫出的条码会自动输入到搜索框并回车搜索，无需额外驱动。建议扫码枪设置为以回车结尾。' : 'System supports standard USB barcode scanners (keyboard mode). Scanner input auto-enters search box and submits. No driver needed. Set scanner to suffix with Enter.'}</p>
             </div>
 
-            <div className="rounded-[12px] border border-[#0f3d2e]/10 bg-white p-3">
-              <p className="text-[12px] font-semibold text-[#0f3d2e]">{isZh ? '售价改动说明' : 'Price Change Note'}</p>
-              <p className="mt-1 text-[11px] text-[#4f7a5c]">{isZh ? '每本书的现售价改动不会影响已售出的书。已售订单的单价在销售时已保存，改价只影响新订单。库存成本按批次进货价独立计算，与现售价无关。' : 'Changing current price does NOT affect past sales. Past orders have unit_price saved at sale time. Price change only affects new orders. Inventory cost is per-batch purchase cost, independent of current price.'}</p>
+            <div className="rounded-[12px] border border-[#2d2f92]/10 bg-white p-3">
+              <p className="text-[12px] font-semibold text-[#2d2f92]">{isZh ? '售价改动说明' : 'Price Change Note'}</p>
+              <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '每本书的现售价改动不会影响已售出的书。已售订单的单价在销售时已保存，改价只影响新订单。库存成本按批次进货价独立计算，与现售价无关。' : 'Changing current price does NOT affect past sales. Past orders have unit_price saved at sale time. Price change only affects new orders. Inventory cost is per-batch purchase cost, independent of current price.'}</p>
             </div>
           </div>
         </Card>

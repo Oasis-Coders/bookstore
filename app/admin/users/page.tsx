@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
       <AppShell title="Users" titleZh="人员管理" eyebrow={eyebrow}>
         <div className="mx-auto max-w-[840px]">
           <Card>
-            <p className="text-[12px] text-[#4f7a5c]">{isZh ? '加载中…' : 'Loading…'}</p>
+            <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>
           </Card>
         </div>
       </AppShell>
@@ -120,7 +120,7 @@ export default function AdminUsersPage() {
               {isSuperAdmin ? (isZh ? 'super_admin 可改' : 'super_admin editable') : isZh ? 'admin 只读' : 'admin read-only'}
             </Badge>
           </div>
-          <p className="mt-2 text-[12px] text-[#4f7a5c]">
+          <p className="mt-2 text-[12px] text-[#5b5f94]">
             {isSuperAdmin
               ? isZh
                 ? '你可以修改每个人的角色'
@@ -141,14 +141,14 @@ export default function AdminUsersPage() {
               return (
                 <div
                   key={p.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#0f3d2e]/10 px-4 py-3"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-[#2d2f92]/10 px-4 py-3"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[13px] font-semibold">{p.display_name || shortId}</p>
-                    <p className="truncate text-[11px] text-[#0f3d2e]/70">
+                    <p className="truncate text-[11px] text-[#2d2f92]/70">
                       {(p as any).email || ''}
                     </p>
-                    <p className="truncate text-[10px] text-[#4f7a5c]">
+                    <p className="truncate text-[10px] text-[#5b5f94]">
                       {p.id.slice(0, 8)}… • {new Date(p.created_at || Date.now()).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}
                     </p>
                   </div>
@@ -190,14 +190,14 @@ export default function AdminUsersPage() {
               );
             })}
             {profiles.length === 0 && (
-              <p className="py-8 text-center text-[12px] text-[#4f7a5c]">{isZh ? '暂无人员' : 'No personnel'}</p>
+              <p className="py-8 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无人员' : 'No personnel'}</p>
             )}
           </div>
         </Card>
 
         <Card>
           <CardTitle>{isZh ? '权限说明' : 'Permissions'}</CardTitle>
-          <div className="mt-3 space-y-2 text-[12px] text-[#0f3d2e]/80">
+          <div className="mt-3 space-y-2 text-[12px] text-[#2d2f92]/80">
             <p>
               <Badge>staff</Badge>{' '}
               {isZh ? '只能操作日常：图书、采购、销售、库存' : 'Daily ops only: books, POs, sales, inventory'}
@@ -213,7 +213,7 @@ export default function AdminUsersPage() {
               {isZh ? '可改所有人员角色，是最高权限' : 'Can change all roles, highest privilege'}
             </p>
           </div>
-          <div className="mt-4 rounded-[12px] bg-[#faf6ee] p-3 text-[11px] text-[#4f7a5c]">
+          <div className="mt-4 rounded-[12px] bg-[#faf7f0] p-3 text-[11px] text-[#5b5f94]">
             <p>
               {isZh
                 ? '首位注册用户自动 super_admin，后续需 super_admin 分配。'

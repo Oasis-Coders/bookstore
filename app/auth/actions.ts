@@ -102,7 +102,7 @@ export async function signUp(formData: FormData) {
         user_metadata: {
           display_name: displayName,
           avatar_icon: initialIcon,
-          avatar_color: '#d26a39',
+          avatar_color: '#e5444c',
         },
       });
 
@@ -158,7 +158,7 @@ export async function signUp(formData: FormData) {
       data: {
         display_name: displayName,
         avatar_icon: fallbackIcon,
-        avatar_color: '#d26a39',
+        avatar_color: '#e5444c',
       },
     },
   });

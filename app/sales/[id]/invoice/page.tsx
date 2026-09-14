@@ -57,7 +57,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
     })();
   }, [id]);
 
-  if (loading) return <div className="p-10 text-[12px] text-[#6b8a7a]">{isZh ? '发票加载中…' : 'Loading invoice…'}</div>;
+  if (loading) return <div className="p-10 text-[12px] text-[#7e84ad]">{isZh ? '发票加载中…' : 'Loading invoice…'}</div>;
   if (error) return <div className="p-10 text-[12px] text-red-600">{isZh ? '找不到发票' : 'Invoice not found'}</div>;
   if (!sale) return <div className="p-10 text-[12px]">{isZh ? '未找到' : 'Not found'}</div>;
 
@@ -106,36 +106,36 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
   const displayBookSubtotal = enriched.every((e:any)=>e.discAmt===0) ? totalGross : bookSubtotal;
 
   return (
-    <div className="min-h-screen bg-white text-[#0f1f17] print:bg-white">
+    <div className="min-h-screen bg-white text-[#1a1c40] print:bg-white">
       <style>{`@media print { .no-print { display:none } body { -webkit-print-color-adjust: exact } }`}</style>
       <div className="mx-auto max-w-[820px] p-6 sm:p-10 font-serif">
-        <div className="flex justify-between items-start border-b-2 border-[#0f3d2e] pb-5">
+        <div className="flex justify-between items-start border-b-2 border-[#2d2f92] pb-5">
           <div>
             <h1 className="text-[22px] font-bold tracking-tight">COCM Bookshop</h1>
-            <p className="text-[11px] text-[#5a7a6a] mt-1">活水书房</p>
+            <p className="text-[11px] text-[#6d72a0] mt-1">活水书房</p>
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">{isZh ? '发票编号' : 'Invoice No'}</p>
+            <p className="text-[11px] text-[#7e84ad] uppercase tracking-widest">{isZh ? '发票编号' : 'Invoice No'}</p>
             <p className="text-[20px] font-bold">{invoiceNo}</p>
           </div>
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-8 text-[12px]">
           <div>
-            <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">{isZh ? '购买日期' : 'Purchase Date'}</p>
+            <p className="text-[11px] text-[#7e84ad] uppercase tracking-widest">{isZh ? '购买日期' : 'Purchase Date'}</p>
             <p className="mt-1">{purchaseDate}</p>
-            {customerName && <><p className="mt-3 text-[11px] text-[#6b8a7a] uppercase tracking-widest">{isZh ? '客户' : 'Customer'}</p><p className="mt-1">{customerName}</p></>}
+            {customerName && <><p className="mt-3 text-[11px] text-[#7e84ad] uppercase tracking-widest">{isZh ? '客户' : 'Customer'}</p><p className="mt-1">{customerName}</p></>}
           </div>
           <div className="text-right">
-            <p className="text-[11px] text-[#6b8a7a] uppercase tracking-widest">{isZh ? '付款方式' : 'Payment Method'}</p>
+            <p className="text-[11px] text-[#7e84ad] uppercase tracking-widest">{isZh ? '付款方式' : 'Payment Method'}</p>
             <p className="mt-1 capitalize">{payMethodLabel[paymentMethod] || paymentMethod.replace('_',' ')}</p>
           </div>
         </div>
 
-        <div className="mt-8 border border-[#0f3d2e]/20 rounded-[8px] overflow-hidden">
+        <div className="mt-8 border border-[#2d2f92]/20 rounded-[8px] overflow-hidden">
           <table className="w-full text-[12px] border-collapse">
             <thead>
-              <tr className="bg-[#f6f3ee] text-left text-[11px] text-[#5a7a6a]">
+              <tr className="bg-[#f6f3ee] text-left text-[11px] text-[#6d72a0]">
                 <th className="py-2.5 px-3 font-semibold w-[32px]">#</th>
                 <th className="py-2.5 px-2 font-semibold w-[70px]">{isZh ? '分类' : 'CAT'}</th>
                 <th className="py-2.5 px-3 font-semibold">{isZh ? '书名' : 'Book Name'}</th>
@@ -146,7 +146,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
               </tr>
             </thead>
             <tbody>
-              {enriched.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-[#8a9a8e]">{isZh ? '本次销售无商品' : 'No items in this sale'}</td></tr>}
+              {enriched.length === 0 && <tr><td colSpan={7} className="py-8 text-center text-[#9aa0bd]">{isZh ? '本次销售无商品' : 'No items in this sale'}</td></tr>}
               {enriched.map((e:any)=>(
                 <tr key={e.idx} className="border-t border-[#ece8e0]">
                   <td className="py-2.5 px-3">{e.idx}</td>
@@ -164,17 +164,17 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
 
         <div className="mt-4 flex justify-end">
           <div className="w-[280px] text-[12.5px] space-y-2">
-            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">{isZh ? '图书小计' : 'Book Subtotal'}</span><span className="font-medium tabular-nums">{fmtGBP(displayBookSubtotal)}</span></div>
+            <div className="flex justify-between py-1"><span className="text-[#6d72a0]">{isZh ? '图书小计' : 'Book Subtotal'}</span><span className="font-medium tabular-nums">{fmtGBP(displayBookSubtotal)}</span></div>
             {globalDisc > 0 && enriched.every((e:any)=>e.discAmt===0) && (
-              <div className="flex justify-between py-1 text-[#d26a39]"><span>{isZh ? '折扣' : 'Discount'} {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-{fmtGBP(globalDisc)}</span></div>
+              <div className="flex justify-between py-1 text-[#e5444c]"><span>{isZh ? '折扣' : 'Discount'} {totalGross>0 ? `${Math.round(globalDisc/totalGross*100)}%` : ''}</span><span className="tabular-nums">-{fmtGBP(globalDisc)}</span></div>
             )}
-            <div className="flex justify-between py-1"><span className="text-[#5a7a6a]">{isZh ? '邮费' : 'P & P Cost'}</span><span className="tabular-nums">{fmtGBP(shipping)}</span></div>
-            <div className="flex justify-between py-2 border-t-2 border-[#0f3d2e] font-bold text-[14px] mt-2 pt-2"><span>{isZh ? '总计：' : 'Total:'}</span><span className="tabular-nums">{fmtGBP(total)}</span></div>
+            <div className="flex justify-between py-1"><span className="text-[#6d72a0]">{isZh ? '邮费' : 'P & P Cost'}</span><span className="tabular-nums">{fmtGBP(shipping)}</span></div>
+            <div className="flex justify-between py-2 border-t-2 border-[#2d2f92] font-bold text-[14px] mt-2 pt-2"><span>{isZh ? '总计：' : 'Total:'}</span><span className="tabular-nums">{fmtGBP(total)}</span></div>
           </div>
         </div>
 
-        <div className="mt-10 rounded-[10px] bg-[#faf6ee] border border-[#ece5d6] p-4 text-[11.5px] leading-relaxed text-[#3d5a4e]">
-          <p className="font-semibold text-[#0f3d2e] mb-1">{isZh ? '付款方式' : 'Payment Method'}</p>
+        <div className="mt-10 rounded-[10px] bg-[#faf7f0] border border-[#ece5d6] p-4 text-[11.5px] leading-relaxed text-[#3c4070]">
+          <p className="font-semibold text-[#2d2f92] mb-1">{isZh ? '付款方式' : 'Payment Method'}</p>
           <p>{isZh ? '支票付款：抬头请写 COCM' : 'By cheque: Please make cheque payable to COCM'}</p>
           <p>{isZh ? '请在支票背面注明发票编号' : 'Please quote Invoice No. on the back of the cheque'}</p>
           <p className="mt-2">{isZh ? '银行转账：' : 'By bank transfer:'}</p>
@@ -184,8 +184,8 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         </div>
 
         <div className="no-print mt-8 flex gap-2">
-          <button onClick={()=>window.print()} className="rounded-full bg-[#0f3d2e] text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
-          <a href="/sales" className="rounded-full border border-[#0f3d2e]/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
+          <button onClick={()=>window.print()} className="rounded-full bg-[#2d2f92] text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
+          <a href="/sales" className="rounded-full border border-[#2d2f92]/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
         </div>
       </div>
     </div>

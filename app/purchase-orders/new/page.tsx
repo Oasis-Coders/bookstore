@@ -112,14 +112,14 @@ export default function NewPOPage() {
   return (
     <AppShell title={isZh ? '新建采购单' : 'New PO'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
       <div className="mx-auto max-w-[640px]">
-        <Link href="/purchase-orders" className="mb-4 inline-flex text-[13px] text-[#4f7a5c] hover:text-[#0f3d2e]">
+        <Link href="/purchase-orders" className="mb-4 inline-flex text-[13px] text-[#5b5f94] hover:text-[#2d2f92]">
           ← {isZh ? '返回采购单' : 'Back to Purchase Orders'}
         </Link>
         <Card>
           <CardTitle>{isZh ? '新建采购单' : 'New Purchase Order'}</CardTitle>
-          <div className="mt-2 rounded-[10px] bg-[#faf6ee] p-3 text-[11px] text-[#4f7a5c]">
+          <div className="mt-2 rounded-[10px] bg-[#faf7f0] p-3 text-[11px] text-[#5b5f94]">
             {isZh ? ' 要采购新书？先去书库添加新书，再来填采购单。支持扫码枪扫ISBN快速添加。' : ' New book to purchase? Add it to Books first, then fill PO. Barcode scanner supported for ISBN.'}
-            <Link href="/books/new" className="ml-2 text-[#0f3d2e] underline font-medium">{isZh ? '去添加新书' : 'Add new book'}</Link>
+            <Link href="/books/new" className="ml-2 text-[#2d2f92] underline font-medium">{isZh ? '去添加新书' : 'Add new book'}</Link>
           </div>
           {error && <div aria-live="polite" className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -131,7 +131,7 @@ export default function NewPOPage() {
                 value={form.supplier_id}
                 onChange={(e) => setForm((f) => ({ ...f, supplier_id: e.target.value }))}
                 required
-                className="mt-1 flex h-11 w-full rounded-[20px] border border-[#0f3d2e]/15 bg-white px-4 text-[13px]"
+                className="mt-1 flex h-11 w-full rounded-[20px] border border-[#2d2f92]/15 bg-white px-4 text-[13px]"
               >
                 <option value="">{isZh ? '选择供应商' : 'Select supplier'}</option>
                 {suppliers.map((s) => (

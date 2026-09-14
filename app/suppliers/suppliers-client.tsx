@@ -57,15 +57,15 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {filtered.map((s) => (
-          <Card key={s.id} className="group transition-[box-shadow,transform] hover:shadow-[rgba(15,61,46,0.08)_0px_4px_16px] hover:-translate-y-0.5">
+          <Card key={s.id} className="group transition-[box-shadow,transform] hover:shadow-[rgba(45,47,146,0.08)_0px_4px_16px] hover:-translate-y-0.5">
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-serif text-[16px]">{s.name_zh}</p>
-                {s.name_en && <p className="text-[12px] text-[#4f7a5c]">{s.name_en}</p>}
+                {s.name_en && <p className="text-[12px] text-[#5b5f94]">{s.name_en}</p>}
               </div>
               <Badge>{s.code}</Badge>
             </div>
-            <div className="mt-3 space-y-1 text-[12px] text-[#0f3d2e]/70">
+            <div className="mt-3 space-y-1 text-[12px] text-[#2d2f92]/70">
               {s.contact_person && <p>{tt('suppliers.contact')}：{s.contact_person}</p>}
               {s.phone && <p>{tt('suppliers.phone')}：{s.phone}</p>}
               {s.email && <p>{tt('suppliers.email')}：{s.email}</p>}
@@ -79,7 +79,7 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
         ))}
       </div>
       {filtered.length === 0 && (
-        <Card className="py-12 text-center"><p className="text-[13px] text-[#4f7a5c]">{q ? (isZh ? `未找到 “${q}”` : `No results for “${q}”`) : (isZh ? '暂无供应商' : 'No suppliers yet')}</p><Link href="/suppliers/new" className="mt-3 inline-block"><Button size="sm">{isZh ? '添加供应商' : 'Add supplier'}</Button></Link></Card>
+        <Card className="py-12 text-center"><p className="text-[13px] text-[#5b5f94]">{q ? (isZh ? `未找到 “${q}”` : `No results for “${q}”`) : (isZh ? '暂无供应商' : 'No suppliers yet')}</p><Link href="/suppliers/new" className="mt-3 inline-block"><Button size="sm">{isZh ? '添加供应商' : 'Add supplier'}</Button></Link></Card>
       )}
     </AppShell>
   );
