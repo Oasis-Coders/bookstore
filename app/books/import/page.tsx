@@ -37,7 +37,7 @@ export default function BulkImportPage() {
   };
 
   const downloadTemplate = () => {
-    const csv = 'sku,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,low_stock_threshold,initial_stock\nBOOK-001,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,12.5,5,10\nBOOK-002,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,3,5';
+    const csv = 'sku,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,low_stock_threshold,initial_stock\nBOOK-001,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,5,10\nBOOK-002,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,3,5';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -10,7 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; initialFilters?: any }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -20,13 +20,18 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
   const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
 
-  // Opening stock: saved snapshot first, else system value (inventory cost right after
-  // the previous month's last transaction). Still editable by hand.
-  const sysOpening = monthlyFinancial?.opening_stock != null
-    ? Number(monthlyFinancial.opening_stock)
-    : Number(autoOpeningStock ?? 0);
+  // Opening stock: system value = inventory cost right after the previous month's
+  // last transaction. A saved snapshot never silently overrides it; still editable by hand.
+  const sysOpening = autoOpeningStock != null
+    ? Number(autoOpeningStock)
+    : (monthlyFinancial?.opening_stock != null ? Number(monthlyFinancial.opening_stock) : 0);
   const [openingStock, setOpeningStock] = useState<number>(sysOpening);
-  const [closingStock, setClosingStock] = useState<number>(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
+  // Closing stock: system value = inventory cost at month end for past months,
+  // live inventory for the current month. Still editable by hand.
+  const sysClosing = autoClosingStock != null
+    ? Number(autoClosingStock)
+    : Number(monthlyFinancial?.closing_stock ?? currentInventoryValue ?? 0);
+  const [closingStock, setClosingStock] = useState<number>(sysClosing);
   const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [snapshotsHistory, setSnapshotsHistory] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -35,18 +40,22 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
   useEffect(() => {
     if (monthlyFinancial) {
-      const sysOpen = monthlyFinancial.opening_stock != null ? Number(monthlyFinancial.opening_stock) : Number(autoOpeningStock ?? 0);
+      const sysOpen = autoOpeningStock != null ? Number(autoOpeningStock)
+        : (monthlyFinancial.opening_stock != null ? Number(monthlyFinancial.opening_stock) : 0);
       setOpeningStock(sysOpen);
-      if (monthlyFinancial.closing_stock != null) setClosingStock(Number(monthlyFinancial.closing_stock));
-      else if (currentInventoryValue) setClosingStock(Number(currentInventoryValue));
+      const sysClose = autoClosingStock != null ? Number(autoClosingStock)
+        : Number(monthlyFinancial.closing_stock ?? currentInventoryValue ?? 0);
+      setClosingStock(sysClose);
     }
-  }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, autoOpeningStock]);
+  }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, autoOpeningStock, autoClosingStock]);
 
   useEffect(() => {
-    const sysOpen = monthlyFinancial?.opening_stock != null ? Number(monthlyFinancial.opening_stock) : Number(autoOpeningStock ?? 0);
+    const sysOpen = autoOpeningStock != null ? Number(autoOpeningStock)
+      : (monthlyFinancial?.opening_stock != null ? Number(monthlyFinancial.opening_stock) : 0);
     setOpeningStock(sysOpen);
-    setClosingStock(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
-  }, [monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, monthlyFinancial?.month_start, currentInventoryValue, autoOpeningStock]);
+    setClosingStock(autoClosingStock != null ? Number(autoClosingStock)
+      : Number(monthlyFinancial?.closing_stock ?? currentInventoryValue ?? 0));
+  }, [monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, monthlyFinancial?.month_start, currentInventoryValue, autoOpeningStock, autoClosingStock]);
 
   const financial = {
     sales: Number(monthlyFinancial?.sales_total || 0),
@@ -243,7 +252,13 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
             {/* Closing */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#ece5d6] items-center">
-              <label htmlFor="closing-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#9aa0bd]">closing stock</span></label>
+              <label htmlFor="closing-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '减：期末库存' : 'Less:'} <span className="text-[#9aa0bd]">closing stock</span>
+                {autoClosingStock != null && (
+                  <button type="button" onClick={() => setClosingStock(Number(autoClosingStock))} className="ml-2 text-[10.5px] text-[#6d72a0] underline decoration-dotted underline-offset-2 hover:text-cocm-ink" title={isZh ? '按所选月份最后一天的库存成本重算（当月为实时库存）' : 'Recompute from inventory cost at month end (live for current month)'}>
+                    {isZh ? `系统值 £${Number(autoClosingStock).toFixed(2)} · 点此填入` : `system £${Number(autoClosingStock).toFixed(2)} · tap to fill`}
+                  </button>
+                )}
+              </label>
               <div className="flex justify-end">
                 <input id="closing-stock" type="number" step="0.01" value={closingStock} onChange={e=>setClosingStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-cocm-ink/30 focus:ring-1 focus:ring-cocm-ink/10" />
               </div>
@@ -267,7 +282,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
               {snapshotMsg && <span aria-live="polite" className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
             </div>
           </div>
-          <p className="mt-2 text-[10.5px] leading-relaxed text-[#9aa0bd]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。期初默认取上月最后一天最后一笔交易后的库存成本值，可手动修改；进货取采购单已下单金额。' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Opening defaults to inventory cost after the last transaction of the previous month, editable; purchases from POs.'}</p>
+          <p className="mt-2 text-[10.5px] leading-relaxed text-[#9aa0bd]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。期初默认取上月最后一天最后一笔交易后的库存成本值；期末默认取所选月份最后一天的库存成本值（当月为实时库存）；均可手动修改；进货取采购单已下单金额。' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Opening defaults to inventory cost after the last transaction of the previous month; closing defaults to inventory cost at the selected month end (live for current month); both editable; purchases from POs.'}</p>
 
           {showHistory && (
             <div className="mt-3 rounded-[12px] border border-[#ece5d6] bg-[#fdfcfa] p-3 max-h-[190px] overflow-auto">

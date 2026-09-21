@@ -38,8 +38,10 @@ export default async function SalesPage() {
       console.error('books fetch error', e);
     }
     try {
-      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, customer_name, sold_at, sale_date').order('sale_number', { ascending: true }).limit(20);
-      recentSales = (sRes.data || []).map((s: any) => ({
+      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
+      // Display the latest 20 sales sorted by sale number ascending
+      const latestFirst = [...(sRes.data || [])].sort((a: any, b: any) => String(a.sale_number || '').localeCompare(String(b.sale_number || '')));
+      recentSales = latestFirst.map((s: any) => ({
         id: s.id,
         sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
         subtotal: s.subtotal,

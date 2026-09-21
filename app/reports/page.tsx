@@ -12,6 +12,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   let monthlyFinancial: any = null;
   let currentInventoryValue = 0;
   let autoOpeningStock: number | null = null;
+  let autoClosingStock: number | null = null;
   let mode: 'live' | 'empty' = 'empty';
 
   const targetMonth = month || new Date().toISOString().slice(0,7); // YYYY-MM
@@ -131,6 +132,17 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           const { data: autoOpen } = await supabase.rpc('inventory_value_at', { p_as_of: prevEndStr });
           if (autoOpen != null) autoOpeningStock = Number(autoOpen);
         } catch {}
+        // Auto closing stock: for past months, inventory cost at month end
+        // (inventory_value_at(monthEnd)); for the current month, live inventory.
+        try {
+          const nowMonth = new Date().toISOString().slice(0, 7);
+          if (targetMonth === nowMonth) {
+            autoClosingStock = currentInventoryValue;
+          } else {
+            const { data: autoClose } = await supabase.rpc('inventory_value_at', { p_as_of: monthEnd });
+            if (autoClose != null) autoClosingStock = Number(autoClose);
+          }
+        } catch {}
         // Try view first
         const { data: finView } = await supabase.from('monthly_financial_view').select('*').eq('month_start', monthStart).maybeSingle();
         if (finView) {
@@ -183,7 +195,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} initialFilters={{ from, to, month: targetMonth }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth }} />
     </Suspense>
   );
 }
