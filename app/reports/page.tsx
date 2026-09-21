@@ -11,6 +11,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   let salesBooksList: any[] = [] as any[];
   let monthlyFinancial: any = null;
   let currentInventoryValue = 0;
+  let autoOpeningStock: number | null = null;
   let mode: 'live' | 'empty' = 'empty';
 
   const targetMonth = month || new Date().toISOString().slice(0,7); // YYYY-MM
@@ -23,8 +24,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   if (supabase) {
     try {
       const [vRes, lRes] = await Promise.all([
-        supabase.from('inventory_valuation_view').select('*').limit(30),
-        supabase.from('low_stock_view').select('*').limit(20),
+        supabase.from('inventory_valuation_view').select('*').order('sku', { ascending: true }).limit(5000),
+        supabase.from('low_stock_view').select('*').limit(100),
       ]);
       if (vRes.data && vRes.data.length > 0) {
         valuation = vRes.data;
@@ -36,10 +37,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       // Fetch sales for date range if provided
       if (from || to) {
         try {
-          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by').order('sold_at', { ascending: false });
+          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by').order('sale_number', { ascending: true });
           if (from) query = query.gte('sale_date', from);
           if (to) query = query.lte('sale_date', to);
-          const { data } = await query.limit(100);
+          const { data } = await query.limit(2000);
           // Fetch staff names separately for robustness (FK may not have PostgREST relationship)
           let profileMap: Record<string, string> = {};
           if (data && data.length > 0) {
@@ -53,61 +54,64 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           }
           salesList = (data || []).map((s: any) => ({
             ...s,
-            net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
+            net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
             created_by_name: profileMap[s.created_by] || s.created_by?.slice(0,8) || '-',
             staff_name: profileMap[s.created_by] || '-',
           }));
         } catch (e) {
           // fallback: try with join if profiles relationship exists
           try {
-            let q2 = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, customer_name, status, created_by, profiles(display_name)').order('sold_at', { ascending: false });
+            let q2 = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by, profiles(display_name)').order('sale_number', { ascending: true });
             if (from) q2 = q2.gte('sale_date', from);
             if (to) q2 = q2.lte('sale_date', to);
-            const { data } = await q2.limit(100);
+            const { data } = await q2.limit(2000);
             salesList = (data || []).map((s: any) => ({
               ...s,
-              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
+              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
               created_by_name: s.profiles?.display_name || s.created_by?.slice(0,8) || '-',
               staff_name: s.profiles?.display_name || '-',
             }));
           } catch {}
         }
 
+        // Sales book lines: derive from the exact sale set above (same date range),
+        // so every line in range is included (no arbitrary 200-line truncation).
         try {
-          let bQuery = supabase.from('sales_transaction_lines').select('quantity, unit_price, cost_of_goods_sold, sales_transactions!inner(sale_date, sale_number, payment_method, customer_name, created_by), books(sku, title, title_en, shelf_position)').order('created_at', { ascending: false });
-          const { data: lines } = await bQuery.limit(200);
-          // Build profile map for books list staff
-          let bookProfileMap: Record<string, string> = {};
-          if (lines && (lines as any[]).length > 0) {
-            const cids = [...new Set((lines as any[]).map((l:any)=>l.sales_transactions?.created_by).filter(Boolean))];
-            if (cids.length > 0) {
-              const { data: bp } = await supabase.from('profiles').select('id, display_name').in('id', cids);
-              if (bp) for (const p of bp as any[]) bookProfileMap[p.id]=p.display_name;
+          const saleIds = salesList.map((s: any) => s.id);
+          if (saleIds.length > 0) {
+            const { data: lines } = await supabase.from('sales_transaction_lines')
+              .select('sale_id, quantity, unit_price, cost_of_goods_sold, sales_transactions!inner(sale_date, sale_number, payment_method, customer_name, created_by), books(sku, title, title_en, shelf_position, warehouse_location)')
+              .in('sale_id', saleIds)
+              .order('created_at', { ascending: true })
+              .limit(5000);
+            let bookProfileMap: Record<string, string> = {};
+            if (lines && (lines as any[]).length > 0) {
+              const cids = [...new Set((lines as any[]).map((l:any)=>l.sales_transactions?.created_by).filter(Boolean))];
+              if (cids.length > 0) {
+                const { data: bp } = await supabase.from('profiles').select('id, display_name').in('id', cids);
+                if (bp) for (const p of bp as any[]) bookProfileMap[p.id]=p.display_name;
+              }
             }
+            salesBooksList = (lines || []).map((l: any) => ({
+              sale_date: l.sales_transactions?.sale_date,
+              sale_number: l.sales_transactions?.sale_number,
+              sku: l.books?.sku,
+              title: l.books?.title,
+              title_en: l.books?.title_en,
+              shelf_position: l.books?.shelf_position,
+              warehouse_location: l.books?.warehouse_location,
+              quantity: l.quantity,
+              unit_price: l.unit_price,
+              cost_of_goods_sold: l.cost_of_goods_sold,
+              payment_method: l.sales_transactions?.payment_method,
+              customer_name: l.sales_transactions?.customer_name,
+              created_by: l.sales_transactions?.created_by,
+              staff_name: bookProfileMap[l.sales_transactions?.created_by] || '-',
+            }));
           }
-          salesBooksList = (lines || []).filter((l: any) => {
-            const sd = l.sales_transactions?.sale_date;
-            if (from && sd < from) return false;
-            if (to && sd > to) return false;
-            return true;
-          }).map((l: any) => ({
-            sale_date: l.sales_transactions?.sale_date,
-            sale_number: l.sales_transactions?.sale_number,
-            sku: l.books?.sku,
-            title: l.books?.title,
-            title_en: l.books?.title_en,
-            shelf_position: l.books?.shelf_position,
-            quantity: l.quantity,
-            unit_price: l.unit_price,
-            cost_of_goods_sold: l.cost_of_goods_sold,
-            payment_method: l.sales_transactions?.payment_method,
-            customer_name: l.sales_transactions?.customer_name,
-            created_by: l.sales_transactions?.created_by,
-            staff_name: bookProfileMap[l.sales_transactions?.created_by] || '-',
-          }));
         } catch {
           try {
-            let vQuery = supabase.from('sales_books_report_view').select('*').limit(200);
+            let vQuery = supabase.from('sales_books_report_view').select('*').order('sale_number', { ascending: true }).limit(2000);
             if (from) vQuery = vQuery.gte('sale_date', from);
             if (to) vQuery = vQuery.lte('sale_date', to);
             const { data } = await vQuery;
@@ -118,14 +122,23 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
       // Monthly financial data
       try {
+        // Auto opening stock: inventory cost value right after the previous month's
+        // last transaction (inventory_value_at(prev month end)).
+        try {
+          const prevEnd = new Date(`${monthStart}T00:00:00`);
+          prevEnd.setDate(prevEnd.getDate() - 1);
+          const prevEndStr = prevEnd.toISOString().slice(0, 10);
+          const { data: autoOpen } = await supabase.rpc('inventory_value_at', { p_as_of: prevEndStr });
+          if (autoOpen != null) autoOpeningStock = Number(autoOpen);
+        } catch {}
         // Try view first
         const { data: finView } = await supabase.from('monthly_financial_view').select('*').eq('month_start', monthStart).maybeSingle();
         if (finView) {
           monthlyFinancial = finView;
         } else {
           // Manual calc fallback
-          const salesInMonth = await supabase.from('sales_transactions').select('subtotal, discount_amount').gte('sale_date', monthStart).lte('sale_date', monthEnd).eq('status','completed');
-          const salesTotal = (salesInMonth.data || []).reduce((s: number, r: any) => s + Number(r.subtotal||0) - Number(r.discount_amount||0), 0);
+          const salesInMonth = await supabase.from('sales_transactions').select('subtotal, discount_amount, shipping_cost').gte('sale_date', monthStart).lte('sale_date', monthEnd).eq('status','completed');
+          const salesTotal = (salesInMonth.data || []).reduce((s: number, r: any) => s + Number(r.subtotal||0) - Number(r.discount_amount||0) + Number(r.shipping_cost||0), 0);
           
           // COGS for month
           const cogsQuery = await supabase.from('sales_transaction_lines').select('cost_of_goods_sold, sales_transactions!inner(sale_date, status)').gte('sales_transactions.sale_date', monthStart).lte('sales_transactions.sale_date', monthEnd);
@@ -155,7 +168,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             sales_total: salesTotal,
             cogs_total: cogsTotal,
             purchases_total: purchasesTotal,
-            opening_stock: snap?.opening_stock ?? prevSnap?.closing_stock ?? currentInventoryValue, // fallback
+            opening_stock: snap?.opening_stock ?? prevSnap?.closing_stock ?? autoOpeningStock ?? currentInventoryValue, // fallback
             closing_stock: snap?.closing_stock ?? currentInventoryValue,
             order_count: (salesInMonth.data || []).length,
           };
@@ -170,7 +183,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} initialFilters={{ from, to, month: targetMonth }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} initialFilters={{ from, to, month: targetMonth }} />
     </Suspense>
   );
 }

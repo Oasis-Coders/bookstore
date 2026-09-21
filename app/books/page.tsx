@@ -13,7 +13,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
     try {
       let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').eq('is_active', true).order('title');
       if (q) {
-        query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%`);
+        query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%,warehouse_location.ilike.%${q}%`);
       }
       const { data } = await query.limit(80);
       if (data) {

@@ -15,6 +15,7 @@ export async function createBook(formData: FormData) {
     isbn13: String(formData.get('isbn13') || '').trim() || null,
     category: String(formData.get('category') || '').trim() || null,
     shelf_position: String(formData.get('shelf_position') || '').trim() || null,
+    warehouse_location: String(formData.get('warehouse_location') || '').trim() || null,
     current_price: Number(formData.get('current_price') || 0),
     low_stock_threshold: Number(formData.get('low_stock_threshold') || 5),
   };
@@ -30,11 +31,12 @@ export async function createBook(formData: FormData) {
   // Try with title_en and shelf_position and simplified/traditional, fallback if columns missing
   let payload: any = { ...basePayload, title_en: titleEn, title_simplified: titleSimplified, title_traditional: titleTraditional };
   let { error } = await supabase.from('books').insert(payload);
-  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position'))) {
-    const { shelf_position: _sp, ...rest } = basePayload;
+  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position') || error.message.includes('warehouse_location'))) {
+    const { shelf_position: _sp, warehouse_location: _wl, ...rest } = basePayload;
     const meta: any = {};
     if (titleEn) meta.title_en = titleEn;
     if (basePayload.shelf_position) meta.shelf_position = basePayload.shelf_position;
+    if (basePayload.warehouse_location) meta.warehouse_location = basePayload.warehouse_location;
     if (titleSimplified) meta.title_simplified = titleSimplified;
     if (titleTraditional) meta.title_traditional = titleTraditional;
     payload = { ...rest, metadata: Object.keys(meta).length ? meta : {} };
@@ -60,6 +62,7 @@ export async function updateBook(bookId: string, formData: FormData) {
     isbn13: String(formData.get('isbn13') || '').trim() || null,
     category: String(formData.get('category') || '').trim() || null,
     shelf_position: String(formData.get('shelf_position') || '').trim() || null,
+    warehouse_location: String(formData.get('warehouse_location') || '').trim() || null,
     current_price: Number(formData.get('current_price') || 0),
     low_stock_threshold: Number(formData.get('low_stock_threshold') || 5),
     is_active: formData.get('is_active') === 'true',
@@ -70,15 +73,16 @@ export async function updateBook(bookId: string, formData: FormData) {
   if (!basePayload.sku || !basePayload.title) throw new Error('代号和书名必填 / Code and title required');
   let payload: any = { ...basePayload, title_en: titleEn, title_simplified: titleSimplified, title_traditional: titleTraditional };
   let { error } = await supabase.from('books').update(payload).eq('id', bookId);
-  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position') || error.message.includes('title_simplified') || error.message.includes('title_traditional'))) {
+  if (error && (error.message.includes('title_en') || error.message.includes('shelf_position') || error.message.includes('warehouse_location') || error.message.includes('title_simplified') || error.message.includes('title_traditional'))) {
     // Fallback: update without new columns, merge into metadata
     const { data: existing } = await supabase.from('books').select('metadata').eq('id', bookId).single();
     const meta: any = { ...(existing?.metadata || {}) };
     if (titleEn) meta.title_en = titleEn; else delete meta.title_en;
     if (basePayload.shelf_position) meta.shelf_position = basePayload.shelf_position; else delete meta.shelf_position;
+    if (basePayload.warehouse_location) meta.warehouse_location = basePayload.warehouse_location; else delete meta.warehouse_location;
     if (titleSimplified) meta.title_simplified = titleSimplified; else delete meta.title_simplified;
     if (titleTraditional) meta.title_traditional = titleTraditional; else delete meta.title_traditional;
-    const { shelf_position: _sp, title_simplified: _s, title_traditional: _t, title_en: _en, ...rest } = payload as any;
+    const { shelf_position: _sp, warehouse_location: _wl, title_simplified: _s, title_traditional: _t, title_en: _en, ...rest } = payload as any;
     const { error: err2 } = await supabase.from('books').update({ ...rest, metadata: meta }).eq('id', bookId);
     error = err2;
   }

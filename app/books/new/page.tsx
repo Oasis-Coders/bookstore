@@ -137,6 +137,10 @@ export default function NewBookPage() {
               <label htmlFor="new-shelf" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '书架位置' : 'Shelf Position'}</label>
               <Input id="new-shelf" name="shelf_position" placeholder={isZh ? '如 A-3-2 或 书架B第2层' : 'e.g. A-3-2 or Shelf B Level 2'} className="mt-1" />
             </div>
+            <div>
+              <label htmlFor="new-warehouse" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '仓库位置' : 'Warehouse Location'}</label>
+              <Input id="new-warehouse" name="warehouse_location" placeholder={isZh ? '如 仓库B区第2架' : 'e.g. Warehouse B Rack 2'} className="mt-1" />
+            </div>
 
             <div>
               <label htmlFor="new-title" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '中文书名 *' : 'Title (ZH) *'}</label>

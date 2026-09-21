@@ -12,6 +12,7 @@ import Link from 'next/link';
 
 type Book = {
   shelf_position?: string | null;
+  warehouse_location?: string | null;
   title_en?: string | null;
   title_simplified?: string | null;
   title_traditional?: string | null;
@@ -110,6 +111,7 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {(book.shelf_position || (book as any).metadata?.shelf_position) ? <span className="text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-cocm-red" />{isZh ? '书架：' : 'Shelf: '}{book.shelf_position || (book as any).metadata?.shelf_position}</span> : null}
+                {(book.warehouse_location || (book as any).metadata?.warehouse_location) ? <span className="text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-cocm-ink" />{isZh ? '仓库：' : 'Warehouse: '}{book.warehouse_location || (book as any).metadata?.warehouse_location}</span> : null}
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <span className="text-[15px] font-bold tracking-tight text-cocm-ink">{formatCurrency(book.current_price || 0)}</span>

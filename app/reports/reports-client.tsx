@@ -10,7 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; initialFilters?: any }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -19,7 +19,13 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
   const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
   const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
-  const [openingStock, setOpeningStock] = useState<number>(Number(monthlyFinancial?.opening_stock || 0));
+
+  // Opening stock: saved snapshot first, else system value (inventory cost right after
+  // the previous month's last transaction). Still editable by hand.
+  const sysOpening = monthlyFinancial?.opening_stock != null
+    ? Number(monthlyFinancial.opening_stock)
+    : Number(autoOpeningStock ?? 0);
+  const [openingStock, setOpeningStock] = useState<number>(sysOpening);
   const [closingStock, setClosingStock] = useState<number>(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
   const [savingSnapshot, setSavingSnapshot] = useState(false);
   const [snapshotsHistory, setSnapshotsHistory] = useState<any[]>([]);
@@ -29,16 +35,18 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
   useEffect(() => {
     if (monthlyFinancial) {
-      if (monthlyFinancial.opening_stock != null) setOpeningStock(Number(monthlyFinancial.opening_stock));
+      const sysOpen = monthlyFinancial.opening_stock != null ? Number(monthlyFinancial.opening_stock) : Number(autoOpeningStock ?? 0);
+      setOpeningStock(sysOpen);
       if (monthlyFinancial.closing_stock != null) setClosingStock(Number(monthlyFinancial.closing_stock));
       else if (currentInventoryValue) setClosingStock(Number(currentInventoryValue));
     }
-  }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock]);
+  }, [monthlyFinancial?.month_start, monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, autoOpeningStock]);
 
   useEffect(() => {
-    setOpeningStock(Number(monthlyFinancial?.opening_stock || 0));
+    const sysOpen = monthlyFinancial?.opening_stock != null ? Number(monthlyFinancial.opening_stock) : Number(autoOpeningStock ?? 0);
+    setOpeningStock(sysOpen);
     setClosingStock(Number(monthlyFinancial?.closing_stock || currentInventoryValue || 0));
-  }, [monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, monthlyFinancial?.month_start, currentInventoryValue]);
+  }, [monthlyFinancial?.opening_stock, monthlyFinancial?.closing_stock, monthlyFinancial?.month_start, currentInventoryValue, autoOpeningStock]);
 
   const financial = {
     sales: Number(monthlyFinancial?.sales_total || 0),
@@ -48,8 +56,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     closing: closingStock,
   };
   const stockSubtotal = financial.opening + financial.purchases;
+  // COGS follows the requested formula: opening + purchases − closing.
+  // Direct FIFO COGS stays visible in the footer for validation.
   const cogsFromStock = stockSubtotal - financial.closing;
-  const finalCogs = financial.cogs_direct > 0 ? financial.cogs_direct : cogsFromStock;
+  const finalCogs = cogsFromStock;
   const grossProfit = financial.sales - finalCogs;
 
   const monthLabel = (() => {
@@ -69,12 +79,30 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     } catch { return selectedMonth; }
   })();
 
-  const exportFinancialCsv = () => {
-    const csv = `Month,${selectedMonth}\nSales,${financial.sales}\nOpening Stock,${financial.opening}\nAdd Purchase,${financial.purchases}\nSubtotal Opening+Purchase,${stockSubtotal}\nLess Closing Stock,${financial.closing}\nCost of Sales,${finalCogs}\nGross Profit,${grossProfit}\n`;
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  // ---- CSV: BOM for Excel Chinese + escape every field (no missing rows) ----
+  const csvCell = (v: any) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const downloadCsv = (filename: string, headers: string[], rows: any[][]) => {
+    const body = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n');
+    const blob = new Blob(['\uFEFF' + body], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `financial_${selectedMonth}.csv`; a.click(); URL.revokeObjectURL(url);
+    a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url);
+  };
+
+  const exportFinancialCsv = () => {
+    downloadCsv(`financial_${selectedMonth}.csv`,
+      ['Item', 'Amount (GBP)'],
+      [
+        ['Month', selectedMonth],
+        ['Sales', financial.sales.toFixed(2)],
+        ['Opening Stock', financial.opening.toFixed(2)],
+        ['Add Purchase', financial.purchases.toFixed(2)],
+        ['Subtotal Opening+Purchase', stockSubtotal.toFixed(2)],
+        ['Less Closing Stock', financial.closing.toFixed(2)],
+        ['Cost of Sales (Opening+Purchases-Closing)', finalCogs.toFixed(2)],
+        ['Direct FIFO COGS (validation)', financial.cogs_direct.toFixed(2)],
+        ['Gross Profit', grossProfit.toFixed(2)],
+      ]);
   };
 
   const loadHistory = async () => {
@@ -109,36 +137,23 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
   const exportCsv = (type: 'valuation' | 'lowstock' | 'sales' | 'salesBooks') => {
-    let csv = '';
-    let filename = '';
     if (type === 'valuation') {
-      filename = `inventory_valuation_${new Date().toISOString().slice(0,10)}.csv`;
-      csv = 'SKU,Title,Location,Qty,WAC,Cost Value,Retail Value\n' + valuation.map(r => 
-        `${r.sku},"${r.title}",${r.location_name},${r.quantity_on_hand},${r.weighted_average_cost},${r.inventory_value},${r.retail_value}`
-      ).join('\n');
+      downloadCsv(`inventory_valuation_${new Date().toISOString().slice(0,10)}.csv`,
+        ['SKU', 'Title', 'Shelf Position', 'Warehouse Location', 'Qty', 'Retail Unit Price', 'WAC', 'Cost Value', 'Retail Value'],
+        valuation.map(r => [r.sku, r.title, r.shelf_position || '', r.warehouse_location || '', r.quantity_on_hand, Number(r.current_price || 0).toFixed(2), r.weighted_average_cost, r.inventory_value, r.retail_value]));
     } else if (type === 'lowstock') {
-      filename = `low_stock_${new Date().toISOString().slice(0,10)}.csv`;
-      csv = 'SKU,Title,Threshold,On Hand,Shortage\n' + lowStock.map(r =>
-        `${r.sku},"${r.title}",${r.low_stock_threshold},${r.quantity_on_hand},${r.reorder_shortage}`
-      ).join('\n');
+      downloadCsv(`low_stock_${new Date().toISOString().slice(0,10)}.csv`,
+        ['SKU', 'Title', 'Threshold', 'On Hand', 'Shortage'],
+        lowStock.map(r => [r.sku, r.title, r.low_stock_threshold, r.quantity_on_hand, r.reorder_shortage]));
     } else if (type === 'sales') {
-      filename = `sales_${fromDate}_to_${toDate}.csv`;
-      csv = 'Date,Sale Number,Payment Method,Status,Subtotal,Discount,Net Total,Customer,Staff\n' + salesList.map(r =>
-        `${r.sale_date},${r.sale_number},${r.payment_method},${r.payment_status},${r.subtotal},${r.discount_amount || 0},${r.net_total},${r.customer_name || ''},${r.created_by_name || r.staff_name || ''}`
-      ).join('\n');
+      downloadCsv(`sales_${fromDate}_to_${toDate}.csv`,
+        ['Date', 'Sale Number', 'Payment Method', 'Status', 'Subtotal', 'Discount', 'Postage', 'Net Total', 'Customer', 'Staff'],
+        salesList.map(r => [r.sale_date, r.sale_number, r.payment_method, r.payment_status, r.subtotal, r.discount_amount || 0, r.shipping_cost || 0, r.net_total, r.customer_name || '', r.created_by_name || r.staff_name || '']));
     } else if (type === 'salesBooks') {
-      filename = `sales_books_${fromDate}_to_${toDate}.csv`;
-      csv = 'Date,Sale Number,SKU,Title,Qty,Unit Price,Payment Method,Customer,Shelf\n' + salesBooksList.map(r =>
-        `${r.sale_date},${r.sale_number},${r.sku},"${r.title}",${r.quantity},${r.unit_price},${r.payment_method},${r.customer_name || ''},${r.shelf_position || ''}`
-      ).join('\n');
+      downloadCsv(`sales_books_${fromDate}_to_${toDate}.csv`,
+        ['Date', 'Sale Number', 'SKU', 'Title', 'Qty', 'Unit Price', 'Payment Method', 'Customer', 'Shelf Position', 'Warehouse Location'],
+        salesBooksList.map(r => [r.sale_date, r.sale_number, r.sku, r.title, r.quantity, r.unit_price, r.payment_method, r.customer_name || '', r.shelf_position || '', r.warehouse_location || '']));
     }
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
   const handleDateFilter = () => {
@@ -199,7 +214,13 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
             {/* Opening */}
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-2.5 border-b border-[#f6f1e8] items-center">
-              <label htmlFor="opening-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#9aa0bd]">opening stock</span></label>
+              <label htmlFor="opening-stock" className="text-[12.5px] text-[#3c4070] pl-4">{isZh ? '期初库存' : 'Opening'} <span className="text-[#9aa0bd]">opening stock</span>
+                {autoOpeningStock != null && (
+                  <button type="button" onClick={() => setOpeningStock(Number(autoOpeningStock))} className="ml-2 text-[10.5px] text-[#6d72a0] underline decoration-dotted underline-offset-2 hover:text-cocm-ink" title={isZh ? '按上月最后一天最后一笔交易后的库存成本重算' : 'Recompute from inventory cost after last transaction of previous month'}>
+                    {isZh ? `系统值 £${Number(autoOpeningStock).toFixed(2)} · 点此填入` : `system £${Number(autoOpeningStock).toFixed(2)} · tap to fill`}
+                  </button>
+                )}
+              </label>
               <div className="flex justify-end">
                 <input id="opening-stock" type="number" step="0.01" value={openingStock} onChange={e=>setOpeningStock(Number(e.target.value||0))} className="h-[32px] w-[112px] rounded-full border border-[#e9e2d4] bg-white text-right text-[12.5px] px-3 tabular-nums focus:outline-none focus:border-cocm-ink/30 focus:ring-1 focus:ring-cocm-ink/10" />
               </div>
@@ -239,14 +260,14 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
           {/* Footer actions */}
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-[#7e84ad]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，COGS 按批次成本` : `${monthlyFinancial?.order_count || 0} orders, COGS from batches`}</p>
+            <p className="text-[11px] text-[#7e84ad]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，批次直接成本 £${financial.cogs_direct.toFixed(2)}（公式：期初 + 进货 − 期末）` : `${monthlyFinancial?.order_count || 0} orders, direct FIFO COGS £${financial.cogs_direct.toFixed(2)} (formula: opening + purchases − closing)`}</p>
             <div className="flex items-center gap-2">
               <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-cocm-ink text-white text-[11.5px] px-4 font-medium hover:bg-[#23247a] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
               <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#6d72a0] hover:text-cocm-ink underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
               {snapshotMsg && <span aria-live="polite" className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
             </div>
           </div>
-          <p className="mt-2 text-[10.5px] leading-relaxed text-[#9aa0bd]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。进货取采购单已下单金额，销售成本按批次更精确' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Purchases from PO, COGS from batch allocations'}</p>
+          <p className="mt-2 text-[10.5px] leading-relaxed text-[#9aa0bd]">{isZh ? '公式：销售成本 = 期初 + 进货 - 期末；毛利 = 销售 - 销售成本。期初默认取上月最后一天最后一笔交易后的库存成本值，可手动修改；进货取采购单已下单金额。' : 'COGS = Opening + Purchases - Closing; Gross = Sales - COGS. Opening defaults to inventory cost after the last transaction of the previous month, editable; purchases from POs.'}</p>
 
           {showHistory && (
             <div className="mt-3 rounded-[12px] border border-[#ece5d6] bg-[#fdfcfa] p-3 max-h-[190px] overflow-auto">
@@ -317,7 +338,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[11px]">
-              <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
+              <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">SKU</th><th className="pb-2">{isZh ? '书名' : 'Title'}</th><th className="pb-2 text-center">{isZh ? '数量' : 'Qty'}</th><th className="pb-2">{isZh ? '书架' : 'Shelf'}</th><th className="pb-2">{isZh ? '仓库' : 'Warehouse'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
               <tbody>
                 {salesBooksList.map((r, i) => (
                   <tr key={i} className="border-b border-cocm-ink/5">
@@ -327,6 +348,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 max-w-[200px] truncate">{r.title}</td>
                     <td className="py-2 text-center font-medium">{r.quantity}</td>
                     <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.shelf_position || '-'}</span></td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.warehouse_location || '-'}</span></td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.staff_name || r.created_by_name || '-'}</td>
                   </tr>
@@ -352,8 +374,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
               <tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]">
                 <th className="pb-2">{tt('reports.sku')}</th>
                 <th className="pb-2">{tt('reports.bookTitle')}</th>
-                <th className="pb-2">{tt('reports.location')}</th>
+                <th className="pb-2">{tt('reports.shelfPosition')}</th>
+                <th className="pb-2">{tt('reports.warehouseLocation')}</th>
                 <th className="pb-2 text-right">{tt('reports.onHand')}</th>
+                <th className="pb-2 text-right">{tt('reports.retailUnitPrice')}</th>
                 <th className="pb-2 text-right">{tt('reports.weightedAvg')}</th>
                 <th className="pb-2 text-right">{tt('reports.costValue')}</th>
                 <th className="pb-2 text-right">{tt('reports.retailValue')}</th>
@@ -364,8 +388,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                 <tr key={i} className="border-b border-cocm-ink/5">
                   <td className="py-2 font-mono text-[11px]">{r.sku}</td>
                   <td className="py-2">{r.title}</td>
-                  <td className="py-2 text-[#5b5f94]">{r.location_name}</td>
+                  <td className="py-2 text-[#5b5f94]">{r.shelf_position || '-'}</td>
+                  <td className="py-2 text-[#5b5f94]">{r.warehouse_location || '-'}</td>
                   <td className="py-2 text-right">{r.quantity_on_hand}</td>
+                  <td className="py-2 text-right">{formatCurrency(Number(r.current_price || 0))}</td>
                   <td className="py-2 text-right">{formatCurrency(Number(r.weighted_average_cost || 0))}</td>
                   <td className="py-2 text-right font-medium">{formatCurrency(Number(r.inventory_value || 0))}</td>
                   <td className="py-2 text-right text-[#5b5f94]">{formatCurrency(Number(r.retail_value || 0))}</td>

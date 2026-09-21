@@ -50,6 +50,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
     if (sub <= 0) return '0';
     return String(Math.round((disc / sub) * 100));
   });
+  const [shippingCost, setShippingCost] = useState(() => String(Number(sale.shipping_cost || 0)));
   const [saleDate, setSaleDate] = useState(sale.sale_date || new Date().toISOString().slice(0,10));
   const [notes, setNotes] = useState(sale.notes || sale.customer_note || '');
   const [reason, setReason] = useState('');
@@ -59,7 +60,8 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
   const subtotal = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const discountPctNum = Math.min(100, Math.max(0, Number(discountPercent || 0)));
   const discountAmount = subtotal * discountPctNum / 100;
-  const netTotal = Math.max(0, subtotal - discountAmount);
+  const shippingNum = Math.max(0, Number(shippingCost || 0));
+  const netTotal = Math.max(0, subtotal - discountAmount + shippingNum);
 
   // For stock check during edit: available = current stockMap + qty already in this sale (since restore will happen)
   const oldQtyMap = useMemo(() => {
@@ -144,7 +146,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_discount_amount: discountAmount,
         p_sale_date: saleDate,
         p_notes: notes.trim() === '' ? '' : notes,
-        p_shipping_cost: 0,
+        p_shipping_cost: Math.round(shippingNum * 100) / 100,
         p_reason: reason,
       });
       if (error) {
@@ -162,7 +164,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
 
   const readableDiff = (oldVals: any, newVals: any) => {
     if (!oldVals || !newVals) return null;
-    const keys = ['customer_name','payment_method','payment_status','discount_amount','sale_date','notes','subtotal','total_cost'];
+    const keys = ['customer_name','payment_method','payment_status','discount_amount','shipping_cost','sale_date','notes','subtotal','total_cost'];
     const diffs: string[] = [];
     for (const k of keys) {
       const ov = oldVals[k];
@@ -172,6 +174,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
           : k === 'payment_method' ? (isZh ? '付款方式' : 'Payment')
           : k === 'payment_status' ? (isZh ? '状态' : 'Status')
           : k === 'discount_amount' ? (isZh ? '折扣' : 'Discount')
+          : k === 'shipping_cost' ? (isZh ? '邮费' : 'Shipping')
           : k === 'sale_date' ? (isZh ? '日期' : 'Date')
           : k === 'notes' ? (isZh ? '备注' : 'Notes')
           : k === 'subtotal' ? (isZh ? '小计' : 'Subtotal')
@@ -242,6 +245,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             <div className="mt-4 space-y-1 border-t border-cocm-ink/10 pt-3">
               <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{subtotal.toFixed(2)}</span></div>
               {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-cocm-red"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+              {shippingNum > 0 && <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '邮费' : 'Postage'}</span><span>£{shippingNum.toFixed(2)}</span></div>}
               <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{isZh ? '实付' : 'Payable'}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
             </div>
           </div>
@@ -276,9 +280,13 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
                 <Input id="edit-discount" type="number" inputMode="decimal" min="0" max="100" step="1" value={discountPercent} onChange={e => setDiscountPercent(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <label htmlFor="edit-sale-date" className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'}</label>
-                <Input id="edit-sale-date" type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
+                <label htmlFor="edit-shipping" className="text-[11px] font-medium">{isZh ? '邮费 £（发票 P&P 处）' : 'Postage £ (invoice P&P)'}</label>
+                <Input id="edit-shipping" type="number" inputMode="decimal" min="0" step="0.01" value={shippingCost} onChange={e => setShippingCost(e.target.value)} className="mt-1" />
               </div>
+            </div>
+            <div>
+              <label htmlFor="edit-sale-date" className="text-[11px] font-medium">{isZh ? '销售日期' : 'Sale Date'}</label>
+              <Input id="edit-sale-date" type="date" value={saleDate} onChange={e => setSaleDate(e.target.value)} className="mt-1" />
             </div>
             <div>
               <label htmlFor="edit-notes" className="text-[11px] font-medium">{isZh ? '备注' : 'Notes'}</label>

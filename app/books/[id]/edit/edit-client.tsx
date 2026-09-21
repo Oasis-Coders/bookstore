@@ -108,6 +108,10 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
                 <label htmlFor="edit-shelf" className="text-[11px] text-[#5b5f94]">{isZh ? '书架位置' : 'Shelf Position'}</label>
                 <Input id="edit-shelf" name="shelf_position" defaultValue={book.shelf_position || book.metadata?.shelf_position || ''} placeholder={isZh ? '如 A-3-2' : 'e.g. A-3-2'} className="mt-1" />
               </div>
+              <div>
+                <label htmlFor="edit-warehouse" className="text-[11px] text-[#5b5f94]">{isZh ? '仓库位置' : 'Warehouse Location'}</label>
+                <Input id="edit-warehouse" name="warehouse_location" defaultValue={book.warehouse_location || book.metadata?.warehouse_location || ''} placeholder={isZh ? '如 仓库B区第2架' : 'e.g. Warehouse B Rack 2'} className="mt-1" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

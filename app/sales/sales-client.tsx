@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +28,12 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean } = { books: [], recentSales: [], stockMap: {}, isAdmin: false }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
+  const router = useRouter();
+
+  const goSale = (saleId: string) => {
+    // Everyone can view the invoice; content editing stays admin-only (改单 button)
+    router.push(`/sales/${saleId}/invoice`);
+  };
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedBookId, setSelectedBookId] = useState('');
   const [scanInput, setScanInput] = useState('');
@@ -37,6 +44,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
   const [saleDate, setSaleDate] = useState('');
   useEffect(() => { setSaleDate(new Date().toISOString().slice(0,10)); }, []);
   const [discountPercent, setDiscountPercent] = useState('0');
+  const [shippingCost, setShippingCost] = useState('0');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
   const [customerName, setCustomerName] = useState('');
@@ -45,7 +53,8 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
   const total = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const discountPctNum = Math.min(100, Math.max(0, Number(discountPercent || 0)));
   const discountAmount = total * discountPctNum / 100;
-  const netTotal = Math.max(0, total - discountAmount);
+  const shippingNum = Math.max(0, Number(shippingCost || 0));
+  const netTotal = Math.max(0, total - discountAmount + shippingNum);
   const totalQty = cart.reduce((s,i)=>s+i.qty,0);
 
   const addBookById = (bookId: string) => {
@@ -104,7 +113,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
       fd.set('payment_status', paymentStatus);
       fd.set('customer_name', customerName);
       fd.set('notes', notes);
-      fd.set('shipping_cost', '0');
+      fd.set('shipping_cost', String(shippingNum));
       const result = await createSale(fd);
       if ((result as any)?.success) {
         setMsg(isZh ? `销售成功 ${totalQty}本/${cart.length}种 已出库` : `Sale completed ${totalQty} pcs/${cart.length} titles`);
@@ -112,6 +121,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
         setCustomerName('');
         setNotes('');
         setDiscountPercent('0');
+        setShippingCost('0');
         window.location.reload();
       } else {
         setMsg((result as any)?.error || (isZh ? '销售失败' : 'Sale failed'));
@@ -222,6 +232,13 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               <div className="mt-4 space-y-1 border-t border-cocm-ink/10 pt-3">
                 <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{total.toFixed(2)}</span></div>
                 {discountPctNum > 0 && <div className="flex items-center justify-between text-[12px] text-cocm-red"><span>{isZh ? `折扣 ${discountPctNum}%` : `Discount ${discountPctNum}%`}</span><span>-£{discountAmount.toFixed(2)}</span></div>}
+                <div className="flex items-center justify-between text-[12px]">
+                  <label htmlFor="shipping-cost" className="text-[#5b5f94]">{isZh ? '邮费（网购单邮寄费，会打印在发票 P&P 处）' : 'Postage (online orders, shows on invoice as P&P)'}</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[#5b5f94]">£</span>
+                    <Input id="shipping-cost" type="number" inputMode="decimal" min="0" step="0.01" value={shippingCost} onChange={e => setShippingCost(e.target.value)} placeholder="0.00" className="h-8 w-[84px] text-right text-[12px]" />
+                  </div>
+                </div>
                 <div className="flex items-center justify-between font-semibold"><span className="text-[13px]">{tt('sales.total')}</span><span className="font-serif text-[18px]">£{netTotal.toFixed(2)}</span></div>
               </div>
 
@@ -233,18 +250,18 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
         <div className="space-y-4">
           <Card>
-            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按时间倒序' : 'Latest first'}</span></CardTitle>
+            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按单号升序 • 点任意一单查看发票/改单' : 'By sale no. ascending • tap a sale to view invoice/edit'}</span></CardTitle>
             <div className="mt-3 space-y-2">
               {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => {
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
                 const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
                 return (
-                <div key={s.id} className="flex items-center justify-between rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px]">
+                <div key={s.id} role="link" tabIndex={0} onClick={() => goSale(s.id)} onKeyDown={e => { if (e.key === 'Enter') goSale(s.id); }} className="flex items-center justify-between rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px] cursor-pointer hover:bg-cocm-paper/60" title={isZh ? '查看发票' : 'View invoice'}>
                   <div>
-                    <p className="font-mono font-semibold">{s.sale_number}</p>
+                    <p className="font-mono font-semibold text-cocm-red underline decoration-dotted underline-offset-2">{s.sale_number}</p>
                     <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
                   </div>
-                  <div className="text-right flex items-center gap-2">
+                  <div className="text-right flex items-center gap-2" onClick={e => e.stopPropagation()}>
                     <div>
                       <p>£{net.toFixed(2)}</p>
                       <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>

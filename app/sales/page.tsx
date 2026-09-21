@@ -38,13 +38,14 @@ export default async function SalesPage() {
       console.error('books fetch error', e);
     }
     try {
-      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
+      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, customer_name, sold_at, sale_date').order('sale_number', { ascending: true }).limit(20);
       recentSales = (sRes.data || []).map((s: any) => ({
         id: s.id,
         sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
         subtotal: s.subtotal,
         discount_amount: s.discount_amount,
-        net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0),
+        shipping_cost: s.shipping_cost,
+        net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
         payment_method: s.payment_method,
         customer_name: s.customer_name,
         sold_at: s.sale_date || new Date(s.sold_at).toLocaleString('en-GB'),
