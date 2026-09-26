@@ -210,7 +210,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
             <p>{sale.sale_number} • {new Date(sale.sold_at).toLocaleString('en-GB')} • £{Number(sale.subtotal || 0).toFixed(2)} {Number(sale.discount_amount || 0) > 0 ? `(-£${Number(sale.discount_amount).toFixed(2)} → £${(Number(sale.subtotal||0)-Number(sale.discount_amount||0)).toFixed(2)})` : ''}</p>
             <div className="flex flex-wrap gap-2">
               {(lines || []).map((l: any) => (
-                <span key={l.id} className="rounded-full bg-cocm-paper px-2 py-0.5">{l.books?.title || l.book_id.slice(0,6)} ×{l.quantity} @£{Number(l.unit_price).toFixed(2)}</span>
+                <span key={l.id} className="inline-block max-w-full truncate rounded-full bg-cocm-paper px-2 py-0.5">{l.books?.title || l.book_id.slice(0,6)} ×{l.quantity} @£{Number(l.unit_price).toFixed(2)}</span>
               ))}
             </div>
           </div>

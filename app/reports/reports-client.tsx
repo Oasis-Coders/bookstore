@@ -188,7 +188,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <div className="flex items-center gap-3">
             <span className="h-[6px] w-[22px] rounded-full bg-cocm-ink" />
             <h2 className="text-[15px] font-semibold tracking-tight text-cocm-ink">{isZh ? '每月财务报表' : 'Monthly Financial Report'}</h2>
-            <span className="text-[11px] font-medium text-[#6d72a0] bg-white border border-[#e9e2d4] px-2.5 py-1 rounded-full">{monthLabel}</span>
+            <span className="whitespace-nowrap text-[11px] font-medium text-[#6d72a0] bg-white border border-[#e9e2d4] px-2.5 py-1 rounded-full">{monthLabel}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="relative">
@@ -269,7 +269,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <div className="grid grid-cols-[1fr_150px_145px] px-4 py-3 items-center bg-[#eef6ee]">
               <span className="text-[13px] font-semibold text-cocm-ink">{isZh ? '毛利' : 'Gross profit'} <span className="font-normal text-[#6d72a0] ml-1">Gross profit</span></span>
               <span></span>
-              <span className="text-right"><span className="inline-block rounded-full bg-[#c8e6c9] px-3.5 py-1 text-[13px] font-bold tabular-nums text-cocm-ink">{formatCurrency(grossProfit)}</span></span>
+              <span className="text-right"><span className="inline-block whitespace-nowrap rounded-full bg-[#c8e6c9] px-3.5 py-1 text-[13px] font-bold tabular-nums text-cocm-ink">{formatCurrency(grossProfit)}</span></span>
             </div>
           </div>
 
@@ -277,7 +277,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] text-[#7e84ad]">{isZh ? `当月 ${monthlyFinancial?.order_count || 0} 笔销售，批次直接成本 £${financial.cogs_direct.toFixed(2)}（公式：期初 + 进货 − 期末）` : `${monthlyFinancial?.order_count || 0} orders, direct FIFO COGS £${financial.cogs_direct.toFixed(2)} (formula: opening + purchases − closing)`}</p>
             <div className="flex items-center gap-2">
-              <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] rounded-full bg-cocm-ink text-white text-[11.5px] px-4 font-medium hover:bg-[#23247a] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
+              <button onClick={saveSnapshot} disabled={savingSnapshot} className="h-[30px] whitespace-nowrap rounded-full bg-cocm-ink text-white text-[11.5px] px-4 font-medium hover:bg-[#23247a] disabled:opacity-60 transition">{savingSnapshot ? (isZh ? '保存中…' : 'Saving…') : (isZh ? '保存快照' : 'Save')}</button>
               <button onClick={()=>{ setShowHistory(!showHistory); if(!showHistory) loadHistory(); }} className="text-[11px] text-[#6d72a0] hover:text-cocm-ink underline decoration-dotted underline-offset-4 px-2">{showHistory ? (isZh ? '收起' : 'Hide') : (isZh ? '查看历史' : 'History')}</button>
               {snapshotMsg && <span aria-live="polite" className={`text-[11px] px-2.5 py-1 rounded-full ${snapshotMsg.includes('失败') || snapshotMsg.toLowerCase().includes('fail') ? 'bg-[#fef2f2] text-[#991b1b]' : 'bg-[#f0fdf4] text-[#166534]'}`}>{snapshotMsg}</span>}
             </div>
@@ -318,9 +318,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       {/* Sales List by Date */}
       {salesList.length > 0 && (
         <Card className="mt-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-[14px]">{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
-            <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px]">{isZh ? '导出CSV' : 'Export CSV'}</Button>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-[14px] min-w-0">{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px] shrink-0">{isZh ? '导出CSV' : 'Export CSV'}</Button>
           </div>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
@@ -346,9 +346,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       {/* Sales Books List for Shopify Sync */}
       {salesBooksList.length > 0 && (
         <Card className="mt-4">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-[14px]">{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
-            <Button size="sm" variant="ghost" onClick={() => exportCsv('salesBooks')} className="rounded-[10px]">{isZh ? '导出CSV 手动改Shopify库存' : 'Export CSV for Shopify'}</Button>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-[14px] min-w-0">{isZh ? `销售书目列表 (${fromDate} 至 ${toDate}) - 用于Shopify库存同步` : `Books Sold List (${fromDate} to ${toDate}) - For Shopify Sync`}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('salesBooks')} className="rounded-[10px] shrink-0">{isZh ? '导出CSV 手动改Shopify库存' : 'Export CSV for Shopify'}</Button>
           </div>
           <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '集合统计后，手动修改网上书店相应库存。含日期、书名、代号/SKU、书架位置提示。' : 'Aggregate then manually update online store stock. Includes Date, Title, SKU, shelf hint for picking.'}</p>
           <div className="mt-3 overflow-auto">
@@ -362,8 +362,8 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 font-mono">{r.sku}</td>
                     <td className="py-2 max-w-[200px] truncate">{r.title}</td>
                     <td className="py-2 text-center font-medium">{r.quantity}</td>
-                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.shelf_position || '-'}</span></td>
-                    <td className="py-2"><span className="px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.warehouse_location || '-'}</span></td>
+                    <td className="py-2"><span className="whitespace-nowrap px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.shelf_position || '-'}</span></td>
+                    <td className="py-2"><span className="whitespace-nowrap px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.warehouse_location || '-'}</span></td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.staff_name || r.created_by_name || '-'}</td>
                   </tr>
@@ -424,21 +424,21 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-[14px]">{tt('reports.lowStockTitle')}</CardTitle>
-            <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')}>{isZh ? '导出' : 'Export'}</Button>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')} className="shrink-0">{isZh ? '导出' : 'Export'}</Button>
           </div>
           <div className="mt-3 space-y-2">
             {lowStock.length === 0 ? (
               <p className="py-6 text-center text-[12px] text-[#5b5f94]">{tt('reports.noLowStock')}</p>
             ) : (
               lowStock.map((r, i) => (
-                <div key={i} className="flex items-center justify-between rounded-[12px] bg-[#fbe4e5]/50 px-3 py-2">
-                  <div>
-                    <p className="text-[12px] font-medium">{r.title}</p>
+                <div key={i} className="flex items-center justify-between gap-2 rounded-[12px] bg-[#fbe4e5]/50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-medium truncate">{r.title}</p>
                     <p className="text-[11px] text-[#5b5f94]">{tt('reports.threshold')} {r.low_stock_threshold} • {tt('reports.current')} {r.quantity_on_hand}</p>
                   </div>
-                  <Badge variant="danger">{tt('reports.shortage')} {r.reorder_shortage}</Badge>
+                  <Badge variant="danger" className="shrink-0">{tt('reports.shortage')} {r.reorder_shortage}</Badge>
                 </div>
               ))
             )}

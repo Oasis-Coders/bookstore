@@ -210,7 +210,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                       <div className="flex-1 min-w-0">
                         <span className="truncate font-medium">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></span>
                         <div className="flex items-center gap-2 mt-0.5">
-                          {item.shelf_position && <span className="inline-flex text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
+                          {item.shelf_position && <span className="inline-flex whitespace-nowrap text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
                           {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : (isZh ? `还剩 ${item.stock} 本` : `${item.stock} left`)}</span>}
                         </div>
                       </div>
@@ -256,12 +256,12 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
                 const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
                 return (
-                <div key={s.id} role="link" tabIndex={0} onClick={() => goSale(s.id)} onKeyDown={e => { if (e.key === 'Enter') goSale(s.id); }} className="flex items-center justify-between rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px] cursor-pointer hover:bg-cocm-paper/60" title={isZh ? '查看发票' : 'View invoice'}>
-                  <div>
+                <div key={s.id} role="link" tabIndex={0} onClick={() => goSale(s.id)} onKeyDown={e => { if (e.key === 'Enter') goSale(s.id); }} className="flex items-center justify-between gap-2 rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px] cursor-pointer hover:bg-cocm-paper/60" title={isZh ? '查看发票' : 'View invoice'}>
+                  <div className="min-w-0">
                     <p className="font-mono font-semibold text-cocm-red underline decoration-dotted underline-offset-2">{s.sale_number}</p>
                     <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
                   </div>
-                  <div className="text-right flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                  <div className="text-right flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
                     <div>
                       <p>£{net.toFixed(2)}</p>
                       <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>

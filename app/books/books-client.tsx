@@ -88,11 +88,11 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
           {books.map((book) => (
             <Card key={book.id} className="cv-auto group p-5 hover:shadow-[0_8px_24px_rgba(45,47,146,0.08),0_2px_8px_rgba(45,47,146,0.04)] hover:-translate-y-[1px] hover:border-cocm-ink/10 transition-[box-shadow,border-color,transform] duration-300">
               <div className="flex items-start justify-between gap-2">
-                <Badge className="rounded-[8px] bg-cocm-ink/5 text-cocm-ink border-cocm-ink/10 text-[10.5px] font-semibold tracking-wide">{book.sku}</Badge>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-cocm-paper text-[#5b5f94] border border-cocm-ink/5">{book.category || tt('books.uncategorized')}</span>
+                <Badge className="shrink-0 rounded-[8px] bg-cocm-ink/5 text-cocm-ink border-cocm-ink/10 text-[10.5px] font-semibold tracking-wide">{book.sku}</Badge>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <span className="whitespace-nowrap text-[11px] font-medium px-2.5 py-1 rounded-full bg-cocm-paper text-[#5b5f94] border border-cocm-ink/5">{book.category || tt('books.uncategorized')}</span>
                   {typeof book.on_hand === 'number' && (
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${book.on_hand <= (book.low_stock_threshold || 3) ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
+                    <span className={`whitespace-nowrap text-[10px] font-bold px-2 py-1 rounded-full ${book.on_hand <= (book.low_stock_threshold || 3) ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>
                       {isZh ? `库存 ${book.on_hand}` : `Stock ${book.on_hand}`}
                     </span>
                   )}
@@ -110,12 +110,12 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
                 {book.publisher ? <span className="opacity-60">· {book.publisher}</span> : null}
               </p>
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {(book.shelf_position || (book as any).metadata?.shelf_position) ? <span className="text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-cocm-red" />{isZh ? '书架：' : 'Shelf: '}{book.shelf_position || (book as any).metadata?.shelf_position}</span> : null}
-                {(book.warehouse_location || (book as any).metadata?.warehouse_location) ? <span className="text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 rounded-full bg-cocm-ink" />{isZh ? '仓库：' : 'Warehouse: '}{book.warehouse_location || (book as any).metadata?.warehouse_location}</span> : null}
+                {(book.shelf_position || (book as any).metadata?.shelf_position) ? <span className="whitespace-nowrap text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-cocm-red" />{isZh ? '书架：' : 'Shelf: '}{book.shelf_position || (book as any).metadata?.shelf_position}</span> : null}
+                {(book.warehouse_location || (book as any).metadata?.warehouse_location) ? <span className="whitespace-nowrap text-[11px] font-medium text-cocm-ink/70 flex items-center gap-1 bg-cocm-paper px-2 py-1 rounded-full border border-cocm-ink/5"><span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-cocm-ink" />{isZh ? '仓库：' : 'Warehouse: '}{book.warehouse_location || (book as any).metadata?.warehouse_location}</span> : null}
               </div>
-              <div className="mt-4 flex items-center justify-between">
+              <div className="mt-4 flex items-center justify-between gap-2">
                 <span className="text-[15px] font-bold tracking-tight text-cocm-ink">{formatCurrency(book.current_price || 0)}</span>
-                <div className="flex gap-1">
+                <div className="flex shrink-0 gap-1">
                   <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-8 px-3 text-[11px] rounded-[9px] hover:bg-cocm-ink hover:text-white transition-colors font-medium">{isZh ? '编辑' : 'Edit'}</Button></Link>
                 </div>
               </div>

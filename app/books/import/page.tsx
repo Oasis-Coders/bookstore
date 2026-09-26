@@ -14,13 +14,40 @@ export default function BulkImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState('');
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [detectedEncoding, setDetectedEncoding] = useState('');
+  const [encodingWarning, setEncodingWarning] = useState('');
+
+  // Decode an uploaded CSV buffer: strict UTF-8 first, fall back to GBK
+  // (Excel on Chinese Windows saves CSV as GBK/ANSI by default).
+  const decodeCsvBuffer = (buf: ArrayBuffer): { text: string; encoding: string } => {
+    const bytes = new Uint8Array(buf);
+    let offset = 0;
+    if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) offset = 3; // strip UTF-8 BOM
+    const slice = bytes.slice(offset);
+    try {
+      return { text: new TextDecoder('utf-8', { fatal: true }).decode(slice), encoding: 'UTF-8' };
+    } catch {
+      return { text: new TextDecoder('gbk').decode(slice), encoding: 'GBK' };
+    }
+  };
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const text = ev.target?.result as string;
+      const { text, encoding } = decodeCsvBuffer(ev.target?.result as ArrayBuffer);
+      setDetectedEncoding(encoding);
+      // The file itself may already carry corrupted chars (e.g. saved through a
+      // lossy encoding step in Excel, turning Chinese into "?"). Flag it early.
+      const corruptedCells = (text.match(/[?�]{2,}/g) || []).length;
+      setEncodingWarning(
+        text.includes('�')
+          ? (isZh ? '文件中已包含损坏字符（�），原表格可能在保存时编码出错，请检查后重新保存再上传。' : 'File already contains corrupted characters (�). Re-save the spreadsheet with the correct encoding and upload again.')
+          : corruptedCells > 3
+            ? (isZh ? '文件中出现较多连续问号，书名可能已在表格保存时损坏，请核对原表格。' : 'Many consecutive "?" found — titles may have been corrupted when the spreadsheet was saved. Please verify the source file.')
+            : ''
+      );
       const lines = text.split('\n').filter(l => l.trim());
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
       const rows = lines.slice(1).map(line => {
@@ -33,7 +60,7 @@ export default function BulkImportPage() {
       setResult('');
       setImportErrors([]);
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const downloadTemplate = () => {
@@ -148,7 +175,7 @@ export default function BulkImportPage() {
               <ol className="mt-2 list-decimal list-inside space-y-1 text-[#5b5f94]">
                 <li>{isZh ? '在表格中整理好书库，按模板格式保存为CSV' : 'Organize books in spreadsheet, save as CSV per template'}</li>
                 <li>{isZh ? '点击下载模板查看必填字段' : 'Download template to see required fields'}</li>
-                <li>{isZh ? '上传CSV文件，预览后确认导入' : 'Upload CSV, preview, then confirm import'}</li>
+                <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / GBK encoding), preview, then confirm import'}</li>
                 <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock'}</li>
                 <li>{isZh ? '外接扫码枪：USB扫码器可直接扫ISBN，自动填入代号' : 'Barcode: USB scanners work directly, scanning ISBN auto-fills code'}</li>
               </ol>
@@ -162,6 +189,12 @@ export default function BulkImportPage() {
               </label>
               {preview.length > 0 && <Button size="sm" onClick={handleImport} disabled={importing}>{importing ? (isZh ? '导入中...' : 'Importing...') : (isZh ? `确认导入 ${preview.length} 本` : `Confirm Import ${preview.length} books`)}</Button>}
             </div>
+            {detectedEncoding && (
+              <p className="text-[11px] text-[#5b5f94]">{isZh ? `检测到文件编码：${detectedEncoding}` : `Detected file encoding: ${detectedEncoding}`}</p>
+            )}
+            {encodingWarning && (
+              <div className="rounded-[10px] bg-amber-50 border border-amber-200 px-3 py-2 text-[12px] text-amber-800">{encodingWarning}</div>
+            )}
 
             {result && <div className={`rounded-[10px] px-3 py-2 text-[12px] ${result.includes('失败') || result.toLowerCase().includes('fail') ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-green-50 text-green-800 border border-green-200'}`}>{result}</div>}
             {importErrors.length > 0 && <div className="rounded-[10px] bg-red-50 p-3 text-[11px] text-red-700 max-h-[120px] overflow-auto">{importErrors.map((e,i)=><div key={i}>{e}</div>)}</div>}

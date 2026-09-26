@@ -10,7 +10,7 @@ export function Badge({ className, variant = 'default', ...props }: React.HTMLAt
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-[10px] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.04em]',
+        'inline-flex items-center whitespace-nowrap rounded-[10px] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.04em]',
         variants[variant],
         className
       )}

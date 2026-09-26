@@ -184,8 +184,8 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
         </div>
 
         <div className="no-print mt-8 flex gap-2">
-          <button onClick={()=>window.print()} className="rounded-full bg-cocm-ink text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
-          <a href="/sales" className="rounded-full border border-cocm-ink/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
+          <button onClick={()=>window.print()} className="whitespace-nowrap rounded-full bg-cocm-ink text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
+          <a href="/sales" className="whitespace-nowrap rounded-full border border-cocm-ink/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>
         </div>
       </div>
     </div>

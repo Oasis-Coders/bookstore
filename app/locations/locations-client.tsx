@@ -15,12 +15,12 @@ export function LocationsClient({ locations }: { locations: any[] }) {
     }>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
         {locations.map((l: any) => (
-          <Card key={l.id} className="flex items-center justify-between">
-            <div>
+          <Card key={l.id} className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
               <p className="font-medium text-[14px]">{l.name}</p>
-              <p className="text-[11px] text-[#5b5f94]">{l.code} · {l.location_type === 'warehouse' ? (isZh ? '仓库' : 'Warehouse') : (isZh ? '门店' : 'Store')} {l.address ? `· ${l.address}` : ''}</p>
+              <p className="text-[11px] text-[#5b5f94] truncate">{l.code} · {l.location_type === 'warehouse' ? (isZh ? '仓库' : 'Warehouse') : (isZh ? '门店' : 'Store')} {l.address ? `· ${l.address}` : ''}</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <Badge variant={l.location_type === 'warehouse' ? 'default' : 'active'}>{l.location_type === 'warehouse' ? (isZh ? '仓库' : 'WH') : (isZh ? '门店' : 'Store')}</Badge>
               <Link href={`/locations/${l.id}/edit`}><Button size="sm" variant="ghost" className="h-7 px-2 text-[11px]">{isZh ? '编辑' : 'Edit'}</Button></Link>
             </div>

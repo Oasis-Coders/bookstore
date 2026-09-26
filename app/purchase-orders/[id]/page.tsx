@@ -170,12 +170,12 @@ export default function PODetailPage() {
         {error && <div className="rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
 
         <Card>
-          <div className="flex items-start justify-between">
-            <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
               <p className="font-mono text-[18px] font-semibold">{po.po_number}</p>
-              <p className="text-[13px] text-[#5b5f94]">{po.suppliers?.name_zh} • {po.order_date}</p>
+              <p className="text-[13px] text-[#5b5f94] truncate">{po.suppliers?.name_zh} • {po.order_date}</p>
             </div>
-            <Badge>{statusLabel[po.status] || po.status}</Badge>
+            <Badge className="shrink-0">{statusLabel[po.status] || po.status}</Badge>
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {po.status === 'draft' && (
@@ -195,9 +195,9 @@ export default function PODetailPage() {
           <CardTitle>{isZh ? '行项目' : 'Line Items'}</CardTitle>
           <div className="mt-3 space-y-2">
             {(lines || []).map((l: any) => (
-              <div key={l.id} className="flex items-center justify-between rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">
-                <span>{l.books?.title} ({l.books?.sku})</span>
-                <span>{l.quantity_ordered} × £{l.unit_cost} = £{(l.quantity_ordered * Number(l.unit_cost)).toFixed(2)}</span>
+              <div key={l.id} className="flex items-center justify-between gap-2 rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">
+                <span className="min-w-0 truncate">{l.books?.title} ({l.books?.sku})</span>
+                <span className="shrink-0 tabular-nums">{l.quantity_ordered} × £{l.unit_cost} = £{(l.quantity_ordered * Number(l.unit_cost)).toFixed(2)}</span>
               </div>
             ))}
             {(!lines || lines.length === 0) && <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无行项目' : 'No line items'}</p>}

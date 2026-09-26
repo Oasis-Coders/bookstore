@@ -58,12 +58,12 @@ export function SuppliersClient({ suppliers }: { suppliers: any[] }) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {filtered.map((s) => (
           <Card key={s.id} className="group transition-[box-shadow,transform] hover:shadow-[rgba(45,47,146,0.08)_0px_4px_16px] hover:-translate-y-0.5">
-            <div className="flex items-start justify-between">
-              <div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
                 <p className="font-serif text-[16px]">{s.name_zh}</p>
                 {s.name_en && <p className="text-[12px] text-[#5b5f94]">{s.name_en}</p>}
               </div>
-              <Badge>{s.code}</Badge>
+              <Badge className="shrink-0">{s.code}</Badge>
             </div>
             <div className="mt-3 space-y-1 text-[12px] text-cocm-ink/70">
               {s.contact_person && <p>{tt('suppliers.contact')}：{s.contact_person}</p>}

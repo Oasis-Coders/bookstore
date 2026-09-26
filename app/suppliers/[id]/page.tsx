@@ -92,12 +92,12 @@ export default function SupplierDetailPage() {
           <CardTitle>{isZh ? '最近采购单' : 'Recent Purchase Orders'}</CardTitle>
           <div className="mt-3 space-y-2">
             {(pos || []).map((po: any) => (
-              <Link key={po.po_number} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between rounded-[10px] bg-cocm-paper/60 px-3 py-2.5 text-[12px] hover:bg-[#f5eedf] transition">
-                <div className="flex flex-col">
+              <Link key={po.po_number} href={`/purchase-orders/${po.id}`} className="flex items-center justify-between gap-2 rounded-[10px] bg-cocm-paper/60 px-3 py-2.5 text-[12px] hover:bg-[#f5eedf] transition">
+                <div className="flex min-w-0 flex-col">
                   <span className="font-mono font-medium">{po.po_number}</span>
-                  <span className="text-[11px] text-[#7e84ad]">{po.order_date ? (isZh ? `下单 ${po.order_date}` : `Ordered ${po.order_date}`) : new Date(po.created_at).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}</span>
+                  <span className="text-[11px] text-[#7e84ad] truncate">{po.order_date ? (isZh ? `下单 ${po.order_date}` : `Ordered ${po.order_date}`) : new Date(po.created_at).toLocaleDateString(isZh ? 'zh-CN' : 'en-GB')}</span>
                 </div>
-                <Badge>{isZh ? (statusZh[po.status] || po.status) : po.status}</Badge>
+                <Badge className="shrink-0">{isZh ? (statusZh[po.status] || po.status) : po.status}</Badge>
               </Link>
             ))}
             {(!pos || pos.length === 0) && <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无采购单' : 'No purchase orders'}</p>}
