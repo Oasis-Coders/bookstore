@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { friendlyDbError } from '@/lib/friendly-error';
 
 type SaleResult = { success: true; saleId: string } | { success: false; error: string };
 
@@ -79,11 +80,9 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
     } as any);
 
     if (error) {
-      const msg = error.message || '';
-      if (msg.includes('库存不足')) return { success: false, error: msg };
-      if (msg.includes('不存在') || msg.includes('停用')) return { success: false, error: msg };
-      if (msg.includes('权限') || msg.includes('role')) return { success: false, error: '没有执行销售的权限，请联系管理员' };
-      return { success: false, error: msg || '销售失败，请重试' };
+      // RPC raises friendly Chinese messages (e.g. 库存不足); technical errors
+      // (duplicate sale number under concurrency, deadlock) become plain language.
+      return { success: false, error: friendlyDbError(error, { fallback: '销售失败，请重试' }) };
     }
 
     revalidatePath('/sales');
@@ -91,7 +90,7 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
     revalidatePath('/books');
     return { success: true, saleId: data as string };
   } catch (e: any) {
-    return { success: false, error: e.message || '销售失败，请重试' };
+    return { success: false, error: friendlyDbError(e, { fallback: '销售失败，请重试' }) };
   }
 }
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { friendlyDbError } from '@/lib/friendly-error';
 
 export async function approvePO(poId: string) {
   const supabase = await createSupabaseServerClient();
@@ -28,7 +29,7 @@ export async function receivePO(formData: FormData) {
     p_received_at: new Date().toISOString(),
   });
 
-  if (error) throw error;
+  if (error) throw new Error(friendlyDbError(error, { fallback: '收货失败，请重试' }));
   revalidatePath('/purchase-orders');
   revalidatePath('/reports');
   return data;

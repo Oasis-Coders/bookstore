@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { friendlyDbError } from '@/lib/friendly-error';
 
 type CartItem = { id: string; title: string; qty: number; price: number; sku?: string; shelf_position?: string; stock?: number };
 
@@ -150,13 +151,13 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_reason: reason,
       });
       if (error) {
-        setMsg(error.message || (isZh ? '保存失败' : 'Save failed'));
+        setMsg(friendlyDbError(error, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));
       } else {
         router.push(`/sales/${sale.id}/invoice`);
         router.refresh();
       }
     } catch (e: any) {
-      setMsg(e.message || (isZh ? '保存失败' : 'Save failed'));
+      setMsg(friendlyDbError(e, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));
     } finally {
       setSaving(false);
     }

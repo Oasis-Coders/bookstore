@@ -1,6 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { friendlyDbError } from '@/lib/friendly-error';
 
 export async function createLocation(formData: FormData) {
   const supabase = await createSupabaseServerClient();
@@ -20,7 +21,7 @@ export async function createLocation(formData: FormData) {
       const roleNames = (roles || []).map((r: any) => r.roles?.name);
       throw new Error(`权限不足：当前角色 [${roleNames.join(',') || '无角色'}] 无法添加库位。`);
     }
-    throw error;
+    throw new Error(friendlyDbError(error, { duplicate: '库位代号已存在，请换一个代号' }));
   }
   revalidatePath('/locations');
 }
@@ -35,7 +36,7 @@ export async function updateLocation(id: string, formData: FormData) {
     is_active: formData.get('is_active') !== 'false',
   };
   const { error } = await supabase.from('locations').update(payload).eq('id', id);
-  if (error) throw error;
+  if (error) throw new Error(friendlyDbError(error, { duplicate: '库位代号已存在，请换一个代号' }));
   revalidatePath(`/locations/${id}`);
   revalidatePath('/locations');
 }

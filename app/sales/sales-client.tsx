@@ -147,7 +147,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
           <CardTitle>{tt('sales.newSale')}</CardTitle>
           <p className="mt-1 text-[12px] text-[#5b5f94]">{tt('sales.newSaleHint')}</p>
 
-          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
+          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') || msg.includes('不足') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
 
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">

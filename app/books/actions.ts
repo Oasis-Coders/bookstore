@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { friendlyDbError } from '@/lib/friendly-error';
 
 export async function createBook(formData: FormData) {
   const supabase = await createSupabaseServerClient();
@@ -45,9 +46,9 @@ export async function createBook(formData: FormData) {
   }
   if (error) {
     if (error.message.includes('row-level security') || error.code === '42501') {
-      throw new Error(`权限不足：当前角色 [${roleNames.join(',') || '无角色'}] 无法添加图书。请让 super_admin 在 人员管理 给你分配 staff/admin 角色。原始错误: ${error.message}`);
+      throw new Error(`权限不足：当前角色 [${roleNames.join(',') || '无角色'}] 无法添加图书。请让 super_admin 在 人员管理 给你分配 staff/admin 角色。`);
     }
-    throw error;
+    throw new Error(friendlyDbError(error, { duplicate: '图书代号已存在，请换一个代号' }));
   }
   revalidatePath('/books');
 }
@@ -86,7 +87,7 @@ export async function updateBook(bookId: string, formData: FormData) {
     const { error: err2 } = await supabase.from('books').update({ ...rest, metadata: meta }).eq('id', bookId);
     error = err2;
   }
-  if (error) throw error;
+  if (error) throw new Error(friendlyDbError(error, { duplicate: '图书代号已存在，请换一个代号' }));
   revalidatePath('/books');
   revalidatePath(`/books/${bookId}`);
 }
