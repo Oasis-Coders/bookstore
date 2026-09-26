@@ -20,9 +20,13 @@ export function EditSupplierClient({ supplier, canDelete }: { supplier: any; can
     setSaving(true);
     setMsg('');
     try {
-      await updateSupplier(supplier.id, new FormData(e.currentTarget));
-      setMsg(isZh ? '已保存' : 'Saved');
-      setTimeout(() => router.push(`/suppliers/${supplier.id}`), 800);
+      const result = await updateSupplier(supplier.id, new FormData(e.currentTarget));
+      if (!result.success) {
+        setMsg(result.error || (isZh ? '保存失败' : 'Save failed'));
+      } else {
+        setMsg(isZh ? '已保存' : 'Saved');
+        setTimeout(() => router.push(`/suppliers/${supplier.id}`), 800);
+      }
     } catch (err: any) {
       setMsg(err.message);
     } finally {
@@ -33,8 +37,12 @@ export function EditSupplierClient({ supplier, canDelete }: { supplier: any; can
   const handleDelete = async () => {
     if (!confirm(isZh ? `删除供应商 ${supplier.name_zh}？` : `Delete supplier ${supplier.name_zh}?`)) return;
     try {
-      await deleteSupplier(supplier.id);
-      router.push('/suppliers');
+      const result = await deleteSupplier(supplier.id);
+      if (!result.success) {
+        alert(result.error || (isZh ? '删除失败' : 'Delete failed'));
+      } else {
+        router.push('/suppliers');
+      }
     } catch (e: any) {
       alert(e.message);
     }

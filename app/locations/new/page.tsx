@@ -23,8 +23,12 @@ export default function NewLocationPage() {
     setError('');
     const fd = new FormData(e.currentTarget);
     try {
-      await createLocation(fd);
-      router.push('/locations');
+      const result = await createLocation(fd);
+      if (!result.success) {
+        setError(result.error || (isZh ? '创建失败' : 'Failed to create'));
+      } else {
+        router.push('/locations');
+      }
     } catch (err: any) {
       setError(err?.message || (isZh ? '创建失败' : 'Failed to create'));
     } finally {

@@ -23,8 +23,12 @@ export default function NewSupplierPage() {
     setError('');
     const fd = new FormData(e.currentTarget);
     try {
-      await createSupplier(fd);
-      router.push('/suppliers');
+      const result = await createSupplier(fd);
+      if (!result.success) {
+        setError(result.error || (isZh ? '创建失败' : 'Failed to create'));
+      } else {
+        router.push('/suppliers');
+      }
     } catch (err: any) {
       setError(err?.message || (isZh ? '创建失败' : 'Failed to create'));
     } finally {

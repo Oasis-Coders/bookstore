@@ -22,9 +22,13 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
     setMsg('');
     const fd = new FormData(e.currentTarget);
     try {
-      await updateBook(book.id, fd);
-      setMsg(isZh ? '已保存' : 'Saved');
-      setTimeout(() => router.push('/books'), 800);
+      const result = await updateBook(book.id, fd);
+      if (!result.success) {
+        setMsg(result.error || (isZh ? '保存失败' : 'Save failed'));
+      } else {
+        setMsg(isZh ? '已保存' : 'Saved');
+        setTimeout(() => router.push('/books'), 800);
+      }
     } catch (err: any) {
       setMsg(err.message || (isZh ? '保存失败' : 'Save failed'));
     } finally {
@@ -35,8 +39,12 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
   const handleDelete = async () => {
     if (!confirm(isZh ? `确定删除《${book.title}》？` : `Delete "${book.title}"?`)) return;
     try {
-      await deleteBook(book.id);
-      router.push('/books');
+      const result = await deleteBook(book.id);
+      if (!result.success) {
+        alert(result.error || (isZh ? '删除失败' : 'Delete failed'));
+      } else {
+        router.push('/books');
+      }
     } catch (err: any) {
       alert(err.message);
     }

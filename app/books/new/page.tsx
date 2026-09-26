@@ -35,8 +35,12 @@ export default function NewBookPage() {
     setError('');
     const fd = new FormData(e.currentTarget);
     try {
-      await createBook(fd);
-      router.push('/books');
+      const result = await createBook(fd);
+      if (!result.success) {
+        setError(result.error || (isZh ? '创建失败' : 'Failed to create'));
+      } else {
+        router.push('/books');
+      }
     } catch (err: any) {
       setError(err?.message || (isZh ? '创建失败' : 'Failed to create'));
     } finally {

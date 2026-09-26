@@ -20,9 +20,13 @@ export function EditLocationClient({ location }: { location: any }) {
     setSaving(true);
     setMsg('');
     try {
-      await updateLocation(location.id, new FormData(e.currentTarget));
-      setMsg(isZh ? '已保存' : 'Saved');
-      setTimeout(() => router.push('/locations'), 800);
+      const result = await updateLocation(location.id, new FormData(e.currentTarget));
+      if (!result.success) {
+        setMsg(result.error || (isZh ? '保存失败' : 'Save failed'));
+      } else {
+        setMsg(isZh ? '已保存' : 'Saved');
+        setTimeout(() => router.push('/locations'), 800);
+      }
     } catch (err: any) {
       setMsg(err.message);
     } finally {
@@ -33,8 +37,12 @@ export function EditLocationClient({ location }: { location: any }) {
   const handleDelete = async () => {
     if (!confirm(isZh ? `删除库位 ${location.name}？` : `Delete location ${location.name}?`)) return;
     try {
-      await deleteLocation(location.id);
-      router.push('/locations');
+      const result = await deleteLocation(location.id);
+      if (!result.success) {
+        alert(result.error || (isZh ? '删除失败' : 'Delete failed'));
+      } else {
+        router.push('/locations');
+      }
     } catch (e: any) {
       alert(e.message);
     }

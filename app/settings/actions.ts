@@ -2,19 +2,27 @@
 
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { friendlyDbError } from '@/lib/friendly-error';
+import type { ActionResult } from '@/app/books/actions';
 
-export async function updateProfile(formData: FormData) {
+// NOTE: returns { success, error } instead of throwing: throwing from a
+// server action crashes the page with a generic "Server Components render"
+// error in production builds.
+const ok = (): ActionResult => ({ success: true });
+const fail = (error: string): ActionResult => ({ success: false, error });
+
+export async function updateProfile(formData: FormData): Promise<ActionResult> {
   const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error('Supabase not configured');
+  if (!supabase) return fail('系统未配置');
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('未登录');
+  if (!user) return fail('未登录');
 
   const displayName = String(formData.get('displayName') || '').trim();
   const avatarIcon = String(formData.get('avatarIcon') || '').trim();
   const avatarColor = String(formData.get('avatarColor') || '').trim();
 
-  if (!displayName) throw new Error('名字必填');
+  if (!displayName) return fail('名字必填');
 
   const payload: any = {
     display_name: displayName,
@@ -31,7 +39,7 @@ export async function updateProfile(formData: FormData) {
     .update(payload)
     .eq('id', user.id);
 
-  if (profileError) throw profileError;
+  if (profileError) return fail(friendlyDbError(profileError, { fallback: '保存失败，请重试' }));
 
   // Update user_metadata in auth
   const { error: authError } = await supabase.auth.updateUser({
@@ -49,4 +57,5 @@ export async function updateProfile(formData: FormData) {
 
   revalidatePath('/settings');
   revalidatePath('/');
+  return ok();
 }

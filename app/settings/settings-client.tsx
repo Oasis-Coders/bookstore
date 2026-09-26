@@ -59,10 +59,14 @@ export function SettingsClient({ profile, user, role }: Props) {
     fd.set('avatarIcon', avatarIcon);
     fd.set('avatarColor', avatarColor);
     try {
-      await updateProfile(fd);
-      setMessage(isZh ? '已保存' : 'Saved');
-      // Force reload to update sidebar
-      setTimeout(() => window.location.reload(), 600);
+      const result = await updateProfile(fd);
+      if (!result.success) {
+        setMessage(result.error || (isZh ? '保存失败' : 'Save failed'));
+      } else {
+        setMessage(isZh ? '已保存' : 'Saved');
+        // Force reload to update sidebar
+        setTimeout(() => window.location.reload(), 600);
+      }
     } catch (err: any) {
       setMessage(err.message || (isZh ? '保存失败' : 'Save failed'));
     } finally {
@@ -82,9 +86,13 @@ export function SettingsClient({ profile, user, role }: Props) {
     fd.set('avatarIcon', avatarIcon);
     fd.set('avatarColor', avatarColor);
     try {
-      await updateProfile(fd);
-      setMessage(isZh ? `名字已改成 ${displayName.trim()}` : `Name changed to ${displayName.trim()}`);
-      setTimeout(() => window.location.reload(), 600);
+      const result = await updateProfile(fd);
+      if (!result.success) {
+        setMessage(result.error || (isZh ? '保存失败' : 'Save failed'));
+      } else {
+        setMessage(isZh ? `名字已改成 ${displayName.trim()}` : `Name changed to ${displayName.trim()}`);
+        setTimeout(() => window.location.reload(), 600);
+      }
     } catch (err: any) {
       setMessage(err.message || (isZh ? '保存失败' : 'Save failed'));
     } finally {
