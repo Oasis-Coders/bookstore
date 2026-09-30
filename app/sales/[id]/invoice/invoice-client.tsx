@@ -86,7 +86,7 @@ export function InvoiceClient({ saleId, isAdmin }: { saleId: string; isAdmin?: b
     const isClearance = catRaw.toLowerCase() === 'sales' || skuRaw.toLowerCase() === 'sales';
     return {
       idx: idx+1,
-      cat: isZh && isClearance ? '特价' : (catRaw.slice(0,8) || skuRaw.slice(0,6) || '-'),
+      cat: isZh && isClearance ? '特价' : (skuRaw || catRaw.slice(0,8) || '-'),
       title: l.books?.title || 'Unknown Book',
       qty,
       unit,
