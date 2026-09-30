@@ -193,7 +193,7 @@ export default function BulkImportPage() {
               <Button size="sm" variant="secondary" onClick={downloadTemplate}>{isZh ? '下载模板' : 'Download Template'}</Button>
               <label className="inline-flex h-9 items-center rounded-[12px] border border-cocm-ink/15 px-4 text-[13px] font-semibold cursor-pointer hover:bg-cocm-paper">
                 {isZh ? '选择文件' : 'Choose File'}
-                <input type="file" accept=".csv" onChange={handleFile} className="hidden" />
+                <input type="file" accept=".csv" onChange={handleFile} className="sr-only" />
               </label>
               {preview.length > 0 && <Button size="sm" onClick={handleImport} disabled={importing}>{importing ? (isZh ? '导入中...' : 'Importing...') : (isZh ? `确认导入 ${preview.length} 本` : `Confirm Import ${preview.length} books`)}</Button>}
             </div>
