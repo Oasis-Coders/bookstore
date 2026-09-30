@@ -145,7 +145,7 @@ export default function BulkImportPage() {
             // Create a simple inventory batch - needs a location, use first active location or fallback
             const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).limit(1).maybeSingle();
             if (loc?.id) {
-              await supabase.from('inventory_batches').insert({
+              const { error: batchError } = await supabase.from('inventory_batches').insert({
                 book_id: newBook.id,
                 location_id: loc.id,
                 batch_code: `IMPORT-${row.sku}-${Date.now()}`,
@@ -156,6 +156,9 @@ export default function BulkImportPage() {
                 created_by: userId,
                 source_type: 'purchase',
               });
+              if (batchError) errors.push(`${row.sku}: ${isZh ? '初始库存入库失败：' : 'Initial stock failed: '}${batchError.message}`);
+            } else {
+              errors.push(`${row.sku}: ${isZh ? '初始库存未入库：没有可用库位' : 'Initial stock skipped: no active location'}`);
             }
           }
         }
