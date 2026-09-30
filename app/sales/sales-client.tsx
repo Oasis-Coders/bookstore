@@ -76,7 +76,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
   // 2A: 混合支付 = 恰好两种付款方式，金额之和 = 应付金额
   const mixSum = Number(mixAmtA || 0) + Number(mixAmtB || 0);
   const mixValid = paymentMethod === 'mix'
-    ? (mixA !== '' && mixB !== '' && Number(mixAmtA) > 0 && Number(mixAmtB) > 0 && Math.abs(mixSum - netTotal) < 0.005)
+    ? (mixA !== '' && mixB !== '' && mixA !== mixB && Number(mixAmtA) > 0 && Number(mixAmtB) > 0 && Math.abs(mixSum - netTotal) < 0.005)
     : true;
 
   const addBookById = (bookId: string) => {
@@ -121,7 +121,10 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
     if (cart.length === 0) return;
     // 2A: 混合支付校验
     if (paymentMethod === 'mix' && !mixValid) {
-      setMsg(isZh ? `混合支付需填写两种付款方式，且金额之和 (£${mixSum.toFixed(2)}) 必须等于应付 £${netTotal.toFixed(2)}` : `Mix payment needs two methods whose amounts (£${mixSum.toFixed(2)}) add up to £${netTotal.toFixed(2)}`);
+      const reason = mixA === mixB
+        ? (isZh ? '混合支付的两种付款方式不能相同' : 'The two mix payment methods must differ')
+        : (isZh ? `混合支付需填写两种付款方式，且金额之和 (£${mixSum.toFixed(2)}) 必须等于应付 £${netTotal.toFixed(2)}` : `Mix payment needs two methods whose amounts (£${mixSum.toFixed(2)}) add up to £${netTotal.toFixed(2)}`);
+      setMsg(reason);
       return;
     }
     setSelling(true);
