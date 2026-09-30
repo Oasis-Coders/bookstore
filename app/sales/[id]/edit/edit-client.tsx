@@ -179,7 +179,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_notes: notes.trim() === '' ? '' : notes,
         p_shipping_cost: Math.round(shippingNum * 100) / 100,
         p_reason: reason,
-        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: Number(mixAmtA) }, { method: mixB, amount: Number(mixAmtB) }] : null,
+        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: Number(mixAmtA) }, { method: mixB, amount: Number(mixAmtB) }] : [], // 非混合时清空旧明细（DB 将 [] 视为清除）
       });
       if (error) {
         setMsg(friendlyDbError(error, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));
