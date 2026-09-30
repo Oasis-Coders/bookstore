@@ -9,7 +9,7 @@ export default async function PurchaseOrdersPage() {
     try {
       const { data } = await supabase
         .from('purchase_orders')
-        .select('*, suppliers(name_zh, code)')
+        .select('*, suppliers(name_zh, code), stage_handlers')
         .order('created_at', { ascending: false })
         .limit(20);
       if (data) pos = data;

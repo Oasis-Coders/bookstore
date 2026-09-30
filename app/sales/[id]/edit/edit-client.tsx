@@ -18,10 +18,13 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
   card: { zh: '刷卡', en: 'Card' },
   bank_transfer: { zh: '银行转账', en: 'Bank Transfer' },
   shopify: { zh: '网付', en: 'Shopify' },
+  paypal: { zh: 'PayPal', en: 'PayPal' },
   mix: { zh: '混合', en: 'Mix' },
   deferral: { zh: '赊账', en: 'Deferral' },
   other: { zh: '其他', en: 'Other' },
 };
+
+const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
 export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: any; lines: any[]; edits: any[]; books?: any[]; stockMap?: Record<string, number> }) {
   const { lang } = useT();
@@ -43,8 +46,21 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
   const [selectedBookId, setSelectedBookId] = useState('');
 
   const [customerName, setCustomerName] = useState(sale.customer_name || '');
-  const [paymentMethod, setPaymentMethod] = useState(sale.payment_method || 'cash');
   const [paymentStatus, setPaymentStatus] = useState(sale.payment_status || 'paid');
+  // 2B: 待付时付款方式可为空（显示"未选"）
+  const [paymentMethod, setPaymentMethod] = useState(sale.payment_method || (sale.payment_status === 'pending' ? '' : 'cash'));
+  // 2A: 混合支付 = 恰好两种付款方式
+  const initMix = Array.isArray(sale.payment_mix) ? sale.payment_mix : [];
+  const [mixA, setMixA] = useState(initMix[0]?.method || 'cash');
+  const [mixB, setMixB] = useState(initMix[1]?.method || 'card');
+  const [mixAmtA, setMixAmtA] = useState(initMix[0]?.amount != null ? String(initMix[0].amount) : '');
+  const [mixAmtB, setMixAmtB] = useState(initMix[1]?.amount != null ? String(initMix[1].amount) : '');
+  // 2B: 待付清空付款方式，切回已付恢复默认
+  const handleStatusChange = (v: string) => {
+    setPaymentStatus(v);
+    if (v === 'pending') setPaymentMethod('');
+    else if (paymentMethod === '') setPaymentMethod('cash');
+  };
   const [discountPercent, setDiscountPercent] = useState(() => {
     const sub = Number(sale.subtotal || 0);
     const disc = Number(sale.discount_amount || 0);
@@ -63,6 +79,11 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
   const discountAmount = subtotal * discountPctNum / 100;
   const shippingNum = Math.max(0, Number(shippingCost || 0));
   const netTotal = Math.max(0, subtotal - discountAmount + shippingNum);
+  // 2A: 混合支付校验：两种方式，金额之和 = 应付
+  const mixSum = Number(mixAmtA || 0) + Number(mixAmtB || 0);
+  const mixValid = paymentMethod === 'mix'
+    ? (mixA !== '' && mixB !== '' && Number(mixAmtA) > 0 && Number(mixAmtB) > 0 && Math.abs(mixSum - netTotal) < 0.005)
+    : true;
 
   // For stock check during edit: available = current stockMap + qty already in this sale (since restore will happen)
   const oldQtyMap = useMemo(() => {
@@ -131,6 +152,11 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
       setMsg(isZh ? '请填写改动原因，会写入操作记录' : 'Please enter reason for audit');
       return;
     }
+    // 2A: 混合支付校验
+    if (paymentMethod === 'mix' && !mixValid) {
+      setMsg(isZh ? `混合支付需填写两种付款方式，且金额之和 (£${mixSum.toFixed(2)}) 必须等于应付 £${netTotal.toFixed(2)}` : `Mix payment needs two methods whose amounts (£${mixSum.toFixed(2)}) add up to £${netTotal.toFixed(2)}`);
+      return;
+    }
     setSaving(true);
     setMsg('');
     try {
@@ -142,6 +168,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_items: items,
         // Send empty string to clear, null is not sent - we send '' for cleared fields, backend treats '' as clear
         p_customer_name: customerName.trim() === '' ? '' : customerName,
+        // 2B: 待付→''（后端转为 NULL）；2A: mix 时传明细
         p_payment_method: paymentMethod,
         p_payment_status: paymentStatus,
         p_discount_amount: discountAmount,
@@ -149,6 +176,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_notes: notes.trim() === '' ? '' : notes,
         p_shipping_cost: Math.round(shippingNum * 100) / 100,
         p_reason: reason,
+        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: Number(mixAmtA) }, { method: mixB, amount: Number(mixAmtB) }] : null,
       });
       if (error) {
         setMsg(friendlyDbError(error, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));
@@ -165,7 +193,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
 
   const readableDiff = (oldVals: any, newVals: any) => {
     if (!oldVals || !newVals) return null;
-    const keys = ['customer_name','payment_method','payment_status','discount_amount','shipping_cost','sale_date','notes','subtotal','total_cost'];
+    const keys = ['customer_name','payment_method','payment_mix','payment_status','discount_amount','shipping_cost','sale_date','notes','subtotal','total_cost'];
     const diffs: string[] = [];
     for (const k of keys) {
       const ov = oldVals[k];
@@ -173,6 +201,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
       if (JSON.stringify(ov) !== JSON.stringify(nv) && (ov !== undefined || nv !== undefined)) {
         const label = k === 'customer_name' ? (isZh ? '购书人' : 'Customer')
           : k === 'payment_method' ? (isZh ? '付款方式' : 'Payment')
+          : k === 'payment_mix' ? (isZh ? '混合明细' : 'Mix detail')
           : k === 'payment_status' ? (isZh ? '状态' : 'Status')
           : k === 'discount_amount' ? (isZh ? '折扣' : 'Discount')
           : k === 'shipping_cost' ? (isZh ? '邮费' : 'Shipping')
@@ -185,6 +214,12 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
           if (k === 'payment_method' && v) {
             const l = PAYMENT_LABELS[String(v)] || { zh: String(v), en: String(v) };
             return isZh ? l.zh : l.en;
+          }
+          if (k === 'payment_mix' && Array.isArray(v)) {
+            return v.map((m: any) => {
+              const l = PAYMENT_LABELS[String(m.method)] || { zh: String(m.method), en: String(m.method) };
+              return `${isZh ? l.zh : l.en} £${Number(m.amount).toFixed(2)}`;
+            }).join(' + ');
           }
           return v === null || v === undefined ? (isZh ? '空' : 'empty') : String(v);
         };
@@ -264,17 +299,41 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
               <div>
                 <label htmlFor="edit-payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
                 <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
+                  {paymentStatus === 'pending' && <option value="">{isZh ? '未选' : 'Not chosen'}</option>}
                   {Object.entries(PAYMENT_LABELS).map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
                 </select>
               </div>
               <div>
                 <label htmlFor="edit-payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select id="edit-payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
+                <select id="edit-payment-status" value={paymentStatus} onChange={e => handleStatusChange(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
               </div>
             </div>
+            {paymentMethod === 'mix' && (
+              <div className="rounded-[12px] border border-cocm-ink/15 bg-cocm-paper/50 p-3">
+                <p className="text-[11px] font-semibold text-cocm-ink">{isZh ? '混合支付：两种付款方式及金额（合计须等于应付）' : 'Mix payment: two methods, amounts must add up'}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="flex gap-2">
+                    <select value={mixA} onChange={e => setMixA(e.target.value)} aria-label={isZh ? '付款方式一' : 'Method 1'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                      {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
+                    </select>
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtA} onChange={e => setMixAmtA(e.target.value)} placeholder="£" aria-label={isZh ? '金额一' : 'Amount 1'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                  </div>
+                  <div className="flex gap-2">
+                    <select value={mixB} onChange={e => setMixB(e.target.value)} aria-label={isZh ? '付款方式二' : 'Method 2'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                      {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
+                    </select>
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtB} onChange={e => setMixAmtB(e.target.value)} placeholder="£" aria-label={isZh ? '金额二' : 'Amount 2'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                  </div>
+                </div>
+                <p className={`mt-1.5 text-[11px] ${mixValid ? 'text-green-700' : 'text-cocm-red'}`}>
+                  {isZh ? `合计 £${mixSum.toFixed(2)} / 应付 £${netTotal.toFixed(2)}` : `Sum £${mixSum.toFixed(2)} / Due £${netTotal.toFixed(2)}`}
+                  {!mixValid && (isZh ? ' — 金额之和必须等于应付' : ' — must equal the total due')}
+                </p>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-discount" className="text-[11px] font-medium">{isZh ? '折扣 %' : 'Discount %'}</label>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { AppShell } from '@/components/layout/app-shell';
@@ -10,10 +10,12 @@ import { Input } from '@/components/ui/input';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
 import { useUnsavedGuard } from '@/components/ui/use-unsaved-guard';
+import { createPODraft, getSupplierBooks } from '../actions';
 import Link from 'next/link';
 
 type SupplierOpt = { id: string; name_zh: string; code: string };
 type BookOpt = { id: string; title: string; sku: string; title_en?: string; shelf_position?: string };
+type DraftRow = { key: number; book_id: string; quantity: string };
 
 export default function NewPOPage() {
   const router = useRouter();
@@ -26,29 +28,27 @@ export default function NewPOPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [form, setForm] = useState(() => ({
-    supplier_id: '',
-    book_id: '',
-    quantity: '',
-    unit_cost: '',
-    notes: '',
-    order_date: new Date().toISOString().slice(0,10),
-  }));
+  const [supplierId, setSupplierId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [orderDate, setOrderDate] = useState(new Date().toISOString().slice(0, 10));
+  const [rows, setRows] = useState<DraftRow[]>([{ key: 0, book_id: '', quantity: '' }]);
+  const [nextKey, setNextKey] = useState(1);
 
-  // Warn before leaving with unsaved input (reload/close + in-app navigation)
-  const poDirty = !submitting && (form.supplier_id !== '' || form.book_id !== '' || form.quantity !== '' || form.unit_cost !== '' || form.notes !== '');
+  // 供应商历史书目（导入勾选）
+  const [histBooks, setHistBooks] = useState<{ book_id: string; title: string; sku: string }[]>([]);
+  const [histChecked, setHistChecked] = useState<Record<string, { qty: string }>>({});
+  const [histLoading, setHistLoading] = useState(false);
+
+  const poDirty = !submitting && (supplierId !== '' || rows.some((r) => r.book_id !== '' || r.quantity !== '') || notes !== '');
   useUnsavedGuard(poDirty, isZh);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
-    if (!supabase) {
-      setLoadingOpts(false);
-      return;
-    }
+    if (!supabase) { setLoadingOpts(false); return; }
     (async () => {
       const [sRes, bRes] = await Promise.all([
         supabase.from('suppliers').select('id, name_zh, code').eq('is_active', true).limit(50),
-        supabase.from('books').select('id, title, sku, title_en, shelf_position').eq('is_active', true).limit(200),
+        supabase.from('books').select('id, title, sku, title_en, shelf_position').eq('is_active', true).order('title').limit(300),
       ]);
       setSuppliers((sRes.data as any) || []);
       setBooks((bRes.data as any) || []);
@@ -56,51 +56,64 @@ export default function NewPOPage() {
     })();
   }, []);
 
+  // 供应商切换 -> 拉历史书目
+  useEffect(() => {
+    if (!supplierId) { setHistBooks([]); setHistChecked({}); return; }
+    setHistLoading(true);
+    getSupplierBooks(supplierId).then((list) => {
+      setHistBooks(list);
+      setHistChecked({});
+      setHistLoading(false);
+    }).catch(() => setHistLoading(false));
+  }, [supplierId]);
+
+  const bookMap = useMemo(() => new Map(books.map((b) => [b.id, b])), [books]);
+
+  function addRow() {
+    setRows((r) => [...r, { key: nextKey, book_id: '', quantity: '' }]);
+    setNextKey((k) => k + 1);
+  }
+  function removeRow(key: number) {
+    setRows((r) => (r.length <= 1 ? r : r.filter((x) => x.key !== key)));
+  }
+  function patchRow(key: number, patch: Partial<DraftRow>) {
+    setRows((r) => r.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  }
+  function importFromHistory() {
+    const picked = histBooks.filter((b) => histChecked[b.book_id]);
+    if (!picked.length) return;
+    setRows((r) => {
+      const existing = new Set(r.map((x) => x.book_id).filter(Boolean));
+      const fresh = r.filter((x) => x.book_id !== '' || x.quantity !== '');
+      const added = picked.filter((b) => !existing.has(b.book_id)).map((b, i) => ({
+        key: nextKey + i, book_id: b.book_id, quantity: histChecked[b.book_id].qty || '',
+      }));
+      return [...fresh, ...added];
+    });
+    setNextKey((k) => k + picked.length);
+    setHistChecked({});
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!form.supplier_id) {
+    if (!supplierId) {
       setError(isZh ? '请选择供应商' : 'Please select a supplier');
       document.getElementById('po-supplier')?.focus();
       return;
     }
+    const lines = rows
+      .filter((r) => r.book_id && Number(r.quantity) > 0)
+      .map((r) => ({ book_id: r.book_id, quantity: Math.floor(Number(r.quantity)) }));
+    if (lines.length === 0) {
+      setError(isZh ? '请至少添加一种图书并填写数量' : 'Please add at least one book with quantity');
+      return;
+    }
     setSubmitting(true);
     try {
-      const supabase = createSupabaseBrowserClient();
-      if (!supabase) throw new Error('Supabase not configured');
-
-      const poNumber = `PO-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
-      const { data: userRes } = await supabase.auth.getUser();
-      const createdBy = userRes.user?.id;
-      if (!createdBy) throw new Error(isZh ? '未登录' : 'Not logged in');
-
-      const { data, error: poErr } = await supabase
-        .from('purchase_orders')
-        .insert({
-          po_number: poNumber,
-          supplier_id: form.supplier_id,
-          notes: form.notes || null,
-          created_by: createdBy,
-          status: 'draft',
-          order_date: form.order_date || new Date().toISOString().slice(0,10),
-        })
-        .select('id')
-        .single();
-      if (poErr) throw poErr;
-
-      const qty = Number(form.quantity || 0);
-      const unitCost = Number(form.unit_cost || 0);
-      if (form.book_id && qty > 0) {
-        const { error: lineErr } = await supabase.from('purchase_order_lines').insert({
-          purchase_order_id: data.id,
-          book_id: form.book_id,
-          quantity_ordered: qty,
-          unit_cost: unitCost,
-        });
-        if (lineErr) throw lineErr;
-      }
-
-      router.push('/purchase-orders');
+      const res = await createPODraft({ supplier_id: supplierId, notes, order_date: orderDate, lines });
+      if (!res.success) throw new Error(res.error || (isZh ? '创建失败' : 'Failed'));
+      router.push(`/purchase-orders/${res.poId}`);
       router.refresh();
     } catch (err: any) {
       setError(err?.message || (isZh ? '创建失败' : 'Failed to create'));
@@ -111,14 +124,14 @@ export default function NewPOPage() {
 
   return (
     <AppShell title={isZh ? '新建采购单' : 'New PO'} titleZh="新建采购单" eyebrow={isZh ? '活水书房' : 'COCM Bookshop'}>
-      <div className="mx-auto max-w-[640px]">
+      <div className="mx-auto max-w-[680px]">
         <Link href="/purchase-orders" className="mb-4 inline-flex text-[13px] text-[#5b5f94] hover:text-cocm-ink">
           ← {isZh ? '返回采购单' : 'Back to Purchase Orders'}
         </Link>
         <Card>
           <CardTitle>{isZh ? '新建采购单' : 'New Purchase Order'}</CardTitle>
           <div className="mt-2 rounded-[10px] bg-cocm-paper p-3 text-[11px] text-[#5b5f94]">
-            {isZh ? ' 要采购新书？先去书库添加新书，再来填采购单。支持扫码枪扫ISBN快速添加。' : ' New book to purchase? Add it to Books first, then fill PO. Barcode scanner supported for ISBN.'}
+            {isZh ? '草稿只记录要进的书和数量；进货价等到收货时再填（实际结算价）。要采购新书？先去书库添加新书，再来填采购单。' : 'Draft only records books and quantities; enter actual unit cost when receiving. New book? Add it to Books first.'}
             <Link href="/books/new" className="ml-2 text-cocm-ink underline font-medium">{isZh ? '去添加新书' : 'Add new book'}</Link>
           </div>
           {error && <div aria-live="polite" className="mt-4 rounded-[12px] bg-red-50 px-3 py-2 text-[12px] text-red-700">{error}</div>}
@@ -127,68 +140,106 @@ export default function NewPOPage() {
               <label htmlFor="po-supplier" className="text-[12px] font-semibold">{isZh ? '供应商 *' : 'Supplier *'}</label>
               <select
                 id="po-supplier"
-                name="supplier_id"
-                value={form.supplier_id}
-                onChange={(e) => setForm((f) => ({ ...f, supplier_id: e.target.value }))}
+                value={supplierId}
+                onChange={(e) => setSupplierId(e.target.value)}
                 required
                 className="mt-1 flex h-11 w-full rounded-[20px] border border-cocm-ink/15 bg-white px-4 text-[13px]"
               >
                 <option value="">{isZh ? '选择供应商' : 'Select supplier'}</option>
                 {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name_zh} ({s.code})
-                  </option>
+                  <option key={s.id} value={s.id}>{s.name_zh} ({s.code})</option>
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2">
-                <label htmlFor="po-book-picker" className="text-[12px] font-semibold">{isZh ? '图书 (输入缩小范围)' : 'Book (type to filter)'}</label>
-                <BookAutocomplete id="po-book-picker" books={books} value={form.book_id} onChange={(id) => setForm(f => ({...f, book_id: id}))} isZh={isZh} placeholder={isZh ? '输入书名/代号…' : 'Type title/sku to filter…'} />
+
+            {/* 供应商历史书目导入 */}
+            {supplierId && (
+              <div className="rounded-[12px] border border-cocm-ink/10 p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[12px] font-semibold">{isZh ? '从该供应商历史订单导入' : 'Import from supplier history'}</p>
+                  {histLoading && <span className="text-[11px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</span>}
+                </div>
+                {histBooks.length === 0 && !histLoading ? (
+                  <p className="mt-2 text-[11px] text-[#5b5f94]">{isZh ? '该供应商暂无历史订单书目' : 'No history for this supplier yet'}</p>
+                ) : (
+                  <>
+                    <div className="mt-2 max-h-[180px] space-y-1.5 overflow-y-auto">
+                      {histBooks.map((b) => (
+                        <label key={b.book_id} className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-cocm-paper px-2.5 py-1.5 text-[12px]">
+                          <input
+                            type="checkbox"
+                            checked={!!histChecked[b.book_id]}
+                            onChange={(e) => setHistChecked((m) => (e.target.checked ? { ...m, [b.book_id]: { qty: '' } } : Object.fromEntries(Object.entries(m).filter(([k]) => k !== b.book_id))))}
+                            className="h-4 w-4 accent-[#2d2f92]"
+                          />
+                          <span className="min-w-0 flex-1 truncate">{b.title} <span className="text-[#5b5f94]">({b.sku})</span></span>
+                          {histChecked[b.book_id] && (
+                            <input
+                              type="number" min="1" placeholder={isZh ? '数量' : 'Qty'}
+                              value={histChecked[b.book_id].qty}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => setHistChecked((m) => ({ ...m, [b.book_id]: { qty: e.target.value } }))}
+                              className="h-8 w-[72px] rounded-[8px] border border-cocm-ink/15 bg-white px-2 text-[12px]"
+                            />
+                          )}
+                        </label>
+                      ))}
+                    </div>
+                    <Button type="button" size="sm" variant="ghost" className="mt-2" onClick={importFromHistory} disabled={!Object.keys(histChecked).length}>
+                      {isZh ? `导入已勾选 (${Object.keys(histChecked).length})` : `Import checked (${Object.keys(histChecked).length})`}
+                    </Button>
+                  </>
+                )}
               </div>
-              <div>
-                <label htmlFor="po-quantity" className="text-[12px] font-semibold">{isZh ? '数量' : 'Quantity'}</label>
-                <Input
-                  id="po-quantity"
-                  name="quantity"
-                  value={form.quantity}
-                  onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
-                  type="number"
-                  inputMode="decimal"
-                  min="1"
-                  className="mt-1"
-                />
-              </div>
-            </div>
+            )}
+
             <div>
-              <label htmlFor="po-unit-cost" className="text-[12px] font-semibold">{isZh ? '进货价' : 'Unit Cost'}</label>
-              <Input
-                id="po-unit-cost"
-                name="unit_cost"
-                value={form.unit_cost}
-                onChange={(e) => setForm((f) => ({ ...f, unit_cost: e.target.value }))}
-                type="number"
-                inputMode="decimal"
-                step="0.01"
-                placeholder={isZh ? '单本成本' : 'Cost per unit'}
-                className="mt-1"
-              />
+              <div className="flex items-center justify-between">
+                <label className="text-[12px] font-semibold">{isZh ? '图书明细 *（可多行）' : 'Books * (multiple rows)'}</label>
+                <button type="button" onClick={addRow} className="text-[12px] font-medium text-cocm-ink underline">＋ {isZh ? '加一行' : 'Add row'}</button>
+              </div>
+              <div className="mt-2 space-y-2">
+                {rows.map((r) => (
+                  <div key={r.key} className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <BookAutocomplete
+                        id={`po-book-${r.key}`}
+                        books={books}
+                        value={r.book_id}
+                        onChange={(id) => patchRow(r.key, { book_id: id })}
+                        isZh={isZh}
+                        placeholder={isZh ? '输入书名/代号…' : 'Type title/sku…'}
+                      />
+                      {r.book_id && bookMap.get(r.book_id) && (
+                        <p className="mt-0.5 truncate text-[10px] text-[#5b5f94]">{bookMap.get(r.book_id)!.title_en || bookMap.get(r.book_id)!.sku}</p>
+                      )}
+                    </div>
+                    <Input
+                      value={r.quantity}
+                      onChange={(e) => patchRow(r.key, { quantity: e.target.value })}
+                      type="number" inputMode="numeric" min="1" placeholder={isZh ? '数量' : 'Qty'}
+                      aria-label={isZh ? '数量' : 'Quantity'}
+                      className="w-[84px]"
+                    />
+                    <button type="button" onClick={() => removeRow(r.key)} aria-label={isZh ? '删除这一行' : 'Remove row'} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
+                  </div>
+                ))}
+              </div>
             </div>
+
             <div>
               <label htmlFor="po-order-date" className="text-[12px] font-semibold">{isZh ? '下单日期 *' : 'Order Date *'}</label>
-              <Input id="po-order-date" name="order_date" value={form.order_date} onChange={(e) => setForm((f) => ({ ...f, order_date: e.target.value }))} type="date" className="mt-1" required />
+              <Input id="po-order-date" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} type="date" className="mt-1" required />
             </div>
             <div>
               <label htmlFor="po-notes" className="text-[12px] font-semibold">{isZh ? '备注' : 'Notes'}</label>
-              <Input id="po-notes" name="notes" value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1" />
+              <Input id="po-notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="mt-1" />
             </div>
             <div className="flex gap-2 pt-2">
               <Link href="/purchase-orders" className="flex-1">
-                <Button variant="ghost" className="w-full" type="button">
-                  {isZh ? '取消' : 'Cancel'}
-                </Button>
+                <Button variant="ghost" className="w-full" type="button">{isZh ? '取消' : 'Cancel'}</Button>
               </Link>
-              <Button type="submit" className="flex-1" disabled={submitting}>
+              <Button type="submit" className="flex-1" disabled={submitting || loadingOpts}>
                 {submitting ? (isZh ? '创建中…' : 'Creating…') : isZh ? '创建草稿' : 'Create Draft'}
               </Button>
             </div>

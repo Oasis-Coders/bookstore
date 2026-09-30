@@ -8,6 +8,13 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 
+const STAGE_LABELS: Record<string, { zh: string; en: string }> = {
+  draft: { zh: '建单', en: 'Drafted' },
+  approved: { zh: '批准', en: 'Approved' },
+  ordered: { zh: '下单', en: 'Ordered' },
+  received: { zh: '收货', en: 'Received' },
+};
+
 const statusColor: Record<string, 'default' | 'active' | 'warning' | 'danger'> = {
   draft: 'default',
   approved: 'warning',
@@ -52,6 +59,12 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
               <p className="font-mono text-[13px] font-semibold">{po.po_number}</p>
               <p className="text-[12px] text-[#5b5f94]">
                 {po.suppliers?.name_zh} • {po.order_date} • {formatCurrency(Number(po.subtotal || 0))}
+              {Array.isArray(po.stage_handlers) && po.stage_handlers.length > 0 && (
+                <span className="block text-[11px] text-[#9aa0bd]">
+                  {(STAGE_LABELS[po.stage_handlers[po.stage_handlers.length - 1].stage]?.[isZh ? 'zh' : 'en']) || ''}
+                  {' '}{po.stage_handlers[po.stage_handlers.length - 1].display_name}
+                </span>
+              )}
               </p>
             </div>
             <div className="flex items-center gap-2">

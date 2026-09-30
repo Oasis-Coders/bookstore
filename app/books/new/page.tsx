@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createBook } from '../actions';
 import { CategorySelect } from '@/components/ui/category-select';
+import { PublisherSelect } from '@/components/ui/publisher-select';
 import { useUnsavedGuard } from '@/components/ui/use-unsaved-guard';
 import Link from 'next/link';
 
@@ -168,7 +169,7 @@ export default function NewBookPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="new-publisher" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '出版社' : 'Publisher'}</label>
-                <Input id="new-publisher" name="publisher" placeholder={isZh ? '出版社' : 'Publisher'} className="mt-1" />
+                <PublisherSelect id="new-publisher" name="publisher" className="mt-1" />
               </div>
               <div>
                 <label htmlFor="new-author" className="block text-[12px] font-semibold text-cocm-ink">{isZh ? '作者' : 'Author'}</label>

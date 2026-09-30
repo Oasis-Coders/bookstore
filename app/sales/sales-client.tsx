@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,19 +14,23 @@ import { createSale } from './actions';
 
 type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string; stock?: number };
 
-type RecentSale = { id: string; sale_number: string; subtotal: number; discount_amount?: number; total?: number; payment_method?: string; customer_name?: string; sold_at: string; net_total?: number };
+type RecentSale = { id: string; sale_number: string; subtotal: number; discount_amount?: number; total?: number; payment_method?: string | null; payment_mix?: any; payment_status?: string; customer_name?: string; sold_at: string; net_total?: number };
 
 const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
   cash: { zh: '现金', en: 'Cash' },
   card: { zh: '刷卡', en: 'Card' },
   bank_transfer: { zh: '银行转账', en: 'Bank Transfer' },
   shopify: { zh: '网付', en: 'Shopify' },
+  paypal: { zh: 'PayPal', en: 'PayPal' },
   mix: { zh: '混合', en: 'Mix' },
   deferral: { zh: '赊账', en: 'Deferral' },
   other: { zh: '其他', en: 'Other' },
 };
 
-export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean } = { books: [], recentSales: [], stockMap: {}, isAdmin: false }) {
+// 2A: 混合支付可用的子方式（不含 mix 自身）
+const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
+
+export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; salesQuery?: string } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, salesQuery: '' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -47,6 +52,17 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
   const [shippingCost, setShippingCost] = useState('0');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentStatus, setPaymentStatus] = useState('paid');
+  // 2A: 混合支付 = 恰好两种付款方式，金额之和 = 应付
+  const [mixA, setMixA] = useState('cash');
+  const [mixB, setMixB] = useState('card');
+  const [mixAmtA, setMixAmtA] = useState('');
+  const [mixAmtB, setMixAmtB] = useState('');
+  // 2B: 待付时清空付款方式（显示"未选"），切回已付时恢复默认
+  const handleStatusChange = (v: string) => {
+    setPaymentStatus(v);
+    if (v === 'pending') setPaymentMethod('');
+    else if (paymentMethod === '') setPaymentMethod('cash');
+  };
   const [customerName, setCustomerName] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -56,6 +72,12 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
   const shippingNum = Math.max(0, Number(shippingCost || 0));
   const netTotal = Math.max(0, total - discountAmount + shippingNum);
   const totalQty = cart.reduce((s,i)=>s+i.qty,0);
+
+  // 2A: 混合支付 = 恰好两种付款方式，金额之和 = 应付金额
+  const mixSum = Number(mixAmtA || 0) + Number(mixAmtB || 0);
+  const mixValid = paymentMethod === 'mix'
+    ? (mixA !== '' && mixB !== '' && Number(mixAmtA) > 0 && Number(mixAmtB) > 0 && Math.abs(mixSum - netTotal) < 0.005)
+    : true;
 
   const addBookById = (bookId: string) => {
     const found = books?.find((b: any) => b.id === bookId);
@@ -97,6 +119,11 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
   const handleConfirm = async () => {
     if (cart.length === 0) return;
+    // 2A: 混合支付校验
+    if (paymentMethod === 'mix' && !mixValid) {
+      setMsg(isZh ? `混合支付需填写两种付款方式，且金额之和 (£${mixSum.toFixed(2)}) 必须等于应付 £${netTotal.toFixed(2)}` : `Mix payment needs two methods whose amounts (£${mixSum.toFixed(2)}) add up to £${netTotal.toFixed(2)}`);
+      return;
+    }
     setSelling(true);
     setMsg('');
     try {
@@ -109,8 +136,15 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
       fd.set('sale_date', saleDate);
       fd.set('discount', String(discountAmount));
       fd.set('discount_percent', String(discountPctNum));
-      fd.set('payment_method', paymentMethod);
+      // 2B: 待付 → 付款方式清空（后端存 NULL）
+      fd.set('payment_method', paymentMethod || '');
       fd.set('payment_status', paymentStatus);
+      if (paymentMethod === 'mix') {
+        fd.set('payment_mix', JSON.stringify([
+          { method: mixA, amount: Number(mixAmtA) },
+          { method: mixB, amount: Number(mixAmtB) },
+        ]));
+      }
       fd.set('customer_name', customerName);
       fd.set('notes', notes);
       fd.set('shipping_cost', String(shippingNum));
@@ -122,6 +156,8 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
         setNotes('');
         setDiscountPercent('0');
         setShippingCost('0');
+        setMixAmtA('');
+        setMixAmtB('');
         window.location.reload();
       } else {
         setMsg((result as any)?.error || (isZh ? '销售失败' : 'Sale failed'));
@@ -168,20 +204,46 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
               <div>
                 <label htmlFor="payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment Method'}</label>
                 <select id="payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
+                  {paymentStatus === 'pending' && <option value="">{isZh ? '未选' : 'Not chosen'}</option>}
                   <option value="cash">{isZh ? '现金' : 'Cash'}</option>
                   <option value="card">{isZh ? '刷卡' : 'Card'}</option>
                   <option value="bank_transfer">{isZh ? '银行转账' : 'Bank Transfer'}</option>
                   <option value="shopify">{isZh ? '网付' : 'Shopify'}</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="mix">{isZh ? '混合（两种）' : 'Mix (two methods)'}</option>
                 </select>
               </div>
               <div>
                 <label htmlFor="payment-status" className="text-[11px] font-medium">{isZh ? '状态' : 'Status'}</label>
-                <select id="payment-status" value={paymentStatus} onChange={e => setPaymentStatus(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
+                <select id="payment-status" value={paymentStatus} onChange={e => handleStatusChange(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   <option value="paid">{isZh ? '已付' : 'Paid'}</option>
                   <option value="pending">{isZh ? '待付' : 'Pending'}</option>
                 </select>
               </div>
             </div>
+            {paymentMethod === 'mix' && (
+              <div className="rounded-[12px] border border-cocm-ink/15 bg-cocm-paper/50 p-3">
+                <p className="text-[11px] font-semibold text-cocm-ink">{isZh ? '混合支付：填写两种付款方式及金额（合计须等于应付）' : 'Mix payment: two methods, amounts must add up to the total'}</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div className="flex gap-2">
+                    <select value={mixA} onChange={e => setMixA(e.target.value)} aria-label={isZh ? '付款方式一' : 'Method 1'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                      {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
+                    </select>
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtA} onChange={e => setMixAmtA(e.target.value)} placeholder="£" aria-label={isZh ? '金额一' : 'Amount 1'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                  </div>
+                  <div className="flex gap-2">
+                    <select value={mixB} onChange={e => setMixB(e.target.value)} aria-label={isZh ? '付款方式二' : 'Method 2'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                      {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
+                    </select>
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtB} onChange={e => setMixAmtB(e.target.value)} placeholder="£" aria-label={isZh ? '金额二' : 'Amount 2'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                  </div>
+                </div>
+                <p className={`mt-1.5 text-[11px] ${mixValid ? 'text-green-700' : 'text-cocm-red'}`}>
+                  {isZh ? `合计 £${mixSum.toFixed(2)} / 应付 £${netTotal.toFixed(2)}` : `Sum £${mixSum.toFixed(2)} / Due £${netTotal.toFixed(2)}`}
+                  {!mixValid && (isZh ? ' — 金额之和必须等于应付' : ' — must equal the total due')}
+                </p>
+              </div>
+            )}
 
             <div>
               <label htmlFor="customer-name" className="text-[11px] font-medium">{isZh ? '购书人（人名/网单号/教会/团契）' : 'Customer (Name/Order No/Church/Fellowship)'} </label>
@@ -203,26 +265,31 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
               <div className="mt-2 space-y-2 max-h-[360px] overflow-y-auto pr-1">
                 {cart.map((item, idx) => (
-                  <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-cocm-ink text-[10px] text-white">{idx+1}</span>
-                      <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-11 w-11 items-center justify-center rounded-[8px] text-[16px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
-                      <div className="flex-1 min-w-0">
-                        <span className="truncate font-medium">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {item.shelf_position && <span className="inline-flex whitespace-nowrap text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
-                          {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : (isZh ? `还剩 ${item.stock} 本` : `${item.stock} left`)}</span>}
+                  <div key={item.id} className="rounded-[12px] bg-cocm-paper px-3 py-2.5 text-[12px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-start gap-2 min-w-0">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cocm-ink text-[10px] text-white">{idx+1}</span>
+                        <div className="min-w-0">
+                          <p className="font-medium leading-snug">{item.title} <span className="text-[#5b5f94] text-[10px]">({item.sku})</span></p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {item.shelf_position && <span className="inline-flex whitespace-nowrap text-[10px] bg-white px-1.5 py-0.5 rounded-full border">{item.shelf_position}</span>}
+                            {item.stock !== undefined && item.stock <= 2 && <span className={`text-[10px] ${item.stock===0 ? 'text-red-600' : 'text-amber-600'}`}>{item.stock===0 ? (isZh ? '零库存' : '0 stock') : (isZh ? `还剩 ${item.stock} 本` : `${item.stock} left`)}</span>}
+                          </div>
                         </div>
                       </div>
+                      <button onClick={() => removeItem(item.id)} aria-label={isZh ? `删除《${item.title}》` : `Remove ${item.title}`} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] text-[18px] text-red-400 hover:bg-red-50 hover:text-red-600">×</button>
                     </div>
-                    <div className="flex items-center gap-2 ml-2">
+                    <div className="mt-2 flex items-center justify-between gap-2 border-t border-cocm-ink/10 pt-2">
                       <div className="flex items-center gap-1">
-                        <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">-</button>
-                        <span className="w-6 text-center">{item.qty}</span>
-                        <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-11 w-11 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">+</button>
+                        <button onClick={() => updateQty(item.id, item.qty - 1)} aria-label={isZh ? `减少《${item.title}》数量` : `Decrease quantity of ${item.title}`} className="h-9 w-9 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">-</button>
+                        <span className="w-7 text-center font-semibold">{item.qty}</span>
+                        <button onClick={() => updateQty(item.id, item.qty + 1)} aria-label={isZh ? `增加《${item.title}》数量` : `Increase quantity of ${item.title}`} className="h-9 w-9 rounded-[8px] bg-white text-[14px] hover:bg-[#edeffb]">+</button>
                       </div>
-                      <Input value={String(item.price)} inputMode="decimal" onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-7 w-[68px] text-[11px] px-1" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
-                      <span className="w-[60px] text-right">£{(item.qty * item.price).toFixed(2)}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-[#5b5f94]">{isZh ? '单价 £' : '£'}</span>
+                        <Input value={String(item.price)} inputMode="decimal" onChange={e=>updatePrice(item.id, Number(e.target.value)||0)} className="h-8 w-[72px] text-[12px] px-1.5" title={isZh ? '清仓/赠送可手动改价' : 'Clearance/gift - edit price'} />
+                      </div>
+                      <span className="min-w-[64px] text-right font-semibold tabular-nums">£{(item.qty * item.price).toFixed(2)}</span>
                     </div>
                   </div>
                 ))}
@@ -250,16 +317,31 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin }: { books?:
 
         <div className="space-y-4">
           <Card>
-            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按单号升序 • 点任意一单查看发票/改单' : 'By sale no. ascending • tap a sale to view invoice/edit'}</span></CardTitle>
+            <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按单号降序 • 点任意一单查看发票/改单' : 'By sale no. descending • tap a sale to view invoice/edit'}</span></CardTitle>
+            <form method="GET" action="/sales" className="mt-3 flex gap-2">
+              <Input name="q" defaultValue={salesQuery || ''} placeholder={isZh ? '搜单号 / 购书人…' : 'Search sale no. / buyer…'} className="h-9 flex-1 text-[12px]" aria-label={isZh ? '搜索销售' : 'Search sales'} />
+              <Button type="submit" variant="ghost" size="sm" className="h-9 rounded-[10px]">{isZh ? '搜索' : 'Search'}</Button>
+              {salesQuery && <Link href="/sales"><Button type="button" variant="ghost" size="sm" className="h-9 rounded-[10px]">{isZh ? '清除' : 'Clear'}</Button></Link>}
+            </form>
             <div className="mt-3 space-y-2">
               {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => {
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
-                const pm = PAYMENT_LABELS[String(s.payment_method || 'cash')] || { zh: s.payment_method || '现金', en: s.payment_method || 'Cash' };
+                // 2B: 待付且未选付款方式 → 显示"未选"
+                const pm = s.payment_method
+                  ? (PAYMENT_LABELS[String(s.payment_method)] || { zh: String(s.payment_method), en: String(s.payment_method) })
+                  : { zh: '未选', en: 'Not chosen' };
+                // 2A: 混合明细
+                const mixArr = Array.isArray(s.payment_mix) ? s.payment_mix : [];
+                const mixText = mixArr.map((m: any) => {
+                  const l = PAYMENT_LABELS[String(m.method)] || { zh: String(m.method), en: String(m.method) };
+                  return `${isZh ? l.zh : l.en} £${Number(m.amount).toFixed(2)}`;
+                }).join(' + ');
                 return (
                 <div key={s.id} role="link" tabIndex={0} onClick={() => goSale(s.id)} onKeyDown={e => { if (e.key === 'Enter') goSale(s.id); }} className="flex items-center justify-between gap-2 rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px] cursor-pointer hover:bg-cocm-paper/60" title={isZh ? '查看发票' : 'View invoice'}>
                   <div className="min-w-0">
                     <p className="font-mono font-semibold text-cocm-red underline decoration-dotted underline-offset-2">{s.sale_number}</p>
-                    <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
+                    <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en}{s.payment_status === 'pending' ? (isZh ? '（待付）' : ' (pending)') : ''} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
+                    {mixText && <p className="text-[11px] text-cocm-ink">{mixText}</p>}
                   </div>
                   <div className="text-right flex shrink-0 items-center gap-2" onClick={e => e.stopPropagation()}>
                     <div>

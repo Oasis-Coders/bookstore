@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
+import { CategoryManager } from '@/components/ui/category-manager';
 import Link from 'next/link';
 
 type Book = {
@@ -26,9 +27,10 @@ type Book = {
   category?: string;
   low_stock_threshold?: number;
   on_hand?: number;
+  is_active?: boolean;
 };
 
-export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode: 'live' | 'empty' }) {
+export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string; mode: 'live' | 'empty'; show: 'all' | 'active' | 'inactive' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [scanning, setScanning] = useState(false);
@@ -49,6 +51,10 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
   return (
     <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
       <div className="flex gap-2">
+        <CategoryManager />
+        <Link href="/books/barcodes">
+          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '备用条码' : 'Spare codes'}</Button>
+        </Link>
         <Link href="/books/import">
           <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '批量导入' : 'Import'}</Button>
         </Link>
@@ -82,6 +88,19 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
             {isZh ? '支持中英文、简繁体、代号、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, Code, shelf. USB barcode scanner supported - scans auto-submit.'}
             {false && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
           </p>
+          <div className="flex gap-1.5" role="group" aria-label={isZh ? '按状态筛选' : 'Filter by status'}>
+            {([
+              ['all', isZh ? '全部' : 'All'],
+              ['active', isZh ? '在售' : 'Active'],
+              ['inactive', isZh ? '停用' : 'Inactive'],
+            ] as const).map(([v, label]) => (
+              <Link key={v} href={`/books?show=${v}${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
+                <span className={`inline-block rounded-[10px] px-3 py-1.5 text-[12px] font-medium transition-colors ${show === v ? 'bg-cocm-ink text-white' : 'bg-white text-[#5b5f94] border border-cocm-ink/10 hover:border-cocm-ink/25'}`}>
+                  {label}
+                </span>
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
@@ -90,6 +109,9 @@ export function BooksClient({ books, q, mode }: { books: Book[]; q: string; mode
               <div className="flex items-start justify-between gap-2">
                 <Badge className="shrink-0 rounded-[8px] bg-cocm-ink/5 text-cocm-ink border-cocm-ink/10 text-[10.5px] font-semibold tracking-wide">{book.sku}</Badge>
                 <div className="flex shrink-0 items-center gap-1.5">
+                  {book.is_active === false && (
+                    <span className="whitespace-nowrap text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200">{isZh ? '停用' : 'Inactive'}</span>
+                  )}
                   <span className="whitespace-nowrap text-[11px] font-medium px-2.5 py-1 rounded-full bg-cocm-paper text-[#5b5f94] border border-cocm-ink/5">{book.category || tt('books.uncategorized')}</span>
                   {typeof book.on_hand === 'number' && (
                     <span className={`whitespace-nowrap text-[10px] font-bold px-2 py-1 rounded-full ${book.on_hand <= (book.low_stock_threshold || 3) ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-green-50 text-green-700 border border-green-100'}`}>

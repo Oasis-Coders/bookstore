@@ -23,8 +23,15 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
   const saleDate = String(formData.get('sale_date') || new Date().toISOString().slice(0,10));
   const discount = Number(formData.get('discount') || 0);
   const discountPercent = Number(formData.get('discount_percent') || 0);
-  const paymentMethod = String(formData.get('payment_method') || 'cash');
+  const paymentMethodRaw = String(formData.get('payment_method') || '').trim();
+  // 2B: 待付时付款方式可为空 → 存 NULL（显示"未选"）
+  const paymentMethod = paymentMethodRaw || null;
   const paymentStatus = String(formData.get('payment_status') || 'paid');
+  const paymentMixRaw = String(formData.get('payment_mix') || '').trim();
+  let paymentMix: any = null;
+  if (paymentMixRaw) {
+    try { paymentMix = JSON.parse(paymentMixRaw); } catch { paymentMix = null; }
+  }
   const customerName = String(formData.get('customer_name') || '').trim() || null;
   const externalRef = String(formData.get('external_ref') || '');
   const notes = String(formData.get('notes') || '').trim() || null;
@@ -77,6 +84,7 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
       p_sale_date: saleDate,
       p_shipping_cost: shippingCost,
       p_customer_note: notes,
+      p_payment_mix: paymentMix,
     } as any);
 
     if (error) {

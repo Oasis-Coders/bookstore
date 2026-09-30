@@ -125,3 +125,63 @@ export async function deleteBook(bookId: string): Promise<ActionResult> {
   revalidatePath('/books');
   return ok();
 }
+
+// ============ 1A: 出版社下拉选项（与供应商搜索一致：中英名/代号） ============
+export type SupplierOption = { id: string; name_zh: string; name_en: string | null; code: string };
+export async function getSupplierOptions(): Promise<SupplierOption[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from('suppliers').select('id, name_zh, name_en, code').eq('is_active', true).order('name_zh').limit(500);
+  return (data || []) as SupplierOption[];
+}
+
+// ============ 1B: 分类管理 ============
+export type CategoryStat = { name: string; count: number };
+export async function getCategoryStats(): Promise<CategoryStat[]> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return [];
+  const { data } = await supabase.from('books').select('category').not('category', 'is', null).limit(5000);
+  const map = new Map<string, number>();
+  for (const r of (data || []) as any[]) {
+    const c = String(r.category || '').trim();
+    if (c) map.set(c, (map.get(c) || 0) + 1);
+  }
+  return [...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+}
+
+async function requireBookEditor(): Promise<{ supabase: any; ok: boolean; error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { supabase: null, ok: false, error: '系统未配置' };
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user?.id || '');
+  const roleNames = (roles || []).map((r: any) => r.roles?.name);
+  if (!roleNames.includes('staff') && !roleNames.includes('admin') && !roleNames.includes('super_admin')) {
+    return { supabase, ok: false, error: '权限不足：需要 staff 及以上角色' };
+  }
+  return { supabase, ok: true };
+}
+
+export async function renameCategory(oldName: string, newName: string): Promise<ActionResult> {
+  const oldN = oldName.trim(), newN = newName.trim();
+  if (!oldN || !newN) return fail('分类名称不能为空');
+  if (oldN === newN) return ok();
+  const { supabase, ok: can, error } = await requireBookEditor();
+  if (!can) return fail(error!);
+  const { error: err } = await supabase.from('books').update({ category: newN }).eq('category', oldN);
+  if (err) return fail(friendlyDbError(err, { fallback: '改名失败，请重试' }));
+  revalidatePath('/books');
+  return ok();
+}
+
+export async function deleteCategory(name: string): Promise<ActionResult & { affected?: number }> {
+  const n = name.trim();
+  if (!n) return fail('分类名称不能为空');
+  const { supabase, ok: can, error } = await requireBookEditor();
+  if (!can) return fail(error!);
+  const { data: existing } = await supabase.from('books').select('id').eq('category', n).limit(5000);
+  const affected = (existing || []).length;
+  const { error: err } = await supabase.from('books').update({ category: null }).eq('category', n);
+  if (err) return fail(friendlyDbError(err, { fallback: '删除失败，请重试' }));
+  revalidatePath('/books');
+  return { success: true, affected };
+}

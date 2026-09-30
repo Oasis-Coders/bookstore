@@ -10,6 +10,13 @@ export default async function EditBookPage({ params }: { params: Promise<{ id: s
   const { data: book, error } = await supabase.from('books').select('*').eq('id', id).single();
   if (error || !book) notFound();
 
+  // 1C: 已分配的内部备用条码（如有）
+  let spareBarcode: string | null = null;
+  try {
+    const { data: spare } = await supabase.from('spare_barcodes').select('code').eq('assigned_book_id', id).eq('status', 'assigned').limit(1).maybeSingle();
+    spareBarcode = (spare as any)?.code || null;
+  } catch {}
+
   // Check if current user can delete (admin or super_admin)
   let canDelete = false;
   try {
@@ -21,5 +28,5 @@ export default async function EditBookPage({ params }: { params: Promise<{ id: s
     }
   } catch {}
 
-  return <EditBookClient book={book} canDelete={canDelete} />;
+  return <EditBookClient book={book} canDelete={canDelete} spareBarcode={spareBarcode} />;
 }

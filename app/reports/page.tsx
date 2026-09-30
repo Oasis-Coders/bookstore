@@ -2,8 +2,9 @@ import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ReportsClient } from './reports-client';
 
-export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string }> }) {
-  const { from, to, month } = await searchParams;
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string }> }) {
+  const { from, to, month, pay } = await searchParams;
+  const payFilter = pay && pay !== 'all' ? pay : null;
   const supabase = await createSupabaseServerClient();
   let valuation: any[] = [] as any[];
   let lowStock: any[] = [] as any[];
@@ -41,6 +42,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by').order('sale_number', { ascending: true });
           if (from) query = query.gte('sale_date', from);
           if (to) query = query.lte('sale_date', to);
+          if (payFilter) query = query.eq('payment_method', payFilter); // 未选(pending) = NULL, 按指定方式筛选时自然排除
           const { data } = await query.limit(2000);
           // Fetch staff names separately for robustness (FK may not have PostgREST relationship)
           let profileMap: Record<string, string> = {};
@@ -65,6 +67,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             let q2 = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by, profiles(display_name)').order('sale_number', { ascending: true });
             if (from) q2 = q2.gte('sale_date', from);
             if (to) q2 = q2.lte('sale_date', to);
+            if (payFilter) q2 = q2.eq('payment_method', payFilter);
             const { data } = await q2.limit(2000);
             salesList = (data || []).map((s: any) => ({
               ...s,
@@ -195,7 +198,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all' }} />
     </Suspense>
   );
 }

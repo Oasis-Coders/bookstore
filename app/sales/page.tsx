@@ -1,14 +1,16 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SalesClient } from './sales-client';
 
-export default async function SalesPage() {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q: qRaw } = await searchParams;
+  const q = (qRaw || '').trim();
   const supabase = await createSupabaseServerClient();
   let books: any[] = [] as any[];
   let recentSales: any[] = [] as any[];
   let stockMap: Record<string, number> = {};
   let isAdmin = false;
   let saleLocationId: string | null = null;
-  
+
   if (supabase) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -38,10 +40,13 @@ export default async function SalesPage() {
       console.error('books fetch error', e);
     }
     try {
-      const sRes = await supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, customer_name, sold_at, sale_date').order('sold_at', { ascending: false }).limit(20);
-      // Display the latest 20 sales sorted by sale number ascending
-      const latestFirst = [...(sRes.data || [])].sort((a: any, b: any) => String(a.sale_number || '').localeCompare(String(b.sale_number || '')));
-      recentSales = latestFirst.map((s: any) => ({
+      // 2C: 按单号降序；支持按购书人/单号搜索
+      let sQuery = supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, payment_mix, payment_status, customer_name, sold_at, sale_date').order('sale_number', { ascending: false });
+      if (q) {
+        sQuery = sQuery.or(`sale_number.ilike.%${q}%,customer_name.ilike.%${q}%`);
+      }
+      const sRes = await sQuery.limit(q ? 50 : 20);
+      recentSales = (sRes.data || []).map((s: any) => ({
         id: s.id,
         sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
         subtotal: s.subtotal,
@@ -49,6 +54,8 @@ export default async function SalesPage() {
         shipping_cost: s.shipping_cost,
         net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
         payment_method: s.payment_method,
+        payment_mix: s.payment_mix,
+        payment_status: s.payment_status,
         customer_name: s.customer_name,
         sold_at: s.sale_date || new Date(s.sold_at).toLocaleString('en-GB'),
       }));
@@ -87,5 +94,5 @@ export default async function SalesPage() {
     }
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} salesQuery={q} />;
 }

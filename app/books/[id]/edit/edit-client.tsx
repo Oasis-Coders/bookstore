@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateBook, deleteBook } from '@/app/books/actions';
 import { CategorySelect } from '@/components/ui/category-select';
+import { PublisherSelect } from '@/components/ui/publisher-select';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boolean }) {
+export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; canDelete?: boolean; spareBarcode?: string | null }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -100,13 +101,20 @@ export function EditBookClient({ book, canDelete }: { book: any; canDelete?: boo
               </div>
               <div>
                 <label htmlFor="edit-publisher" className="text-[11px] text-[#5b5f94]">{isZh ? '出版社' : 'Publisher'}</label>
-                <Input id="edit-publisher" name="publisher" defaultValue={book.publisher || ''} className="mt-1" />
+                <PublisherSelect id="edit-publisher" name="publisher" defaultValue={book.publisher || ''} className="mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-isbn13" className="text-[11px] text-[#5b5f94]">ISBN13</label>
                 <Input id="edit-isbn13" name="isbn13" defaultValue={book.isbn13 || ''} spellCheck={false} inputMode="numeric" className="mt-1" />
+                {spareBarcode ? (
+                  <p className="mt-1 text-[11px] text-cocm-ink">{isZh ? '内部备用条码：' : 'Spare code: '}<span className="font-mono font-semibold">{spareBarcode}</span></p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-[#5b5f94]">
+                    <Link href="/books/barcodes" className="underline hover:text-cocm-ink">{isZh ? '去分配内部备用条码' : 'Assign a spare barcode'}</Link>
+                  </p>
+                )}
               </div>
               <div>
                 <label htmlFor="edit-category" className="text-[11px] text-[#5b5f94]">{isZh ? '分类' : 'Category'}</label>

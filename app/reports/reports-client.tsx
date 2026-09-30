@@ -17,6 +17,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const searchParams = useSearchParams();
 
   const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
+  const [payFilter, setPayFilter] = useState(initialFilters?.pay || 'all');
   const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
   const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
 
@@ -37,6 +38,22 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [showHistory, setShowHistory] = useState(false);
   const [snapshotMsg, setSnapshotMsg] = useState('');
   const [filtering, setFiltering] = useState(false);
+  const PAY_FILTER_LABELS: Record<string, { zh: string; en: string }> = {
+    all: { zh: '全部', en: 'All' },
+    cash: { zh: '现金', en: 'Cash' },
+    card: { zh: '刷卡', en: 'Card' },
+    bank_transfer: { zh: '银行转账', en: 'Bank Transfer' },
+    shopify: { zh: '网付', en: 'Shopify' },
+    paypal: { zh: 'PayPal', en: 'PayPal' },
+    mix: { zh: '混合', en: 'Mix' },
+    deferral: { zh: '挂账', en: 'Deferral' },
+    other: { zh: '其他', en: 'Other' },
+  };
+  const payLabelOf = (m: string | null) => {
+    if (!m) return isZh ? '未选' : 'Not chosen';
+    const l = PAY_FILTER_LABELS[m];
+    return l ? (isZh ? l.zh : l.en) : m;
+  };
 
   useEffect(() => {
     if (monthlyFinancial) {
@@ -157,11 +174,11 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     } else if (type === 'sales') {
       downloadCsv(`sales_${fromDate}_to_${toDate}.csv`,
         ['Date', 'Sale Number', 'Payment Method', 'Status', 'Subtotal', 'Discount', 'Postage', 'Net Total', 'Customer', 'Staff'],
-        salesList.map(r => [r.sale_date, r.sale_number, r.payment_method, r.payment_status, r.subtotal, r.discount_amount || 0, r.shipping_cost || 0, r.net_total, r.customer_name || '', r.created_by_name || r.staff_name || '']));
+        salesList.map(r => [r.sale_date, r.sale_number, payLabelOf(r.payment_method), r.payment_status, r.subtotal, r.discount_amount || 0, r.shipping_cost || 0, r.net_total, r.customer_name || '', r.created_by_name || r.staff_name || '']));
     } else if (type === 'salesBooks') {
       downloadCsv(`sales_books_${fromDate}_to_${toDate}.csv`,
         ['Date', 'Sale Number', 'SKU', 'Title', 'Qty', 'Unit Price', 'Payment Method', 'Customer', 'Shelf Position', 'Warehouse Location'],
-        salesBooksList.map(r => [r.sale_date, r.sale_number, r.sku, r.title, r.quantity, r.unit_price, r.payment_method, r.customer_name || '', r.shelf_position || '', r.warehouse_location || '']));
+        salesBooksList.map(r => [r.sale_date, r.sale_number, r.sku, r.title, r.quantity, r.unit_price, payLabelOf(r.payment_method), r.customer_name || '', r.shelf_position || '', r.warehouse_location || '']));
     }
   };
 
@@ -170,6 +187,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     const params = new URLSearchParams(searchParams.toString());
     params.set('from', fromDate);
     params.set('to', toDate);
+    params.set('pay', payFilter);
     if (selectedMonth) params.set('month', selectedMonth);
     router.push(`/reports?${params.toString()}`);
     setTimeout(()=>setFiltering(false), 800);
@@ -310,8 +328,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <label htmlFor="report-to" className="text-[11px] font-medium">{isZh ? '结束日期' : 'To'}</label>
             <Input id="report-to" type="date" value={toDate} onChange={e => setToDate(e.target.value)} className="mt-1 h-9 rounded-[10px]" />
           </div>
+          <div>
+            <label htmlFor="report-pay" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
+            <select id="report-pay" value={payFilter} onChange={e => setPayFilter(e.target.value)} className="mt-1 flex h-9 rounded-[10px] border border-cocm-ink/15 bg-white px-3 text-[12px]">
+              {Object.entries(PAY_FILTER_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{isZh ? v.zh : v.en}</option>
+              ))}
+            </select>
+          </div>
           <Button size="sm" onClick={handleDateFilter} disabled={filtering} className="h-9 rounded-[10px] min-w-[64px]">{filtering ? <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin motion-reduce:animate-none inline-block" />{isZh ? '查询中' : 'Loading'}</span> : (isZh ? '查询' : 'Filter')}</Button>
-          <span className="text-[11px] text-[#5b5f94]">{isZh ? '附件财务月报表格参考：日期、单号、付款方式/状态、合计' : 'Ref attachment financial monthly report: Date, Sale No, Payment/Status, Total'}</span>
+          <span className="text-[11px] text-[#5b5f94]">{isZh ? '付款方式筛选适用于下方销售单/书目列表及所有 CSV 导出' : 'Payment filter applies to the sales lists below and all CSV exports'}</span>
         </div>
       </Card>
 
@@ -330,7 +356,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                   <tr key={i} className="border-b border-cocm-ink/5">
                     <td className="py-2">{r.sale_date}</td>
                     <td className="py-2 font-mono font-medium">{r.sale_number}</td>
-                    <td className="py-2"><Badge variant="active" className="text-[10px]">{r.payment_method}</Badge></td>
+                    <td className="py-2"><Badge variant="active" className="text-[10px]">{payLabelOf(r.payment_method)}</Badge></td>
                     <td className="py-2 text-[11px]">{r.payment_status}</td>
                     <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || r.subtotal || 0))}</td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>

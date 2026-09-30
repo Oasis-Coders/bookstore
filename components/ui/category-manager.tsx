@@ -1,0 +1,138 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useT } from '@/lib/i18n/use-t';
+import {
+  getCategoryStats,
+  renameCategory,
+  deleteCategory,
+  type CategoryStat,
+} from '@/app/books/actions';
+
+/**
+ * 1B: 分类管理 — 改名 / 删除。删除分类会把该分类下图书的分类清空（图书保留）。
+ */
+export function CategoryManager() {
+  const { lang } = useT();
+  const isZh = lang === 'zh';
+  const [open, setOpen] = useState(false);
+  const [cats, setCats] = useState<CategoryStat[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [msg, setMsg] = useState('');
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      setCats(await getCategoryStats());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (open) { load(); setMsg(''); setEditing(null); }
+  }, [open ]);
+
+  const doRename = async (oldName: string) => {
+    const v = editValue.trim();
+    if (!v) { setMsg(isZh ? '新名称不能为空' : 'Name cannot be empty'); return; }
+    if (v === oldName) { setEditing(null); return; }
+    setBusy(oldName);
+    const r = await renameCategory(oldName, v);
+    setBusy(null);
+    if (!r.success) { setMsg(r.error || (isZh ? '改名失败' : 'Rename failed')); return; }
+    setEditing(null);
+    setMsg(isZh ? `已改名：${oldName} → ${v}` : `Renamed: ${oldName} → ${v}`);
+    load();
+  };
+
+  const doDelete = async (c: CategoryStat) => {
+    const confirmMsg = isZh
+      ? `确定删除分类「${c.name}」吗？该分类下 ${c.count} 本书的分类将被清空（图书保留）。`
+      : `Delete category "${c.name}"? ${c.count} book(s) will become uncategorized (books are kept).`;
+    if (!window.confirm(confirmMsg)) return;
+    setBusy(c.name);
+    const r = await deleteCategory(c.name);
+    setBusy(null);
+    if (!r.success) { setMsg(r.error || (isZh ? '删除失败' : 'Delete failed')); return; }
+    setMsg(isZh ? `已删除「${c.name}」，${r.affected || 0} 本书已取消分类` : `Deleted "${c.name}"`);
+    load();
+  };
+
+  return (
+    <>
+      <Button variant="ghost" size="sm" className="rounded-[12px]" onClick={() => setOpen(true)}>
+        {isZh ? '管理分类' : 'Manage categories'}
+      </Button>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-cocm-ink/30 p-4" onClick={() => setOpen(false)}>
+          <div
+            className="w-full max-w-[480px] rounded-[16px] bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label={isZh ? '管理分类' : 'Manage categories'}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-[16px] font-semibold text-cocm-ink">{isZh ? '管理分类' : 'Manage categories'}</h3>
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>{isZh ? '关闭' : 'Close'}</Button>
+            </div>
+            <p className="mt-1 text-[11px] text-[#5b5f94]">
+              {isZh ? '改名会更新该分类下所有图书；删除分类只清空图书的分类，图书本身保留。' : 'Renaming updates all books in the category; deleting only clears the category from books.'}
+            </p>
+            {msg && <p className="mt-2 text-[12px] text-cocm-ink">{msg}</p>}
+            <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto">
+              {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
+              {!loading && cats.length === 0 && (
+                <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
+              )}
+              {cats.map((c) => (
+                <div key={c.name} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
+                  {editing === c.name ? (
+                    <>
+                      <Input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        className="h-8 flex-1 text-[12px]"
+                        autoFocus
+                        onKeyDown={(e) => { if (e.key === 'Enter') doRename(c.name); if (e.key === 'Escape') setEditing(null); }}
+                      />
+                      <Button size="sm" className="h-8 rounded-[8px]" disabled={busy === c.name} onClick={() => doRename(c.name)}>
+                        {isZh ? '保存' : 'Save'}
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-8 rounded-[8px]" onClick={() => setEditing(null)}>
+                        {isZh ? '取消' : 'Cancel'}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 truncate text-[13px] font-medium text-cocm-ink">{c.name}</span>
+                      <span className="text-[11px] text-[#5b5f94]">{c.count}{isZh ? ' 本' : ''}</span>
+                      <Button
+                        size="sm" variant="ghost" className="h-7 rounded-[8px] px-2 text-[11px]"
+                        onClick={() => { setEditing(c.name); setEditValue(c.name); setMsg(''); }}
+                      >
+                        {isZh ? '改名' : 'Rename'}
+                      </Button>
+                      <Button
+                        size="sm" variant="ghost" className="h-7 rounded-[8px] px-2 text-[11px] text-red-600 hover:text-red-700"
+                        disabled={busy === c.name}
+                        onClick={() => doDelete(c)}
+                      >
+                        {isZh ? '删除' : 'Delete'}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
