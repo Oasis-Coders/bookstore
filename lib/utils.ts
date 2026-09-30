@@ -20,3 +20,10 @@ export function formatDate(date: string | Date) {
     day: 'numeric',
   }).format(new Date(date));
 }
+
+// 金额统一按"分"取整：消除 9.979999542236328 这类浮点尾数，输入框与入库都干净
+export function round2(n: number | string | null | undefined): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.round(v * 100) / 100;
+}

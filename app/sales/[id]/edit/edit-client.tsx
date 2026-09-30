@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
+import { round2 } from '@/lib/utils';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { friendlyDbError } from '@/lib/friendly-error';
 
@@ -53,8 +54,8 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
   const initMix = Array.isArray(sale.payment_mix) ? sale.payment_mix : [];
   const [mixA, setMixA] = useState(initMix[0]?.method || 'cash');
   const [mixB, setMixB] = useState(initMix[1]?.method || 'card');
-  const [mixAmtA, setMixAmtA] = useState(initMix[0]?.amount != null ? String(initMix[0].amount) : '');
-  const [mixAmtB, setMixAmtB] = useState(initMix[1]?.amount != null ? String(initMix[1].amount) : '');
+  const [mixAmtA, setMixAmtA] = useState(initMix[0]?.amount != null ? String(round2(initMix[0].amount)) : '');
+  const [mixAmtB, setMixAmtB] = useState(initMix[1]?.amount != null ? String(round2(initMix[1].amount)) : '');
   // 2B: 待付清空付款方式，切回已付恢复默认
   const handleStatusChange = (v: string) => {
     setPaymentStatus(v);
@@ -67,7 +68,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
     if (sub <= 0) return '0';
     return String(Math.round((disc / sub) * 100));
   });
-  const [shippingCost, setShippingCost] = useState(() => String(Number(sale.shipping_cost || 0)));
+  const [shippingCost, setShippingCost] = useState(() => String(round2(sale.shipping_cost || 0)));
   const [saleDate, setSaleDate] = useState(sale.sale_date || new Date().toISOString().slice(0,10));
   const [notes, setNotes] = useState(sale.notes || sale.customer_note || '');
   const [reason, setReason] = useState('');
@@ -179,7 +180,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
         p_notes: notes.trim() === '' ? '' : notes,
         p_shipping_cost: Math.round(shippingNum * 100) / 100,
         p_reason: reason,
-        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: Number(mixAmtA) }, { method: mixB, amount: Number(mixAmtB) }] : [], // 非混合时清空旧明细（DB 将 [] 视为清除）
+        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: round2(mixAmtA) }, { method: mixB, amount: round2(mixAmtB) }] : [], // 非混合时清空旧明细（DB 将 [] 视为清除）
       });
       if (error) {
         setMsg(friendlyDbError(error, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));

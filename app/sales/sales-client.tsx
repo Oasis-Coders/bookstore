@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
+import { round2 } from '@/lib/utils';
 import { createSale } from './actions';
 
 type CartItem = { id: string; title: string; qty: number; price: number; shelf_position?: string; sku?: string; stock?: number };
@@ -97,7 +98,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
       }
       setCart(cart.map(c=>c.id===found.id ? {...c, qty: c.qty+1} : c));
     } else {
-      setCart([...cart, { id: found.id, title: found.title, qty: 1, price: Number(found.current_price || 10), shelf_position: found.shelf_position, sku: found.sku, stock }]);
+      setCart([...cart, { id: found.id, title: found.title, qty: 1, price: round2(found.current_price || 10), shelf_position: found.shelf_position, sku: found.sku, stock }]);
     }
     setSelectedBookId('');
   };
@@ -114,7 +115,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
     setCart(cart.map(c => c.id === id ? { ...c, qty } : c));
   };
   const updatePrice = (id: string, price: number) => {
-    setCart(cart.map(c => c.id === id ? { ...c, price: Math.max(0, price) } : c));
+    setCart(cart.map(c => c.id === id ? { ...c, price: round2(Math.max(0, price)) } : c));
   };
 
   const handleConfirm = async () => {
@@ -144,8 +145,8 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
       fd.set('payment_status', paymentStatus);
       if (paymentMethod === 'mix') {
         fd.set('payment_mix', JSON.stringify([
-          { method: mixA, amount: Number(mixAmtA) },
-          { method: mixB, amount: Number(mixAmtB) },
+          { method: mixA, amount: round2(mixAmtA) },
+          { method: mixB, amount: round2(mixAmtB) },
         ]));
       }
       fd.set('customer_name', customerName);
