@@ -17,17 +17,21 @@ export default function BulkImportPage() {
   const [detectedEncoding, setDetectedEncoding] = useState('');
   const [encodingWarning, setEncodingWarning] = useState('');
 
-  // Decode an uploaded CSV buffer: strict UTF-8 first, fall back to GBK
-  // (Excel on Chinese Windows saves CSV as GBK/ANSI by default).
+  // Decode an uploaded CSV buffer: BOM sniffing first (UTF-8 / UTF-16),
+  // then strict UTF-8, fall back to GBK (Excel on Chinese Windows saves CSV
+  // as GBK/ANSI by default).
   const decodeCsvBuffer = (buf: ArrayBuffer): { text: string; encoding: string } => {
     const bytes = new Uint8Array(buf);
-    let offset = 0;
-    if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) offset = 3; // strip UTF-8 BOM
-    const slice = bytes.slice(offset);
+    if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf)
+      return { text: new TextDecoder('utf-8').decode(bytes.slice(3)), encoding: 'UTF-8' }; // strip UTF-8 BOM
+    if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe)
+      return { text: new TextDecoder('utf-16le').decode(bytes.slice(2)), encoding: 'UTF-16' };
+    if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff)
+      return { text: new TextDecoder('utf-16be').decode(bytes.slice(2)), encoding: 'UTF-16' };
     try {
-      return { text: new TextDecoder('utf-8', { fatal: true }).decode(slice), encoding: 'UTF-8' };
+      return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes), encoding: 'UTF-8' };
     } catch {
-      return { text: new TextDecoder('gbk').decode(slice), encoding: 'GBK' };
+      return { text: new TextDecoder('gbk').decode(bytes), encoding: 'GBK' };
     }
   };
 
@@ -64,7 +68,9 @@ export default function BulkImportPage() {
   };
 
   const downloadTemplate = () => {
-    const csv = 'sku,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,low_stock_threshold,initial_stock\nBOOK-001,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,5,10\nBOOK-002,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,3,5';
+    // BOM (\uFEFF) 让 Excel 直接按 UTF-8 打开，中文不再乱码。
+    // unit_cost（进货价）只用于首次启用系统时把现有库存一起导入；之后每笔采购的进货价在收货时手动填写。
+    const csv = '\uFEFF' + 'sku,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,unit_cost,low_stock_threshold,initial_stock\nBOOK-001,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,7.8,5,10\nBOOK-002,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,6.0,3,5';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -143,7 +149,8 @@ export default function BulkImportPage() {
                 book_id: newBook.id,
                 location_id: loc.id,
                 batch_code: `IMPORT-${row.sku}-${Date.now()}`,
-                unit_cost: row.current_price ? Number(row.current_price) * 0.6 : 5,
+                // 进货价：优先用表格里的 unit_cost（首次启用导入现有库存）；没填则沿用旧的估算
+                unit_cost: row.unit_cost ? Number(row.unit_cost) : (row.current_price ? Number(row.current_price) * 0.6 : 5),
                 quantity_received: initStock,
                 quantity_remaining: initStock,
                 created_by: userId,
@@ -175,8 +182,9 @@ export default function BulkImportPage() {
               <ol className="mt-2 list-decimal list-inside space-y-1 text-[#5b5f94]">
                 <li>{isZh ? '在表格中整理好书库，按模板格式保存为CSV' : 'Organize books in spreadsheet, save as CSV per template'}</li>
                 <li>{isZh ? '点击下载模板查看必填字段' : 'Download template to see required fields'}</li>
-                <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / GBK encoding), preview, then confirm import'}</li>
-                <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock'}</li>
+                <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / UTF-16 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / UTF-16 / GBK encoding), preview, then confirm import'}</li>
+                <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存、进货价' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock, unit cost'}</li>
+                <li>{isZh ? '进货价（unit_cost）只用于首次启用时导入现有库存；之后每笔采购的进货价在收货时手动填写' : 'unit_cost is only for the initial go-live import; later purchase costs are entered at receipt'}</li>
                 <li>{isZh ? '外接扫码枪：USB扫码器可直接扫ISBN，自动填入代号' : 'Barcode: USB scanners work directly, scanning ISBN auto-fills code'}</li>
               </ol>
             </div>
