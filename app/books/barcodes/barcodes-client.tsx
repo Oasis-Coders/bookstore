@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { AppShell } from '@/components/layout/app-shell';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export function BarcodesClient({
 }) {
   const { lang } = useT();
   const isZh = lang === 'zh';
+  const router = useRouter();
   const [tab, setTab] = useState<'assign' | 'assigned' | 'available'>('assign');
   const [q, setQ] = useState('');
   const [hits, setHits] = useState<BookHit[]>([]);
@@ -36,6 +38,7 @@ export function BarcodesClient({
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
   const [genCount, setGenCount] = useState('500');
+  const [lastAssignedCode, setLastAssignedCode] = useState('');
 
   const doSearch = async () => {
     if (!q.trim()) return;
@@ -51,6 +54,7 @@ export function BarcodesClient({
   const doAssign = async (b: BookHit) => {
     setBusy(b.id);
     setMsg('');
+    setLastAssignedCode('');
     const r = await assignSpareBarcode(b.id);
     setBusy(null);
     if (!r.success) {
@@ -58,7 +62,9 @@ export function BarcodesClient({
       return;
     }
     setMsg(isZh ? `已为《${b.title}》分配备用条码：${r.code}` : `Assigned ${r.code} to ${b.title}`);
+    setLastAssignedCode(r.code || '');
     setHits((prev) => prev.map((h) => (h.id === b.id ? { ...h, has_spare: true } : h)));
+    router.refresh();
   };
 
   const doGenerate = async () => {
@@ -69,6 +75,7 @@ export function BarcodesClient({
     setBusy(null);
     if (!r.success) { setMsg(r.error || (isZh ? '生成失败' : 'Generate failed')); return; }
     setMsg(isZh ? `已生成 ${r.generated} 个备用条码` : `Generated ${r.generated} spare barcodes`);
+    router.refresh();
   };
 
   const [exporting, setExporting] = useState(false);
@@ -152,7 +159,19 @@ export function BarcodesClient({
         </Card>
 
         {msg && (
-          <div className="rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px] text-cocm-ink">{msg}</div>
+          <div className="flex flex-wrap items-center gap-2 rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px] text-cocm-ink">
+            <span className="flex-1">{msg}</span>
+            {lastAssignedCode && (
+              <Link
+                href={`/books/barcodes/print?codes=${lastAssignedCode}`}
+                target="_blank"
+                rel="noopener"
+                className="shrink-0 rounded-[8px] bg-cocm-ink px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90"
+              >
+                {isZh ? '打印此条码' : 'Print this code'}
+              </Link>
+            )}
+          </div>
         )}
 
         {tab === 'assign' && (
@@ -202,7 +221,15 @@ export function BarcodesClient({
               {assigned.map((r) => (
                 <div key={r.code} className="flex items-center justify-between gap-2 rounded-[8px] bg-cocm-paper/60 px-3 py-1.5">
                   <span className="font-mono text-[13px] font-semibold text-cocm-ink">{r.code}</span>
-                  <span className="truncate text-[12px] text-[#5b5f94]">{r.book_title} · {r.book_sku}</span>
+                  <span className="flex-1 truncate text-right text-[12px] text-[#5b5f94]">{r.book_title} · {r.book_sku}</span>
+                  <Link
+                    href={`/books/barcodes/print?codes=${r.code}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="shrink-0 rounded-[8px] border border-cocm-ink/15 px-2 py-0.5 text-[11px] text-cocm-ink hover:bg-white"
+                  >
+                    {isZh ? '打印' : 'Print'}
+                  </Link>
                 </div>
               ))}
               {assigned.length === 0 && <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无' : 'None yet'}</p>}
@@ -214,9 +241,19 @@ export function BarcodesClient({
           <Card className="p-4">
             <div className="flex items-center justify-between">
               <CardTitle>{isZh ? '可用条码（前 300）' : 'Available (first 300)'}</CardTitle>
-              <Button size="sm" variant="ghost" className="h-8 rounded-[10px] text-[12px]" onClick={exportCsv} disabled={exporting}>
-                {exporting ? '…' : (isZh ? '导出全部可用 CSV（打印用）' : 'Export all available CSV')}
-              </Button>
+              <div className="flex gap-1.5">
+                <Link
+                  href="/books/barcodes/print"
+                  target="_blank"
+                  rel="noopener"
+                  className="inline-flex h-8 items-center rounded-[10px] bg-cocm-ink px-3 text-[12px] font-medium text-white hover:opacity-90"
+                >
+                  {isZh ? '打印条形码' : 'Print barcodes'}
+                </Link>
+                <Button size="sm" variant="ghost" className="h-8 rounded-[10px] text-[12px]" onClick={exportCsv} disabled={exporting}>
+                  {exporting ? '…' : (isZh ? '导出全部可用 CSV（打印用）' : 'Export all available CSV')}
+                </Button>
+              </div>
             </div>
             <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
               {available.map((r) => (

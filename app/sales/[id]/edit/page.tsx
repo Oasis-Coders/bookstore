@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditSaleClient } from './edit-client';
 import { notFound, redirect } from 'next/navigation';
+import { getAssignedSpareBarcodeMap } from '@/app/books/barcodes/actions';
 
 export default async function EditSalePage(props: { params: Promise<{ id: string }>, searchParams?: Promise<any> }) {
   const { id } = await props.params;
@@ -63,5 +64,5 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
     } catch {}
   }
 
-  return <EditSaleClient sale={sale} lines={lines || []} edits={edits} books={books} stockMap={stockMap} />;
+  return <EditSaleClient sale={sale} lines={lines || []} edits={edits} books={books} stockMap={stockMap} spareMap={await getAssignedSpareBarcodeMap()} />;
 }

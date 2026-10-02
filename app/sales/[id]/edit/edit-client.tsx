@@ -27,7 +27,7 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 
 const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
-export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: any; lines: any[]; edits: any[]; books?: any[]; stockMap?: Record<string, number> }) {
+export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }: { sale: any; lines: any[]; edits: any[]; books?: any[]; stockMap?: Record<string, number>; spareMap?: Record<string, string> }) {
   const { lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -260,7 +260,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap }: { sale: 
           <CardTitle>{isZh ? '编辑书目和数量' : 'Edit Books & Quantities'}</CardTitle>
           <div className="mt-3">
             <label htmlFor="edit-book-picker" className="text-[11px] font-semibold">{isZh ? '添加图书（输入缩小范围）' : 'Add Book (type to filter)'}</label>
-            <BookAutocomplete id="edit-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
+            <BookAutocomplete id="edit-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} spareMap={spareMap} placeholder={isZh ? '输入书名/代号/备用条码...' : 'Type title/sku/spare barcode...'} />
             <div className="mt-3 space-y-2 max-h-[360px] overflow-y-auto pr-1">
               {cart.map((item, idx) => (
                 <div key={item.id} className="flex items-center justify-between rounded-[12px] bg-cocm-paper px-3 py-2 text-[12px]">

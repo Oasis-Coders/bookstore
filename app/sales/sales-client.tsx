@@ -31,7 +31,7 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 // 2A: 混合支付可用的子方式（不含 mix 自身）
 const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
-export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; salesQuery?: string } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, salesQuery: '' }) {
+export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, salesQuery: '' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -45,6 +45,43 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
   const [scanInput, setScanInput] = useState('');
   const [selling, setSelling] = useState(false);
   const [msg, setMsg] = useState('');
+
+  /** 扫码/输入解析：SKU 精确 → 备用条码精确 → 书名/SKU 模糊 → 备用条码模糊 */
+  const resolveScan = (raw: string): any | null => {
+    const q = raw.trim().toLowerCase();
+    if (!q) return null;
+    let found = books?.find((b: any) => b.sku.toLowerCase() === q);
+    if (!found && spareMap) {
+      const digits = q.replace(/\D/g, '');
+      for (const [code, bookId] of Object.entries(spareMap)) {
+        if (code.toLowerCase() === q || (digits && code.replace(/\D/g, '') === digits)) {
+          found = books?.find((b: any) => b.id === bookId);
+          break;
+        }
+      }
+    }
+    if (!found) found = books?.find((b: any) => b.title.toLowerCase().includes(q) || b.sku.toLowerCase().includes(q));
+    if (!found && spareMap) {
+      for (const [code, bookId] of Object.entries(spareMap)) {
+        if (code.toLowerCase().includes(q)) {
+          found = books?.find((b: any) => b.id === bookId);
+          break;
+        }
+      }
+    }
+    return found || null;
+  };
+
+  const submitScan = () => {
+    const found = resolveScan(scanInput);
+    if (found) {
+      addBookById(found.id);
+      setScanInput('');
+      setMsg('');
+    } else if (scanInput.trim()) {
+      setMsg(isZh ? `未找到图书：${scanInput.trim()}` : `No book found: ${scanInput.trim()}`);
+    }
+  };
   
   // Default to today, set in an effect to avoid hydration mismatch (server/client date may differ)
   const [saleDate, setSaleDate] = useState('');
@@ -187,7 +224,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
           <CardTitle>{tt('sales.newSale')}</CardTitle>
           <p className="mt-1 text-[12px] text-[#5b5f94]">{tt('sales.newSaleHint')}</p>
 
-          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') || msg.includes('不足') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
+          {msg && <div role="status" aria-live="polite" className={`mt-3 rounded-[12px] px-3 py-2 text-[12px] ${msg.includes('失败') || msg.toLowerCase().includes('fail') || msg.includes('不足') || msg.includes('未找到') || msg.toLowerCase().includes('no book found') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>{msg}</div>}
 
           <div className="mt-4 space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -256,10 +293,10 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery 
 
             <div className="rounded-[16px] border border-dashed border-cocm-ink/20 p-4">
               <label htmlFor="sales-book-picker" className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
-              <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} placeholder={isZh ? '输入书名/代号...' : 'Type title/sku...'} />
+              <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} spareMap={spareMap} placeholder={isZh ? '输入书名/代号/备用条码...' : 'Type title/sku/spare barcode...'} />
               <div className="mt-2 flex gap-2">
-                <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q) || b.sku.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } } }} />
-                <Button variant="secondary" size="sm" onClick={() => { const q = scanInput.trim().toLowerCase(); if (!q) return; let found = books?.find((b:any) => b.sku.toLowerCase() === q); if (!found) found = books?.find((b:any) => b.title.toLowerCase().includes(q)); if (found) { addBookById(found.id); setScanInput(''); } }}>{tt('sales.add')}</Button>
+                <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitScan(); } }} />
+                <Button variant="secondary" size="sm" onClick={submitScan}>{tt('sales.add')}</Button>
               </div>
 
               <div className="mt-3 flex items-center justify-between text-[11px] text-[#5b5f94]">

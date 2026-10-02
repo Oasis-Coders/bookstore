@@ -4,20 +4,23 @@ import { Input } from './input';
 
 type BookOpt = { id: string; title: string; sku: string; title_en?: string; shelf_position?: string; current_price?: number };
 
-export function BookAutocomplete({ 
-  books, 
-  value, 
+export function BookAutocomplete({
+  books,
+  value,
   onChange,
   placeholder,
   isZh,
-  id
-}: { 
-  books: BookOpt[]; 
-  value: string; 
+  id,
+  spareMap,
+}: {
+  books: BookOpt[];
+  value: string;
   onChange: (id: string) => void;
   placeholder?: string;
   isZh?: boolean;
   id?: string;
+  /** 备用条码映射 code -> book_id；传入后输入备用条码也能定位到图书 */
+  spareMap?: Record<string, string>;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -48,13 +51,29 @@ export function BookAutocomplete({
 
   const filtered = useMemo(() => {
     if (!query) return books.slice(0, 20);
-    const q = query.toLowerCase();
-    return books.filter(b => 
-      b.title.toLowerCase().includes(q) || 
-      b.sku.toLowerCase().includes(q) ||
-      b.title_en?.toLowerCase().includes(q)
-    ).slice(0, 20);
-  }, [query, books]);
+    const q = query.trim().toLowerCase();
+    const seen = new Set<string>();
+    const out: BookOpt[] = [];
+    const push = (b: BookOpt) => { if (!seen.has(b.id)) { seen.add(b.id); out.push(b); } };
+    // 备用条码优先精确/模糊匹配
+    if (spareMap) {
+      for (const [code, bookId] of Object.entries(spareMap)) {
+        if (code.toLowerCase().includes(q)) {
+          const b = books.find((x) => x.id === bookId);
+          if (b) push(b);
+        }
+      }
+    }
+    for (const b of books) {
+      if (
+        b.title.toLowerCase().includes(q) ||
+        b.sku.toLowerCase().includes(q) ||
+        b.title_en?.toLowerCase().includes(q)
+      ) push(b);
+      if (out.length >= 20) break;
+    }
+    return out;
+  }, [query, books, spareMap]);
 
   const handleSelect = (book: BookOpt) => {
     setSelected(book);

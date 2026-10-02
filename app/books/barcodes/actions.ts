@@ -91,6 +91,23 @@ export async function getBookSpareBarcode(bookId: string): Promise<string | null
   return (data as any)?.code || null;
 }
 
+/** 已分配备用条码映射：code -> book_id（供销售/选书等页面扫码解析用） */
+export async function getAssignedSpareBarcodeMap(): Promise<Record<string, string>> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return {};
+  const { data } = await supabase
+    .from('spare_barcodes')
+    .select('code, assigned_book_id')
+    .eq('status', 'assigned')
+    .not('assigned_book_id', 'is', null)
+    .limit(100000);
+  const map: Record<string, string> = {};
+  for (const r of (data || []) as any[]) {
+    if (r.code && r.assigned_book_id) map[String(r.code).trim()] = r.assigned_book_id;
+  }
+  return map;
+}
+
 /** 按书名/代号搜索图书（分配条码用，只列出尚未分配备用条码的书优先） */
 export async function searchBooksForAssign(q: string): Promise<{ id: string; title: string; sku: string; isbn13: string | null; has_spare: boolean }[]> {
   const supabase = await createSupabaseServerClient();
