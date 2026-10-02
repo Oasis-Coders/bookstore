@@ -12,12 +12,28 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
   let mode: 'live' | 'empty' = 'empty';
 
   if (supabase) {
+    // 备用条码：q 若含数字，先在 spare_barcodes 里找已分配的图书 id
+    let spareBookIds: string[] = [];
+    const digits = q.replace(/\D/g, '');
+    if (digits.length >= 4) {
+      try {
+        const { data: spares } = await supabase
+          .from('spare_barcodes')
+          .select('assigned_book_id')
+          .eq('status', 'assigned')
+          .ilike('code', `%${digits}%`)
+          .not('assigned_book_id', 'is', null)
+          .limit(20);
+        spareBookIds = [...new Set(((spares || []) as any[]).map((r) => r.assigned_book_id).filter(Boolean))];
+      } catch {}
+    }
+    const spareOr = spareBookIds.length ? `,id.in.(${spareBookIds.join(',')})` : '';
     try {
       let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').order('title');
       if (show === 'active') query = query.eq('is_active', true);
       if (show === 'inactive') query = query.eq('is_active', false);
       if (q) {
-        query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%,warehouse_location.ilike.%${q}%`);
+        query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%,warehouse_location.ilike.%${q}%${spareOr}`);
       }
       const { data } = await query.limit(80);
       if (data) {
@@ -33,7 +49,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         if (show === 'active') query2 = query2.eq('is_active', true);
         if (show === 'inactive') query2 = query2.eq('is_active', false);
         if (q) {
-          query2 = query2.or(`title.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%`);
+          query2 = query2.or(`title.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%${spareOr}`);
         }
         const { data } = await query2.limit(80);
         if (data) {

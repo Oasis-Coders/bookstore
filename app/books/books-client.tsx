@@ -85,7 +85,7 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
             </Button>
           </form>
           <p className="text-[11px] text-[#5b5f94]">
-            {isZh ? '支持中英文、简繁体、代号、书架位置搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, Code, shelf. USB barcode scanner supported - scans auto-submit.'}
+            {isZh ? '支持中英文、简繁体、代号、书架位置、备用条码搜索。外接USB扫码枪可直接扫码，扫码枪会自动回车搜索。' : 'Bilingual search incl. EN/ZH, simplified/traditional, Code, shelf, spare barcode. USB barcode scanner supported - scans auto-submit.'}
             {false && <span className="ml-2 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">{tt('common.demoMode')}</span>}
           </p>
           <div className="flex gap-1.5" role="group" aria-label={isZh ? '按状态筛选' : 'Filter by status'}>
