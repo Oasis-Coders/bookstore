@@ -17,7 +17,7 @@ import {
   type SpareBarcodeRow,
 } from './actions';
 
-type BookHit = { id: string; title: string; sku: string; isbn13: string | null; has_spare: boolean };
+type BookHit = { id: string; title: string; sku: string; isbn13: string | null; has_spare: boolean; is_active: boolean };
 
 export function BarcodesClient({
   stats,
@@ -194,7 +194,7 @@ export function BarcodesClient({
                 <div key={b.id} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
                   <div className="flex-1 min-w-0">
                     <p className="truncate text-[13px] font-medium text-cocm-ink">{b.title}</p>
-                    <p className="text-[11px] text-[#5b5f94]">{b.sku}{b.isbn13 ? ` · ISBN ${b.isbn13}` : ''}{b.has_spare ? (isZh ? ' · 已有备用条码' : ' · has spare code') : ''}</p>
+                    <p className="text-[11px] text-[#5b5f94]">{b.sku}{b.isbn13 ? ` · ISBN ${b.isbn13}` : ''}{b.has_spare ? (isZh ? ' · 已有备用条码' : ' · has spare code') : ''}{!b.is_active ? (isZh ? ' · 已停用' : ' · inactive') : ''}</p>
                   </div>
                   <Button
                     size="sm"

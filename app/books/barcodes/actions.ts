@@ -108,17 +108,16 @@ export async function getAssignedSpareBarcodeMap(): Promise<Record<string, strin
   return map;
 }
 
-/** 按书名/代号搜索图书（分配条码用，只列出尚未分配备用条码的书优先） */
-export async function searchBooksForAssign(q: string): Promise<{ id: string; title: string; sku: string; isbn13: string | null; has_spare: boolean }[]> {
+/** 按书名/代号搜索图书（分配条码用；含停用图书，与书库页一致） */
+export async function searchBooksForAssign(q: string): Promise<{ id: string; title: string; sku: string; isbn13: string | null; has_spare: boolean; is_active: boolean }[]> {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
   const kw = q.trim();
   if (!kw) return [];
   const { data: books } = await supabase
     .from('books')
-    .select('id, title, sku, isbn13')
-    .eq('is_active', true)
-    .or(`title.ilike.%${kw}%,sku.ilike.%${kw}%`)
+    .select('id, title, sku, isbn13, is_active')
+    .or(`title.ilike.%${kw}%,title_simplified.ilike.%${kw}%,title_traditional.ilike.%${kw}%,title_en.ilike.%${kw}%,sku.ilike.%${kw}%`)
     .order('title')
     .limit(20);
   const ids = ((books || []) as any[]).map((b) => b.id);
@@ -128,6 +127,6 @@ export async function searchBooksForAssign(q: string): Promise<{ id: string; tit
     assignedSet = new Set(((assigned || []) as any[]).map((r) => r.assigned_book_id));
   }
   return ((books || []) as any[]).map((b) => ({
-    id: b.id, title: b.title, sku: b.sku, isbn13: b.isbn13 || null, has_spare: assignedSet.has(b.id),
+    id: b.id, title: b.title, sku: b.sku, isbn13: b.isbn13 || null, has_spare: assignedSet.has(b.id), is_active: b.is_active !== false,
   }));
 }
