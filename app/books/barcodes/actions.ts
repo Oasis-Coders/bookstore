@@ -20,10 +20,14 @@ export type SpareBarcodeRow = {
 export async function getSpareBarcodeStats(): Promise<SpareBarcodeStat> {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { total: 0, available: 0, assigned: 0 };
-  const { data } = await supabase.from('spare_barcodes').select('status');
-  const total = (data || []).length;
-  const available = (data || []).filter((r: any) => r.status === 'available').length;
-  return { total, available, assigned: total - available };
+  // 用 head count 精确计数：直接拉全表会被 Supabase 默认 1000 行截断
+  const [{ count: total }, { count: available }] = await Promise.all([
+    supabase.from('spare_barcodes').select('code', { count: 'exact', head: true }),
+    supabase.from('spare_barcodes').select('code', { count: 'exact', head: true }).eq('status', 'available'),
+  ]);
+  const t = total || 0;
+  const a = available || 0;
+  return { total: t, available: a, assigned: t - a };
 }
 
 export async function listSpareBarcodes(filter: 'available' | 'assigned', limit = 200): Promise<SpareBarcodeRow[]> {
