@@ -52,15 +52,17 @@ export async function createPODraft(input: { supplier_id: string; notes?: string
     p_lines: cleanLines,
   });
   if (error) return fail(friendlyDbError(error, { fallback: '创建失败，请重试' }));
-  const row = Array.isArray(data) ? data[0] : data;
-  const poId = row?.po_id as string;
+  // RPC 直接返回 uuid（字符串），也兼容返回行对象的写法
+  const poId = (typeof data === 'string' ? data : (Array.isArray(data) ? (data[0] as any)?.po_id : (data as any)?.po_id)) as string;
+  const poNumber = (typeof data === 'string' ? undefined : (Array.isArray(data) ? (data[0] as any)?.po_number : (data as any)?.po_number)) as string | undefined;
+  if (!poId) return fail('创建失败，请重试');
   if (input.order_date) {
     await supabase.from('purchase_orders').update({ order_date: input.order_date }).eq('id', poId);
   }
   // 3B: 记录建单经手人
   await appendStageHandler(supabase, poId, 'draft');
   revalidatePath('/purchase-orders');
-  return ok({ poId, poNumber: row?.po_number as string });
+  return ok({ poId, poNumber });
 }
 
 /** 3A: 取某供应商历史订过的书目（供一键导入勾选） */

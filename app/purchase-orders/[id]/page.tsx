@@ -51,6 +51,8 @@ export default function PODetailPage() {
   // 收货表单：每行数量 + 实际进货价
   const [locationId, setLocationId] = useState('');
   const [receiveRows, setReceiveRows] = useState<Record<string, { qty: string; cost: string }>>({});
+  // 结束采购单：两步确认（第一步布防，第二步执行）
+  const [finalizeArmed, setFinalizeArmed] = useState(false);
 
   async function fetchData() {
     const supabase = createSupabaseBrowserClient();
@@ -99,16 +101,12 @@ export default function PODetailPage() {
     if (rows.length === 0) { setError(isZh ? '请至少填写一行的收货数量；若剩余书不再到货，可点下方的「结束采购单」' : 'Fill at least one row; if the rest will never arrive, use “Finalize PO” below'); return; }
     await run('receive', () => receivePOWithCost({ po_id: id, location_id: locationId, lines: rows }));
     setReceiveRows({});
+    setFinalizeArmed(false);
   }
 
   async function handleFinalize() {
-    const remaining = lines
-      .filter((l) => l.is_selected)
-      .reduce((s, l) => s + Math.max(0, Number(l.quantity_ordered) - Number(l.quantity_received || 0)), 0);
-    const ok = window.confirm(isZh
-      ? `剩余 ${remaining} 本将不再收货，确定结束本采购单吗？结束后不可再收货。`
-      : `${remaining} pcs will no longer be received. Finalize this PO? No further receiving afterwards.`);
-    if (!ok) return;
+    if (!finalizeArmed) { setFinalizeArmed(true); return; }
+    setFinalizeArmed(false);
     await run('finalize', () => finalizePO(id));
   }
 
@@ -153,6 +151,10 @@ export default function PODetailPage() {
     closed: isZh ? '已结束' : 'Closed',
     cancelled: isZh ? '已取消' : 'Cancelled',
   };
+
+  const remainingTotal = lines
+    .filter((l) => l.is_selected)
+    .reduce((s, l: any) => s + Math.max(0, Number(l.quantity_ordered) - Number(l.quantity_received || 0)), 0);
 
   return (
     <AppShell title={po.po_number} titleZh={po.po_number} eyebrow={isZh ? '采购单详情' : 'Purchase Order Details'}>
@@ -324,7 +326,11 @@ export default function PODetailPage() {
                       : 'If the remaining qty will never arrive (short shipment), finalize the PO; no further receiving afterwards.'}
                   </p>
                   <Button type="button" variant="ghost" size="sm" className="mt-2 w-full" disabled={!!actionLoading} onClick={handleFinalize}>
-                    {actionLoading === 'finalize' ? (isZh ? '处理中...' : 'Processing...') : (isZh ? '确认收完，结束采购单' : 'Finalize PO')}
+                    {actionLoading === 'finalize'
+                      ? (isZh ? '处理中...' : 'Processing...')
+                      : finalizeArmed
+                        ? (isZh ? `再次点击确认结束（剩余 ${remainingTotal} 本不再收货）` : `Click again to finalize (${remainingTotal} pcs will not be received)`)
+                        : (isZh ? '确认收完，结束采购单' : 'Finalize PO')}
                   </Button>
                 </div>
               )}
