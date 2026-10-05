@@ -13,7 +13,7 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 import {
   approvePOWithHandler, markPOOrdered, togglePOLineSelected,
-  addPOLine, removePOLine, updatePOLineQty, receivePOWithCost,
+  addPOLine, removePOLine, updatePOLineQty, receivePOWithCost, finalizePO,
   getPOStageHandlers, type StageHandler,
 } from '../actions';
 
@@ -26,6 +26,7 @@ const STAGE_LABEL: Record<string, { zh: string; en: string }> = {
   approved: { zh: '批准', en: 'Approved' },
   ordered: { zh: '下单', en: 'Ordered' },
   received: { zh: '收货', en: 'Received' },
+  finalized: { zh: '结束', en: 'Finalized' },
 };
 
 export default function PODetailPage() {
@@ -95,9 +96,20 @@ export default function PODetailPage() {
     const rows = Object.entries(receiveRows)
       .filter(([, r]) => Number(r.qty) > 0)
       .map(([lineId, r]) => ({ purchase_order_line_id: lineId, quantity: Math.floor(Number(r.qty)), unit_cost: Math.round(Number(r.cost || 0) * 100) / 100 }));
-    if (rows.length === 0) { setError(isZh ? '请至少填写一行的收货数量' : 'Fill at least one row'); return; }
+    if (rows.length === 0) { setError(isZh ? '请至少填写一行的收货数量；若剩余书不再到货，可点下方的「结束采购单」' : 'Fill at least one row; if the rest will never arrive, use “Finalize PO” below'); return; }
     await run('receive', () => receivePOWithCost({ po_id: id, location_id: locationId, lines: rows }));
     setReceiveRows({});
+  }
+
+  async function handleFinalize() {
+    const remaining = lines
+      .filter((l) => l.is_selected)
+      .reduce((s, l) => s + Math.max(0, Number(l.quantity_ordered) - Number(l.quantity_received || 0)), 0);
+    const ok = window.confirm(isZh
+      ? `剩余 ${remaining} 本将不再收货，确定结束本采购单吗？结束后不可再收货。`
+      : `${remaining} pcs will no longer be received. Finalize this PO? No further receiving afterwards.`);
+    if (!ok) return;
+    await run('finalize', () => finalizePO(id));
   }
 
   function exportLinesCSV() {
@@ -138,6 +150,7 @@ export default function PODetailPage() {
     ordered: isZh ? '已下单' : 'Ordered',
     partially_received: isZh ? '部分收货' : 'Partially Received',
     received: isZh ? '已收货' : 'Received',
+    closed: isZh ? '已结束' : 'Closed',
     cancelled: isZh ? '已取消' : 'Cancelled',
   };
 
@@ -303,6 +316,18 @@ export default function PODetailPage() {
               <Button type="submit" size="sm" className="w-full" disabled={!!actionLoading}>
                 {actionLoading === 'receive' ? (isZh ? '处理中...' : 'Processing...') : (isZh ? '确认收货入库' : 'Confirm Receipt')}
               </Button>
+              {po.status === 'partially_received' && (
+                <div className="border-t border-cocm-ink/10 pt-3">
+                  <p className="text-[11px] leading-relaxed text-[#5b5f94]">
+                    {isZh
+                      ? '若剩余数量不再到货（如供应商短装），可直接结束本单；结束后将不再收货。'
+                      : 'If the remaining qty will never arrive (short shipment), finalize the PO; no further receiving afterwards.'}
+                  </p>
+                  <Button type="button" variant="ghost" size="sm" className="mt-2 w-full" disabled={!!actionLoading} onClick={handleFinalize}>
+                    {actionLoading === 'finalize' ? (isZh ? '处理中...' : 'Processing...') : (isZh ? '确认收完，结束采购单' : 'Finalize PO')}
+                  </Button>
+                </div>
+              )}
             </form>
           </Card>
         )}

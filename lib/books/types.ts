@@ -49,7 +49,7 @@ export type PurchaseOrder = {
   id: string;
   po_number: string;
   supplier_id: string;
-  status: 'draft' | 'approved' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
+  status: 'draft' | 'approved' | 'ordered' | 'partially_received' | 'received' | 'closed' | 'cancelled';
   currency: string;
   order_date: string;
   expected_date?: string | null;

@@ -179,6 +179,20 @@ export async function receivePOWithCost(input: { po_id: string; location_id: str
   return ok({ data });
 }
 
+/** 3D: 结束采购单（短装：剩余数量永不到货）— 仅部分收货可结束 */
+export async function finalizePO(poId: string): Promise<ActionResult> {
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return fail('系统未配置');
+  const { data: po } = await supabase.from('purchase_orders').select('status').eq('id', poId).single();
+  if ((po as any)?.status !== 'partially_received') return fail('只有部分收货的采购单可以结束');
+  const { error } = await supabase.from('purchase_orders').update({ status: 'closed' }).eq('id', poId);
+  if (error) return fail(friendlyDbError(error, { fallback: '结束失败，请重试' }));
+  await appendStageHandler(supabase, poId, 'finalized');
+  revalidatePath('/purchase-orders');
+  revalidatePath('/reports');
+  return ok();
+}
+
 /** 3B: 取某采购单的经手人记录 */
 export async function getPOStageHandlers(poId: string): Promise<StageHandler[]> {
   const supabase = await createSupabaseServerClient();

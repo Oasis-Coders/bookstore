@@ -13,6 +13,7 @@ const STAGE_LABELS: Record<string, { zh: string; en: string }> = {
   approved: { zh: '批准', en: 'Approved' },
   ordered: { zh: '下单', en: 'Ordered' },
   received: { zh: '收货', en: 'Received' },
+  finalized: { zh: '结束', en: 'Finalized' },
 };
 
 const statusColor: Record<string, 'default' | 'active' | 'warning' | 'danger'> = {
@@ -21,6 +22,7 @@ const statusColor: Record<string, 'default' | 'active' | 'warning' | 'danger'> =
   ordered: 'warning',
   partially_received: 'active',
   received: 'active',
+  closed: 'default',
   cancelled: 'danger',
 };
 
@@ -34,6 +36,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
     ordered: tt('purchaseOrders.ordered'),
     partially_received: tt('purchaseOrders.partial'),
     received: tt('purchaseOrders.received'),
+    closed: tt('purchaseOrders.closed'),
     cancelled: tt('purchaseOrders.cancelled'),
   };
 
@@ -48,7 +51,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
         <div className="flex flex-wrap gap-2 text-[12px] text-[#5b5f94] items-center">
           <span>{tt('purchaseOrders.statusFlow')}</span>
           <Badge>{tt('purchaseOrders.draft')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.approved')}</Badge><span className="text-[10px]">→</span><Badge variant="warning">{tt('purchaseOrders.ordered')}</Badge><span className="text-[10px]">→</span>
-          <Badge variant="active">{tt('purchaseOrders.partial')}</Badge><span className="text-[10px]">→</span><Badge variant="active">{tt('purchaseOrders.received')}</Badge>
+          <Badge variant="active">{tt('purchaseOrders.partial')}</Badge><span className="text-[10px]">→</span><Badge variant="active">{tt('purchaseOrders.received')}</Badge><span className="text-[10px]">/</span><Badge>{tt('purchaseOrders.closed')}</Badge>
         </div>
       </Card>
 

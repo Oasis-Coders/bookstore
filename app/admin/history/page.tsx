@@ -233,7 +233,7 @@ function AuditHistoryInner() {
               {adjustments.map((po: any) => (
                 <div key={po.po_number} className="flex items-center justify-between rounded-[12px] bg-cocm-paper/50 px-3 py-2 text-[12px]">
                   <div className="min-w-0"><span className="font-mono font-medium">{po.po_number}</span><span className="ml-2 text-[11px] text-[#5b5f94]">{(po as any).profiles?.display_name || ''}{(po as any).profiles?.email ? ` (${(po as any).profiles.email})` : ''}</span></div>
-                  <div className="flex items-center gap-2 shrink-0"><Badge>{po.status === 'draft' ? (isZh ? '草稿' : 'Draft') : po.status === 'approved' ? (isZh ? '已批准' : 'Approved') : po.status === 'ordered' ? (isZh ? '已下单' : 'Ordered') : po.status === 'partially_received' ? (isZh ? '部分收货' : 'Partial') : po.status === 'received' ? (isZh ? '已收货' : 'Received') : po.status}</Badge><span className="text-[#5b5f94]">{po.suppliers?.name_zh}</span></div>
+                  <div className="flex items-center gap-2 shrink-0"><Badge>{po.status === 'draft' ? (isZh ? '草稿' : 'Draft') : po.status === 'approved' ? (isZh ? '已批准' : 'Approved') : po.status === 'ordered' ? (isZh ? '已下单' : 'Ordered') : po.status === 'partially_received' ? (isZh ? '部分收货' : 'Partial') : po.status === 'received' ? (isZh ? '已收货' : 'Received') : po.status === 'closed' ? (isZh ? '已结束' : 'Closed') : po.status}</Badge><span className="text-[#5b5f94]">{po.suppliers?.name_zh}</span></div>
                 </div>
               ))}
               {adjustments.length === 0 && <p className="py-6 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无采购单' : 'No POs'}</p>}

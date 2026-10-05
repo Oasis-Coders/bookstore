@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 type Supplier = any;
 type PO = { id: string; po_number: string; status: string; created_at: string; order_date?: string };
-const statusZh: Record<string,string> = { draft:'草稿', approved:'已批准', ordered:'已下单', partially_received:'部分收货', received:'已收货', cancelled:'已取消' };
+const statusZh: Record<string,string> = { draft:'草稿', approved:'已批准', ordered:'已下单', partially_received:'部分收货', received:'已收货', closed:'已结束', cancelled:'已取消' };
 
 export default function SupplierDetailPage() {
   const { id } = useParams() as { id: string };

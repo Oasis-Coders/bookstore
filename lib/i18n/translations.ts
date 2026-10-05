@@ -131,6 +131,7 @@ export const translations = {
       ordered: 'Ordered',
       partial: 'Partially Received',
       received: 'Received',
+      closed: 'Closed',
       cancelled: 'Cancelled',
       differentCostTitle: 'Same book, different batch cost',
       differentCostDesc:
@@ -342,6 +343,7 @@ export const translations = {
       ordered: '已下单',
       partial: '部分收货',
       received: '已收货',
+      closed: '已结束',
       cancelled: '已取消',
       differentCostTitle: '同书不同批次进价',
       differentCostDesc:

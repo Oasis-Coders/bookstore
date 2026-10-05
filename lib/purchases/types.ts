@@ -1,4 +1,4 @@
-export type PurchaseOrderStatus = 'draft' | 'approved' | 'ordered' | 'partially_received' | 'received' | 'cancelled';
+export type PurchaseOrderStatus = 'draft' | 'approved' | 'ordered' | 'partially_received' | 'received' | 'closed' | 'cancelled';
 
 export type PurchaseOrderLine = {
   id: string;
