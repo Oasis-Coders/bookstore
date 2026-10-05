@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { ensurePublisherSuppliers } from '@/lib/ensure-publisher-supplier';
 
 export default function BulkImportPage() {
   const { lang } = useT();
@@ -14,6 +15,7 @@ export default function BulkImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState('');
   const [importErrors, setImportErrors] = useState<string[]>([]);
+  const [syncNotes, setSyncNotes] = useState<string[]>([]);
   const [detectedEncoding, setDetectedEncoding] = useState('');
   const [encodingWarning, setEncodingWarning] = useState('');
 
@@ -63,6 +65,7 @@ export default function BulkImportPage() {
       setPreview(rows);
       setResult('');
       setImportErrors([]);
+      setSyncNotes([]);
     };
     reader.readAsArrayBuffer(file);
   };
@@ -85,6 +88,7 @@ export default function BulkImportPage() {
     setImporting(true);
     setResult('');
     setImportErrors([]);
+    setSyncNotes([]);
     try {
       const supabase = createSupabaseBrowserClient();
       if (!supabase) throw new Error(isZh ? '未连接数据库' : 'Not connected to database');
@@ -163,6 +167,20 @@ export default function BulkImportPage() {
           }
         }
       }
+      // 出版社自动同步为供应商：模板里 Publisher 列出现的新出版社名，
+      // 自动建进供应商表，之后在采购单/供应商页面的下拉里可直接选用，免去手动添加。
+      const notes: string[] = [];
+      try {
+        const publishers = preview.map(r => r.publisher).filter(Boolean);
+        const { created, warnings } = await ensurePublisherSuppliers(supabase, publishers);
+        if (created.length > 0) {
+          notes.push(`${isZh ? '以下出版社已自动同步为供应商：' : 'Auto-synced as suppliers: '}${created.join('、')}`);
+        }
+        for (const w of warnings) notes.push(`${isZh ? '供应商同步提醒：' : 'Supplier sync note: '}${w}`);
+      } catch (e: any) {
+        notes.push(`${isZh ? '供应商同步失败：' : 'Supplier sync failed: '}${e?.message || ''}`);
+      }
+      setSyncNotes(notes);
       setImportErrors(errors);
       setResult(isZh ? `导入完成：成功 ${successCount} 本，失败 ${errors.length} 本` : `Import complete: ${successCount} succeeded, ${errors.length} failed`);
     } catch (e: any) {
@@ -208,6 +226,7 @@ export default function BulkImportPage() {
             )}
 
             {result && <div className={`rounded-[10px] px-3 py-2 text-[12px] ${result.includes('失败') || result.toLowerCase().includes('fail') ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-green-50 text-green-800 border border-green-200'}`}>{result}</div>}
+            {syncNotes.length > 0 && <div className="rounded-[10px] bg-blue-50 border border-blue-200 px-3 py-2 text-[12px] text-blue-800">{syncNotes.map((n,i)=><div key={i}>{n}</div>)}</div>}
             {importErrors.length > 0 && <div className="rounded-[10px] bg-red-50 p-3 text-[11px] text-red-700 max-h-[120px] overflow-auto">{importErrors.map((e,i)=><div key={i}>{e}</div>)}</div>}
 
             {preview.length > 0 && (

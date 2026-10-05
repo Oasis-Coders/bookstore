@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { friendlyDbError } from '@/lib/friendly-error';
+import { ensurePublisherSuppliers } from '@/lib/ensure-publisher-supplier';
 
 // NOTE: server actions return { success, error } instead of throwing.
 // Throwing from a server action crashes the page with a generic
@@ -58,6 +59,11 @@ export async function createBook(formData: FormData): Promise<ActionResult> {
     }
     return fail(friendlyDbError(error, { duplicate: '图书代号已存在，请换一个代号' }));
   }
+  // 出版社自动同步为供应商：手动输入的新出版社也会出现在采购单/供应商页面的下拉里。
+  // 同步失败（例如非 admin 权限）不影响图书本身的保存。
+  try {
+    await ensurePublisherSuppliers(supabase, [basePayload.publisher]);
+  } catch { /* 同步是 best-effort，图书已保存成功 */ }
   revalidatePath('/books');
   return ok();
 }
@@ -97,6 +103,10 @@ export async function updateBook(bookId: string, formData: FormData): Promise<Ac
     error = err2;
   }
   if (error) return fail(friendlyDbError(error, { duplicate: '图书代号已存在，请换一个代号' }));
+  // 出版社自动同步为供应商（同 createBook）
+  try {
+    await ensurePublisherSuppliers(supabase, [basePayload.publisher]);
+  } catch { /* best-effort */ }
   revalidatePath('/books');
   revalidatePath(`/books/${bookId}`);
   return ok();
