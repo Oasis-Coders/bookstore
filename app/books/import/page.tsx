@@ -37,6 +37,39 @@ export default function BulkImportPage() {
     }
   };
 
+  // 标准 CSV 解析：正确处理引号字段内的逗号、转义引号（""）和换行。
+  // 之前用的 line.split(',') 会把 "李道生 Lee Tao Shen" 这样的作者拆散，
+  // 导致后面所有列整体错位（出版社变成 8.4 这种数字）。
+  const parseCsv = (text: string): string[][] => {
+    const rows: string[][] = [];
+    let row: string[] = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === ',') {
+        row.push(field); field = '';
+      } else if (c === '\n') {
+        row.push(field); rows.push(row); row = []; field = '';
+      } else if (c === '\r') {
+        // 忽略 \r，\n 会处理换行
+      } else {
+        field += c;
+      }
+    }
+    if (field !== '' || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  };
+
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -54,14 +87,23 @@ export default function BulkImportPage() {
             ? (isZh ? '文件中出现较多连续问号，书名可能已在表格保存时损坏，请核对原表格。' : 'Many consecutive "?" found — titles may have been corrupted when the spreadsheet was saved. Please verify the source file.')
             : ''
       );
-      const lines = text.split('\n').filter(l => l.trim());
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const rows = lines.slice(1).map(line => {
-        const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const grid = parseCsv(text);
+      const headers = (grid[0] || []).map(h => h.trim().toLowerCase());
+      const rows: any[] = [];
+      const badRows: number[] = [];
+      grid.slice(1).forEach((vals, idx) => {
+        if (vals.length === 1 && vals[0].trim() === '') return; // 空行跳过
+        if (vals.length !== headers.length) { badRows.push(idx + 2); return; } // 列数不对的行跳过并提示
         const obj: any = {};
-        headers.forEach((h, i) => obj[h] = vals[i] || '');
-        return obj;
+        headers.forEach((h, i) => obj[h] = (vals[i] ?? '').trim());
+        rows.push(obj);
       });
+      if (badRows.length > 0) {
+        const colWarning = isZh
+          ? `第 ${badRows.slice(0, 10).join('、')} 行${badRows.length > 10 ? `等共 ${badRows.length} 行` : ''}列数与表头不符，已跳过未导入，请检查这些行的逗号/引号。`
+          : `Row ${badRows.slice(0, 10).join(', ')}${badRows.length > 10 ? ` (${badRows.length} rows total)` : ''} have wrong column counts and were skipped. Check commas/quotes in those rows.`;
+        setEncodingWarning((prev) => prev ? `${prev}\n${colWarning}` : colWarning);
+      }
       setPreview(rows);
       setResult('');
       setImportErrors([]);
@@ -73,7 +115,8 @@ export default function BulkImportPage() {
   const downloadTemplate = () => {
     // BOM (\uFEFF) 让 Excel 直接按 UTF-8 打开，中文不再乱码。
     // unit_cost（进货价）只用于首次启用系统时把现有库存一起导入；之后每笔采购的进货价在收货时手动填写。
-    const csv = '\uFEFF' + 'sku,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,unit_cost,low_stock_threshold,initial_stock\nBOOK-001,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,7.8,5,10\nBOOK-002,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,6.0,3,5';
+    // isbn 会写入图书的 ISBN 栏（扫码枪扫出的条码也可直接用作代号）。
+    const csv = '\uFEFF' + 'sku,isbn,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,unit_cost,low_stock_threshold,initial_stock\nBOOK-001,9781234567890,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,7.8,5,10\nBOOK-002,,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,6.0,3,5';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -107,7 +150,7 @@ export default function BulkImportPage() {
         }
         const { data: existing } = await supabase.from('books').select('id').eq('sku', row.sku).maybeSingle();
         if (existing) {
-          const { error } = await supabase.from('books').update({
+          const updatePayload: any = {
             title: row.title,
             title_en: row.title_en || null,
             title_simplified: row.title_simplified || null,
@@ -119,12 +162,16 @@ export default function BulkImportPage() {
             warehouse_location: row.warehouse_location || null,
             current_price: row.current_price ? Number(row.current_price) : 0,
             low_stock_threshold: row.low_stock_threshold ? Number(row.low_stock_threshold) : 5,
-          }).eq('id', existing.id);
+          };
+          // ISBN 只在表格里填了时才更新，避免复导入把已有的 ISBN 清空
+          if (row.isbn) updatePayload.isbn13 = row.isbn;
+          const { error } = await supabase.from('books').update(updatePayload).eq('id', existing.id);
           if (error) errors.push(`${row.sku}: ${error.message}`);
           else successCount++;
         } else {
           const { data: newBook, error } = await supabase.from('books').insert({
             sku: row.sku,
+            isbn13: row.isbn || null,
             title: row.title,
             title_en: row.title_en || null,
             title_simplified: row.title_simplified || null,
@@ -204,7 +251,7 @@ export default function BulkImportPage() {
                 <li>{isZh ? '在表格中整理好书库，按模板格式保存为CSV' : 'Organize books in spreadsheet, save as CSV per template'}</li>
                 <li>{isZh ? '点击下载模板查看必填字段' : 'Download template to see required fields'}</li>
                 <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / UTF-16 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / UTF-16 / GBK encoding), preview, then confirm import'}</li>
-                <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存、进货价' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock, unit cost'}</li>
+                <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存、进货价、ISBN' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock, unit cost, ISBN'}</li>
                 <li>{isZh ? '进货价（unit_cost）只用于首次启用时导入现有库存；之后每笔采购的进货价在收货时手动填写' : 'unit_cost is only for the initial go-live import; later purchase costs are entered at receipt'}</li>
                 <li>{isZh ? '外接扫码枪：USB扫码器可直接扫ISBN，自动填入代号' : 'Barcode: USB scanners work directly, scanning ISBN auto-fills code'}</li>
               </ol>
@@ -231,13 +278,13 @@ export default function BulkImportPage() {
 
             {preview.length > 0 && (
               <div>
-                <p className="font-semibold mb-2">{isZh ? `预览前 ${Math.min(20, preview.length)} 条（共 ${preview.length} 条）：` : `Preview first ${Math.min(20, preview.length)} rows (total ${preview.length}):`}</p>
-                <div className="overflow-auto border rounded-[12px]">
+                <p className="font-semibold mb-2">{isZh ? `预览（共 ${preview.length} 条）：` : `Preview (total ${preview.length} rows):`}</p>
+                <div className="overflow-auto border rounded-[12px] max-h-[480px]">
                   <table className="w-full text-[11px]">
                     <thead className="bg-cocm-paper">
                       <tr>{Object.keys(preview[0] || {}).map(k => <th key={k} className="px-2 py-1 text-left font-semibold">{k}</th>)}</tr>
                     </thead>
-                    <tbody>{preview.slice(0,20).map((r, i) => <tr key={i} className="border-t">{Object.values(r).map((v: any, j) => <td key={j} className="px-2 py-1 truncate max-w-[120px]">{v}</td>)}</tr>)}</tbody>
+                    <tbody>{preview.map((r, i) => <tr key={i} className="border-t">{Object.values(r).map((v: any, j) => <td key={j} className="px-2 py-1 truncate max-w-[120px]">{v}</td>)}</tr>)}</tbody>
                   </table>
                 </div>
               </div>

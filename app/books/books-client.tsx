@@ -108,7 +108,7 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
             <Card key={book.id} className="cv-auto group p-5 hover:shadow-[0_8px_24px_rgba(45,47,146,0.08),0_2px_8px_rgba(45,47,146,0.04)] hover:-translate-y-[1px] hover:border-cocm-ink/10 transition-[box-shadow,border-color,transform] duration-300">
               <div className="flex items-start justify-between gap-2">
                 <Badge className="shrink-0 rounded-[8px] bg-cocm-ink/5 text-cocm-ink border-cocm-ink/10 text-[10.5px] font-semibold tracking-wide">{book.sku}</Badge>
-                <div className="flex shrink-0 items-center gap-1.5">
+                <div className="flex min-w-0 flex-wrap items-center justify-end gap-1.5">
                   {book.is_active === false && (
                     <span className="whitespace-nowrap text-[10px] font-bold px-2 py-1 rounded-full bg-gray-100 text-gray-600 border border-gray-200">{isZh ? '停用' : 'Inactive'}</span>
                   )}
