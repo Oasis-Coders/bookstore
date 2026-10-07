@@ -31,7 +31,8 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 // 2A: 混合支付可用的子方式（不含 mix 自身）
 const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
-export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; canEdit?: boolean; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, canEdit: false, salesQuery: '' }) {
+export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, editedSaleIds, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; canEdit?: boolean; editedSaleIds?: string[]; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, canEdit: false, editedSaleIds: [], salesQuery: '' }) {
+  const editedSet = new Set(editedSaleIds || []);
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -380,7 +381,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, sa
                 return (
                 <div key={s.id} role="link" tabIndex={0} onClick={() => goSale(s.id)} onKeyDown={e => { if (e.key === 'Enter') goSale(s.id); }} className="flex items-center justify-between gap-2 rounded-[12px] border border-cocm-ink/5 px-3 py-2 text-[12px] cursor-pointer hover:bg-cocm-paper/60" title={isZh ? '查看发票' : 'View invoice'}>
                   <div className="min-w-0">
-                    <p className="font-mono font-semibold text-cocm-red underline decoration-dotted underline-offset-2">{s.sale_number}</p>
+                    <p className="font-mono font-semibold text-cocm-red underline decoration-dotted underline-offset-2">{s.sale_number}{editedSet.has(s.id) && <span className="ml-1.5 inline-block rounded-full bg-amber-100 px-1.5 py-0.5 align-middle font-sans text-[10px] font-semibold text-amber-800 no-underline">📌{isZh ? '已改单' : 'Edited'}</span>}</p>
                     <p className="text-[11px] text-[#5b5f94]">{s.sold_at} • {isZh ? pm.zh : pm.en}{s.payment_status === 'pending' ? (isZh ? '（待付）' : ' (pending)') : ''} {s.customer_name ? `• ${s.customer_name}` : ''}</p>
                     {mixText && <p className="text-[11px] text-cocm-ink">{mixText}</p>}
                   </div>

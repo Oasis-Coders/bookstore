@@ -11,6 +11,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   let stockMap: Record<string, number> = {};
   let isAdmin = false;
   let canEdit = false;
+  let editedSaleIds: string[] = [];
   let saleLocationId: string | null = null;
 
   if (supabase) {
@@ -66,6 +67,14 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     } catch (e) {
       console.error('sales fetch error', e);
     }
+    // 2026-10-07: 改过的单打标记📌 — 查这些单是否有改单记录
+    try {
+      const ids = recentSales.map((s: any) => s.id);
+      if (ids.length > 0) {
+        const { data: edits } = await supabase.from('sale_edits').select('sale_id').in('sale_id', ids);
+        editedSaleIds = [...new Set((edits || []).map((e: any) => e.sale_id))];
+      }
+    } catch {}
     try {
       // Location-specific stock - only count batches in the sale location
       if (saleLocationId) {
@@ -98,5 +107,5 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     }
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} editedSaleIds={editedSaleIds} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
 }

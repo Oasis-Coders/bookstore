@@ -9,6 +9,7 @@ export function InvoiceClient({ saleId, isAdmin, canEdit }: { saleId: string; is
   const [lines, setLines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [wasEdited, setWasEdited] = useState(false);
 
   // Follow the UI language (same source as lib/i18n context): zh -> zh-CN, en -> en-GB
   const uiLocale: 'zh-CN' | 'en-GB' = (() => {
@@ -56,6 +57,11 @@ export function InvoiceClient({ saleId, isAdmin, canEdit }: { saleId: string; is
       setSale(saleData);
       const { data: lineData } = await supabase.from('sales_transaction_lines').select('*, books(id, title, sku, category)').eq('sale_id', id);
       setLines(lineData || []);
+      // 改过的单打标记📌
+      try {
+        const { count } = await supabase.from('sale_edits').select('id', { count: 'exact', head: true }).eq('sale_id', id);
+        setWasEdited((count || 0) > 0);
+      } catch {}
       setLoading(false);
     })();
   }, [id]);
@@ -120,6 +126,7 @@ export function InvoiceClient({ saleId, isAdmin, canEdit }: { saleId: string; is
           <div className="text-right">
             <p className="text-[11px] text-[#7e84ad] uppercase tracking-widest">{isZh ? '发票编号' : 'Invoice No'}</p>
             <p className="text-[20px] font-bold">{invoiceNo}</p>
+            {wasEdited && <p className="mt-1"><span className="inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">📌{isZh ? '已改单' : 'Edited'}</span></p>}
           </div>
         </div>
 
