@@ -31,7 +31,7 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 // 2A: 混合支付可用的子方式（不含 mix 自身）
 const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
-export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, editedSaleIds, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; canEdit?: boolean; editedSaleIds?: string[]; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, canEdit: false, editedSaleIds: [], salesQuery: '' }) {
+export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, editedSaleIds, onlyEdited, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; canEdit?: boolean; editedSaleIds?: string[]; onlyEdited?: boolean; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, canEdit: false, editedSaleIds: [], onlyEdited: false, salesQuery: '' }) {
   const editedSet = new Set(editedSaleIds || []);
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
@@ -360,12 +360,19 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, ed
         <div className="space-y-4">
           <Card>
             <CardTitle className="flex items-center justify-between">{isZh ? '最近销售' : 'Recent Sales'} <span className="text-[11px] font-normal text-[#5b5f94]">{isZh ? '按单号降序 • 点任意一单查看发票/改单' : 'By sale no. descending • tap a sale to view invoice/edit'}</span></CardTitle>
+            <div className="mt-3 flex gap-2">
+              <Link href={onlyEdited ? '/sales' : '/sales?edited=1'} className={`inline-flex h-9 items-center rounded-[10px] px-3 text-[12px] font-semibold ${onlyEdited ? 'bg-amber-100 text-amber-800' : 'border border-cocm-ink/15 text-[#5b5f94] hover:bg-cocm-paper'}`}>📌{isZh ? '只看改过单' : 'Edited only'}</Link>
+            </div>
             <form method="GET" action="/sales" className="mt-3 flex gap-2">
+              {onlyEdited && <input type="hidden" name="edited" value="1" />}
               <Input name="q" defaultValue={salesQuery || ''} placeholder={isZh ? '搜单号 / 购书人…' : 'Search sale no. / buyer…'} className="h-9 flex-1 text-[12px]" aria-label={isZh ? '搜索销售' : 'Search sales'} />
               <Button type="submit" variant="ghost" size="sm" className="h-9 rounded-[10px]">{isZh ? '搜索' : 'Search'}</Button>
               {salesQuery && <Link href="/sales"><Button type="button" variant="ghost" size="sm" className="h-9 rounded-[10px]">{isZh ? '清除' : 'Clear'}</Button></Link>}
             </form>
             <div className="mt-3 space-y-2">
+              {onlyEdited && (!recentSales || recentSales.length === 0) && (
+                <p className="rounded-[10px] bg-cocm-paper px-3 py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '还没有改过单的记录' : 'No edited sales yet'}</p>
+              )}
               {(recentSales && recentSales.length > 0 ? recentSales : []).map((s: any) => {
                 const net = Number(s.net_total ?? (Number(s.subtotal || s.total || 0) - Number(s.discount_amount || 0)));
                 // 2B: 待付且未选付款方式 → 显示"未选"

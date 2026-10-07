@@ -2,9 +2,10 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SalesClient } from './sales-client';
 import { getAssignedSpareBarcodeMap } from '@/app/books/barcodes/actions';
 
-export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
-  const { q: qRaw } = await searchParams;
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string; edited?: string }> }) {
+  const { q: qRaw, edited: editedRaw } = await searchParams;
   const q = (qRaw || '').trim();
+  const onlyEdited = editedRaw === '1';
   const supabase = await createSupabaseServerClient();
   let books: any[] = [] as any[];
   let recentSales: any[] = [] as any[];
@@ -45,13 +46,26 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       console.error('books fetch error', e);
     }
     try {
-      // 2C: 按单号降序；支持按购书人/单号搜索
+      // 2C: 按单号降序；支持按购书人/单号搜索；edited=1 时只看改过单
       let sQuery = supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, payment_mix, payment_status, customer_name, sold_at, sale_date').order('sale_number', { ascending: false });
-      if (q) {
-        sQuery = sQuery.or(`sale_number.ilike.%${q}%,customer_name.ilike.%${q}%`);
+      if (onlyEdited) {
+        const { data: editedRows } = await supabase.from('sale_edits').select('sale_id').order('edited_at', { ascending: false }).limit(200);
+        const eIds = [...new Set((editedRows || []).map((r: any) => r.sale_id))].slice(0, 50);
+        if (eIds.length === 0) {
+          recentSales = [];
+        } else {
+          sQuery = sQuery.in('id', eIds);
+          const sRes = await sQuery.limit(50);
+          recentSales = sRes.data || [];
+        }
+      } else {
+        if (q) {
+          sQuery = sQuery.or(`sale_number.ilike.%${q}%,customer_name.ilike.%${q}%`);
+        }
+        const sRes = await sQuery.limit(q ? 50 : 20);
+        recentSales = sRes.data || [];
       }
-      const sRes = await sQuery.limit(q ? 50 : 20);
-      recentSales = (sRes.data || []).map((s: any) => ({
+      recentSales = (recentSales as any[]).map((s: any) => ({
         id: s.id,
         sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
         subtotal: s.subtotal,
@@ -107,5 +121,5 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     }
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} editedSaleIds={editedSaleIds} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} editedSaleIds={editedSaleIds} onlyEdited={onlyEdited} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
 }
