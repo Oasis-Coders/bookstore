@@ -66,6 +66,7 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
       <div className="space-y-5">
         <div className="flex flex-col gap-3">
           <form method="GET" action="/books" className="flex gap-2 flex-wrap items-center">
+            <input type="hidden" name="show" value={show} />
             <div className="relative flex-1 min-w-[280px] max-w-[480px]">
               <Input 
                 ref={searchInputRef}

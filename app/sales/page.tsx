@@ -10,6 +10,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   let recentSales: any[] = [] as any[];
   let stockMap: Record<string, number> = {};
   let isAdmin = false;
+  let canEdit = false;
   let saleLocationId: string | null = null;
 
   if (supabase) {
@@ -19,6 +20,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
         const names = (roles || []).map((r: any) => r.roles?.name);
         isAdmin = names.includes('admin') || names.includes('super_admin');
+        // 2026-10-07: 改单放开给 staff（退换货），DB 层 RPC 同步放宽
+        canEdit = isAdmin || names.includes('staff');
       }
     } catch {}
     // Deterministic sale location - same as createSale
@@ -95,5 +98,5 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     }
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
+  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
 }

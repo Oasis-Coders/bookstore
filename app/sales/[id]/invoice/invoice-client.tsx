@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
-export function InvoiceClient({ saleId, isAdmin }: { saleId: string; isAdmin?: boolean }) {
+export function InvoiceClient({ saleId, isAdmin, canEdit }: { saleId: string; isAdmin?: boolean; canEdit?: boolean }) {
   const [id] = useState<string>(saleId);
   const [sale, setSale] = useState<any>(null);
   const [lines, setLines] = useState<any[]>([]);
@@ -191,7 +191,7 @@ export function InvoiceClient({ saleId, isAdmin }: { saleId: string; isAdmin?: b
         <div className="no-print mt-8 flex gap-2 flex-wrap">
           <button onClick={()=>window.print()} className="whitespace-nowrap rounded-full bg-cocm-ink text-white px-5 h-9 text-[13px]">{isZh ? '打印' : 'Print'}</button>
           <button onClick={()=>window.print()} className="whitespace-nowrap rounded-full border border-cocm-ink/20 px-5 h-9 text-[13px]">{isZh ? '保存为 PDF' : 'Save as PDF'}</button>
-          {isAdmin && (
+          {(canEdit ?? isAdmin) && (
             <a href={`/sales/${id}/edit`} className="whitespace-nowrap rounded-full bg-cocm-red text-white px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '改单' : 'Edit Sale'}</a>
           )}
           <a href="/sales" className="whitespace-nowrap rounded-full border border-cocm-ink/20 px-5 h-9 inline-flex items-center text-[13px]">{isZh ? '返回销售' : 'Back to Sales'}</a>

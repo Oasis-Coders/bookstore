@@ -14,8 +14,9 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
 
   const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
   const roleNames = (roles || []).map((r: any) => r.roles?.name);
-  const isAdmin = roleNames.includes('admin') || roleNames.includes('super_admin');
-  if (!isAdmin) redirect('/');
+  // 2026-10-07: 改单放开给 staff（退换货）；DB 层 RPC 同步放宽，操作记入 sale_edits 审计
+  const canEdit = roleNames.includes('staff') || roleNames.includes('admin') || roleNames.includes('super_admin');
+  if (!canEdit) redirect('/');
 
   const { data: sale } = await supabase.from('sales_transactions').select('*').eq('id', id).single();
   if (!sale) notFound();

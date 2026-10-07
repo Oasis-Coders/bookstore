@@ -31,13 +31,13 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
 // 2A: 混合支付可用的子方式（不含 mix 自身）
 const MIX_SUB_METHODS = ['cash', 'card', 'bank_transfer', 'shopify', 'paypal', 'other'];
 
-export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, salesQuery: '' }) {
+export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, salesQuery, spareMap }: { books?: any[]; recentSales?: RecentSale[]; stockMap?: Record<string, number>; isAdmin?: boolean; canEdit?: boolean; salesQuery?: string; spareMap?: Record<string, string> } = { books: [], recentSales: [], stockMap: {}, isAdmin: false, canEdit: false, salesQuery: '' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
 
   const goSale = (saleId: string) => {
-    // Everyone can view the invoice; content editing stays admin-only (改单 button)
+    // Everyone can view the invoice; content editing (改单 button) is staff+ since 2026-10-07
     router.push(`/sales/${saleId}/invoice`);
   };
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -390,7 +390,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, salesQuery,
                       <Badge variant="active" className="text-[10px]">{isZh ? pm.zh : pm.en}</Badge>
                     </div>
                     <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => handlePrintInvoice(s)}>{isZh ? '发票' : 'Invoice'}</Button>
-                    {isAdmin && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-cocm-red" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
+                    {(canEdit ?? isAdmin) && <Button size="sm" variant="ghost" className="h-7 text-[10px] text-cocm-red" onClick={() => handleEdit(s)}>{isZh ? '改单' : 'Edit'}</Button>}
                   </div>
                 </div>
               );})}
