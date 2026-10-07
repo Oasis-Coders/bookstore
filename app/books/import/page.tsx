@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { ensurePublisherSuppliers } from '@/lib/ensure-publisher-supplier';
+import { applyInventoryAdjustment } from '@/lib/inventory/rpc';
 
 export default function BulkImportPage() {
   const { lang } = useT();
@@ -142,13 +143,14 @@ export default function BulkImportPage() {
 
       let successCount = 0;
       const errors: string[] = [];
+      const stockNotes: string[] = [];
 
       for (const row of preview) {
         if (!row.sku || !row.title) {
           errors.push(`${row.sku || '?' }: ${isZh ? '缺少代号或书名' : 'Missing Code or title'}`);
           continue;
         }
-        const { data: existing } = await supabase.from('books').select('id').eq('sku', row.sku).maybeSingle();
+        const { data: existing } = await supabase.from('books').select('id, is_active').eq('sku', row.sku).maybeSingle();
         if (existing) {
           const updatePayload: any = {
             title: row.title,
@@ -166,8 +168,73 @@ export default function BulkImportPage() {
           // ISBN 只在表格里填了时才更新，避免复导入把已有的 ISBN 清空
           if (row.isbn) updatePayload.isbn13 = row.isbn;
           const { error } = await supabase.from('books').update(updatePayload).eq('id', existing.id);
-          if (error) errors.push(`${row.sku}: ${error.message}`);
-          else successCount++;
+          if (error) {
+            errors.push(`${row.sku}: ${error.message}`);
+          } else {
+            successCount++;
+            // 已存在图书：initial_stock 填了就按盘点处理（留空则不动库存）；
+            // 表格值视为盘点数：多出做盘盈入库，不足做盘亏出库（走审计），重复导入不会翻倍。
+            const rawInit = (row.initial_stock ?? '').toString().trim();
+            if (rawInit !== '') {
+              const target = Number(rawInit);
+              if (!Number.isNaN(target) && target >= 0 && Number.isInteger(target)) {
+                if (!existing.is_active) {
+                  stockNotes.push(`${row.sku}: ${isZh ? '已停用，库存未调整' : 'Inactive, stock untouched'}`);
+                } else {
+                  const { data: batches } = await supabase.from('inventory_batches')
+                    .select('quantity_remaining').eq('book_id', existing.id);
+                  const onHand = (batches || []).reduce((s: number, b: any) => s + (b.quantity_remaining || 0), 0);
+                  const delta = target - onHand;
+                  if (delta > 0) {
+                    // 盘盈：建入库批次（与新书导入同口径）
+                    const { data: loc } = await supabase.from('locations').select('id').eq('is_active', true).limit(1).maybeSingle();
+                    if (!loc?.id) {
+                      errors.push(`${row.sku}: ${isZh ? '库存盘点未执行：没有可用库位' : 'Stock-take skipped: no active location'}`);
+                    } else {
+                      const { error: batchError } = await supabase.from('inventory_batches').insert({
+                        book_id: existing.id,
+                        location_id: loc.id,
+                        batch_code: `IMPORT-${row.sku}-${Date.now()}`,
+                        unit_cost: row.unit_cost ? Number(row.unit_cost) : (row.current_price ? Number(row.current_price) * 0.6 : 5),
+                        quantity_received: delta,
+                        quantity_remaining: delta,
+                        created_by: userId,
+                        source_type: 'purchase',
+                      });
+                      if (batchError) errors.push(`${row.sku}: ${isZh ? '库存盘盈入库失败：' : 'Stock-take receipt failed: '}${batchError.message}`);
+                      else stockNotes.push(`${row.sku}: ${isZh ? `库存 ${onHand} → ${target}（盘盈入库 ${delta} 本）` : `Stock ${onHand} → ${target} (+${delta})`}`);
+                    }
+                  } else if (delta < 0) {
+                    // 盘亏：按库位 FIFO 扣减，走盘点调整（留审计记录，需要管理员权限）
+                    const { data: locBatches } = await supabase.from('inventory_batches')
+                      .select('location_id, quantity_remaining, received_at')
+                      .eq('book_id', existing.id).gt('quantity_remaining', 0)
+                      .order('received_at', { ascending: true });
+                    const byLoc = new Map<string, number>();
+                    for (const b of locBatches || []) byLoc.set(b.location_id, (byLoc.get(b.location_id) || 0) + (b.quantity_remaining || 0));
+                    let need = -delta;
+                    const reason = isZh ? `批量导入盘点：${row.sku} 表格 ${target} 本（原 ${onHand} 本）` : `Bulk import stock-take: ${row.sku} sheet ${target} (was ${onHand})`;
+                    let ok = true;
+                    for (const [locId, locRemain] of byLoc) {
+                      if (need <= 0) break;
+                      const take = Math.min(need, locRemain);
+                      try {
+                        await applyInventoryAdjustment(supabase, existing.id, locId, -take, reason);
+                        need -= take;
+                      } catch (e: any) {
+                        errors.push(`${row.sku}: ${isZh ? '库存盘亏调整失败：' : 'Stock-take deduction failed: '}${e?.message || ''}`);
+                        ok = false;
+                        break;
+                      }
+                    }
+                    if (ok) stockNotes.push(`${row.sku}: ${isZh ? `库存 ${onHand} → ${target}（盘亏出库 ${-delta} 本）` : `Stock ${onHand} → ${target} (-${-delta})`}`);
+                  }
+                }
+              } else {
+                errors.push(`${row.sku}: ${isZh ? `初始库存 "${rawInit}" 不是有效的非负整数，已跳过库存调整` : `Invalid initial_stock "${rawInit}", stock-take skipped`}`);
+              }
+            }
+          }
         } else {
           const { data: newBook, error } = await supabase.from('books').insert({
             sku: row.sku,
@@ -227,7 +294,7 @@ export default function BulkImportPage() {
       } catch (e: any) {
         notes.push(`${isZh ? '供应商同步失败：' : 'Supplier sync failed: '}${e?.message || ''}`);
       }
-      setSyncNotes(notes);
+      setSyncNotes([...stockNotes, ...notes]);
       setImportErrors(errors);
       setResult(isZh ? `导入完成：成功 ${successCount} 本，失败 ${errors.length} 本` : `Import complete: ${successCount} succeeded, ${errors.length} failed`);
     } catch (e: any) {
@@ -253,6 +320,7 @@ export default function BulkImportPage() {
                 <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / UTF-16 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / UTF-16 / GBK encoding), preview, then confirm import'}</li>
                 <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存、进货价、ISBN' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock, unit cost, ISBN'}</li>
                 <li>{isZh ? '进货价（unit_cost）只用于首次启用时导入现有库存；之后每笔采购的进货价在收货时手动填写' : 'unit_cost is only for the initial go-live import; later purchase costs are entered at receipt'}</li>
+                <li>{isZh ? '初始库存（initial_stock）：新书建库存批次；已存在的书按表格值盘点（多出入库、不足出库并记审计），留空则不动库存' : 'initial_stock: new books get a stock batch; existing books are stock-taken to the sheet value (overage in, shortage out with audit). Leave blank to keep stock unchanged.'}</li>
                 <li>{isZh ? '外接扫码枪：USB扫码器可直接扫ISBN，自动填入代号' : 'Barcode: USB scanners work directly, scanning ISBN auto-fills code'}</li>
               </ol>
             </div>
