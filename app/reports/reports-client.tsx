@@ -10,7 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -162,7 +162,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
   const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
-  const exportCsv = (type: 'valuation' | 'lowstock' | 'sales' | 'salesBooks') => {
+  const exportCsv = (type: 'valuation' | 'lowstock' | 'sales' | 'salesBooks' | 'editedSales') => {
     if (type === 'valuation') {
       downloadCsv(`inventory_valuation_${new Date().toISOString().slice(0,10)}.csv`,
         ['SKU', 'Title', 'Shelf Position', 'Warehouse Location', 'Qty', 'Retail Unit Price', 'WAC', 'Cost Value', 'Retail Value'],
@@ -179,6 +179,10 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       downloadCsv(`sales_books_${fromDate}_to_${toDate}.csv`,
         ['Date', 'Sale Number', 'SKU', 'Title', 'Qty', 'Unit Price', 'Payment Method', 'Customer', 'Shelf Position', 'Warehouse Location'],
         salesBooksList.map(r => [r.sale_date, r.sale_number, r.sku, r.title, r.quantity, r.unit_price, payLabelOf(r.payment_method), r.customer_name || '', r.shelf_position || '', r.warehouse_location || '']));
+    } else if (type === 'editedSales') {
+      downloadCsv(`edited_sales_${new Date().toISOString().slice(0,10)}.csv`,
+        ['Edited At', 'Sale Date', 'Sale Number', 'Net Total', 'Change Type', 'Reason', 'Edited By'],
+        editedSalesList.map(r => [r.edited_at, r.sale_date, r.sale_number, Number(r.net_total || 0).toFixed(2), r.change_type, r.reason || '', r.edited_by_name || '']));
     }
   };
 
@@ -392,6 +396,34 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2"><span className="whitespace-nowrap px-1.5 py-0.5 rounded-full bg-cocm-paper text-[10px]">{r.warehouse_location || '-'}</span></td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.staff_name || r.created_by_name || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {/* Edited Sales Audit */}
+      {editedSalesList.length > 0 && (
+        <Card className="mt-4">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-[14px] min-w-0">📌{isZh ? '改单记录（近期改过单）' : 'Edited Sales (recent)'}</CardTitle>
+            <Button size="sm" variant="ghost" onClick={() => exportCsv('editedSales')} className="rounded-[10px] shrink-0">{isZh ? '导出CSV' : 'Export CSV'}</Button>
+          </div>
+          <p className="mt-1 text-[11px] text-[#5b5f94]">{isZh ? '按改单时间倒序，一单多改会显示多行，方便日后查证' : 'Newest first; a sale edited multiple times shows multiple rows'}</p>
+          <div className="mt-3 overflow-auto">
+            <table className="w-full text-[12px]">
+              <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '改单日期' : 'Edited At'}</th><th className="pb-2">{isZh ? '销售日期' : 'Sale Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2 text-right">{isZh ? '付款金额' : 'Net Total'}</th><th className="pb-2">{isZh ? '改单原因' : 'Reason'}</th><th className="pb-2">{isZh ? '改单人' : 'Edited By'}</th></tr></thead>
+              <tbody>
+                {editedSalesList.map((r, i) => (
+                  <tr key={i} className="border-b border-cocm-ink/5">
+                    <td className="py-2 text-[11px]">{r.edited_at ? new Date(r.edited_at).toLocaleString(isZh ? 'zh-CN' : 'en-GB') : '-'}</td>
+                    <td className="py-2">{r.sale_date || '-'}</td>
+                    <td className="py-2 font-mono font-medium">{r.sale_number}</td>
+                    <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || 0))}</td>
+                    <td className="py-2 max-w-[240px] text-[#5b5f94]">{r.reason || '-'}</td>
+                    <td className="py-2 text-[11px]">{r.edited_by_name || '-'}</td>
                   </tr>
                 ))}
               </tbody>

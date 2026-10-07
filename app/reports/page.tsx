@@ -10,6 +10,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   let lowStock: any[] = [] as any[];
   let salesList: any[] = [] as any[];
   let salesBooksList: any[] = [] as any[];
+  let editedSalesList: any[] = [] as any[];
   let monthlyFinancial: any = null;
   let currentInventoryValue = 0;
   let autoOpeningStock: number | null = null;
@@ -124,6 +125,40 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         }
       }
 
+      // 2026-10-07: 改单记录报表 — 近期所有改过的单（按改单时间倒序）
+      try {
+        const { data: editsData } = await supabase.from('sale_edits')
+          .select('id, sale_id, change_type, reason, edited_at, edited_by')
+          .order('edited_at', { ascending: false })
+          .limit(200);
+        if (editsData && editsData.length > 0) {
+          const saleIds = [...new Set((editsData as any[]).map(e => e.sale_id))];
+          const editorIds = [...new Set((editsData as any[]).map(e => e.edited_by).filter(Boolean))];
+          const [sRes, pRes] = await Promise.all([
+            supabase.from('sales_transactions').select('id, sale_number, sale_date, subtotal, discount_amount, shipping_cost').in('id', saleIds),
+            editorIds.length > 0 ? supabase.from('profiles').select('id, display_name').in('id', editorIds) : Promise.resolve({ data: [] } as any),
+          ]);
+          const saleMap: Record<string, any> = {};
+          for (const s of (sRes.data || []) as any[]) saleMap[s.id] = s;
+          const editorMap: Record<string, string> = {};
+          for (const p of (pRes.data || []) as any[]) editorMap[p.id] = p.display_name;
+          editedSalesList = (editsData as any[]).map(e => {
+            const s = saleMap[e.sale_id] || {};
+            return {
+              edited_at: e.edited_at,
+              sale_date: s.sale_date,
+              sale_number: s.sale_number,
+              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
+              change_type: e.change_type,
+              reason: e.reason,
+              edited_by_name: editorMap[e.edited_by] || '-',
+            };
+          });
+        }
+      } catch (e) {
+        console.error('edited sales fetch error', e);
+      }
+
       // Monthly financial data
       try {
         // Auto opening stock: inventory cost value right after the previous month's
@@ -198,7 +233,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all' }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all' }} />
     </Suspense>
   );
 }
