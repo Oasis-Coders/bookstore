@@ -4,8 +4,8 @@ import { BooksClient } from './books-client';
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string }> }) {
   const { q: qRaw, show: showRaw } = await searchParams;
   const q = qRaw || '';
-  // 1D: 停用图书不再从书库消失；默认全部可见，可按状态筛选
-  const show = showRaw === 'active' || showRaw === 'inactive' ? showRaw : 'all';
+  // 1D: 停用图书不再从书库消失；默认全部可见，可按状态筛选；lowstock 为低库存预警
+  const show = showRaw === 'active' || showRaw === 'inactive' || showRaw === 'lowstock' ? showRaw : 'all';
   const supabase = await createSupabaseServerClient();
 
   let books: any[] = [];
@@ -28,6 +28,25 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
       } catch {}
     }
     const spareOr = spareBookIds.length ? `,id.in.(${spareBookIds.join(',')})` : '';
+    if (show === 'lowstock') {
+      // 低库存预警：口径与 low_stock_view 一致（在售、阈值>0、库存<=阈值）；按库存升序，最缺货的排前面，不截断
+      try {
+        const { data: lowRows } = await supabase.from('low_stock_view').select('book_id');
+        const lowIds = [...new Set(((lowRows || []) as any[]).map((r) => r.book_id).filter(Boolean))];
+        if (lowIds.length) {
+          let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').in('id', lowIds);
+          if (q) {
+            query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%,warehouse_location.ilike.%${q}%${spareOr}`);
+          }
+          const { data } = await query;
+          books = (data || []).map((b: any) => ({
+            ...b,
+            on_hand: Array.isArray(b.inventory_batches) ? b.inventory_batches.reduce((s: number, batch: any) => s + (batch.quantity_remaining || 0), 0) : 0,
+          })).sort((a: any, b: any) => a.on_hand - b.on_hand);
+        }
+        mode = 'live';
+      } catch {}
+    } else
     try {
       let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').order('title');
       if (show === 'active') query = query.eq('is_active', true);

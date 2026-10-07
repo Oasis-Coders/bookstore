@@ -30,7 +30,7 @@ type Book = {
   is_active?: boolean;
 };
 
-export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string; mode: 'live' | 'empty'; show: 'all' | 'active' | 'inactive' }) {
+export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string; mode: 'live' | 'empty'; show: 'all' | 'active' | 'inactive' | 'lowstock' }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [scanning, setScanning] = useState(false);
@@ -93,6 +93,7 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
               ['all', isZh ? '全部' : 'All'],
               ['active', isZh ? '在售' : 'Active'],
               ['inactive', isZh ? '停用' : 'Inactive'],
+              ['lowstock', isZh ? '低库存预警' : 'Low stock'],
             ] as const).map(([v, label]) => (
               <Link key={v} href={`/books?show=${v}${q ? `&q=${encodeURIComponent(q)}` : ''}`}>
                 <span className={`inline-block rounded-[10px] px-3 py-1.5 text-[12px] font-medium transition-colors ${show === v ? 'bg-cocm-ink text-white' : 'bg-white text-[#5b5f94] border border-cocm-ink/10 hover:border-cocm-ink/25'}`}>
