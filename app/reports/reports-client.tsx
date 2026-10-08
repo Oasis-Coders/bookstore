@@ -18,6 +18,12 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
   const [fromDate, setFromDate] = useState(initialFilters?.from || new Date().toISOString().slice(0, 8) + '01');
   const [payFilter, setPayFilter] = useState(initialFilters?.pay || 'all');
+  const [payStatusFilter, setPayStatusFilter] = useState(initialFilters?.pstatus || 'all');
+  const PAY_STATUS_LABELS: Record<string, { zh: string; en: string }> = {
+    all: { zh: '全部', en: 'All' },
+    paid: { zh: '已付', en: 'Paid' },
+    pending: { zh: '待付', en: 'Pending' },
+  };
   const [toDate, setToDate] = useState(initialFilters?.to || new Date().toISOString().slice(0,10));
   const [selectedMonth, setSelectedMonth] = useState(initialFilters?.month || new Date().toISOString().slice(0,7));
 
@@ -192,6 +198,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     params.set('from', fromDate);
     params.set('to', toDate);
     params.set('pay', payFilter);
+    params.set('pstatus', payStatusFilter);
     if (selectedMonth) params.set('month', selectedMonth);
     router.push(`/reports?${params.toString()}`);
     setTimeout(()=>setFiltering(false), 800);
@@ -340,8 +347,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
               ))}
             </select>
           </div>
+          <div>
+            <label htmlFor="report-pstatus" className="text-[11px] font-medium">{isZh ? '付款状态' : 'Pay status'}</label>
+            <select id="report-pstatus" value={payStatusFilter} onChange={e => setPayStatusFilter(e.target.value)} className="mt-1 flex h-9 rounded-[10px] border border-cocm-ink/15 bg-white px-3 text-[12px]">
+              {Object.entries(PAY_STATUS_LABELS).map(([k, v]) => (
+                <option key={k} value={k}>{isZh ? v.zh : v.en}</option>
+              ))}
+            </select>
+          </div>
           <Button size="sm" onClick={handleDateFilter} disabled={filtering} className="h-9 rounded-[10px] min-w-[64px]">{filtering ? <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-full border-2 border-white/40 border-t-white animate-spin motion-reduce:animate-none inline-block" />{isZh ? '查询中' : 'Loading'}</span> : (isZh ? '查询' : 'Filter')}</Button>
-          <span className="text-[11px] text-[#5b5f94]">{isZh ? '付款方式筛选适用于下方销售单/书目列表及所有 CSV 导出' : 'Payment filter applies to the sales lists below and all CSV exports'}</span>
+          <span className="text-[11px] text-[#5b5f94]">{isZh ? '付款方式/状态筛选适用于下方销售单/书目列表及所有 CSV 导出' : 'Payment filters apply to the sales lists below and all CSV exports'}</span>
         </div>
       </Card>
 

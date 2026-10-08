@@ -24,7 +24,7 @@ const PAYMENT_LABELS: Record<string, { zh: string; en: string }> = {
   shopify: { zh: '网付', en: 'Shopify' },
   paypal: { zh: 'PayPal', en: 'PayPal' },
   mix: { zh: '混合', en: 'Mix' },
-  deferral: { zh: '赊账', en: 'Deferral' },
+  deferral: { zh: '挂账', en: 'Deferral' },
   other: { zh: '其他', en: 'Other' },
 };
 

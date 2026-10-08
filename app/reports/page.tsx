@@ -2,9 +2,10 @@ import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ReportsClient } from './reports-client';
 
-export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string }> }) {
-  const { from, to, month, pay } = await searchParams;
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string; pstatus?: string }> }) {
+  const { from, to, month, pay, pstatus } = await searchParams;
   const payFilter = pay && pay !== 'all' ? pay : null;
+  const payStatusFilter = pstatus && pstatus !== 'all' ? pstatus : null;
   const supabase = await createSupabaseServerClient();
   let valuation: any[] = [] as any[];
   let lowStock: any[] = [] as any[];
@@ -44,6 +45,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           if (from) query = query.gte('sale_date', from);
           if (to) query = query.lte('sale_date', to);
           if (payFilter) query = query.eq('payment_method', payFilter); // 未选(pending) = NULL, 按指定方式筛选时自然排除
+          if (payStatusFilter) query = query.eq('payment_status', payStatusFilter);
           const { data } = await query.limit(2000);
           // Fetch staff names separately for robustness (FK may not have PostgREST relationship)
           let profileMap: Record<string, string> = {};
@@ -69,6 +71,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
             if (from) q2 = q2.gte('sale_date', from);
             if (to) q2 = q2.lte('sale_date', to);
             if (payFilter) q2 = q2.eq('payment_method', payFilter);
+            if (payStatusFilter) q2 = q2.eq('payment_status', payStatusFilter);
             const { data } = await q2.limit(2000);
             salesList = (data || []).map((s: any) => ({
               ...s,
@@ -233,7 +236,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all' }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all', pstatus: payStatusFilter ? payStatusFilter : 'all' }} />
     </Suspense>
   );
 }
