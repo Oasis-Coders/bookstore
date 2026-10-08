@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { ValuationSection } from './valuation-section';
 
 export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
   const { tt, lang } = useT();
@@ -164,9 +165,6 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     }
     setSavingSnapshot(false);
   };
-
-  const totalValue = valuation.reduce((s, r) => s + Number(r.inventory_value || 0), 0);
-  const totalRetail = valuation.reduce((s, r) => s + Number(r.retail_value || 0), 0);
 
   const exportCsv = (type: 'valuation' | 'lowstock' | 'sales' | 'salesBooks' | 'editedSales') => {
     if (type === 'valuation') {
@@ -448,52 +446,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       )}
 
       {/* Valuation */}
-      <Card className="mt-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="text-[14px]">{tt('reports.valuationTitle')}</CardTitle>
-          <div className="flex gap-2 text-[12px]">
-            <span>{tt('reports.costTotal')} {formatCurrency(totalValue)}</span>
-            <span className="text-[#5b5f94]">{tt('reports.retailTotal')} {formatCurrency(totalRetail)}</span>
-          </div>
-        </div>
-        <div className="mt-4 overflow-auto">
-          <table className="w-full text-[12px]">
-            <thead>
-              <tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]">
-                <th className="pb-2">{tt('reports.sku')}</th>
-                <th className="pb-2">{tt('reports.bookTitle')}</th>
-                <th className="pb-2">{tt('reports.shelfPosition')}</th>
-                <th className="pb-2">{tt('reports.warehouseLocation')}</th>
-                <th className="pb-2 text-right">{tt('reports.onHand')}</th>
-                <th className="pb-2 text-right">{tt('reports.retailUnitPrice')}</th>
-                <th className="pb-2 text-right">{tt('reports.weightedAvg')}</th>
-                <th className="pb-2 text-right">{tt('reports.costValue')}</th>
-                <th className="pb-2 text-right">{tt('reports.retailValue')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {valuation.map((r, i) => (
-                <tr key={i} className="border-b border-cocm-ink/5">
-                  <td className="py-2 font-mono text-[11px]">{r.sku}</td>
-                  <td className="py-2">{r.title}</td>
-                  <td className="py-2 text-[#5b5f94]">{r.shelf_position || '-'}</td>
-                  <td className="py-2 text-[#5b5f94]">{r.warehouse_location || '-'}</td>
-                  <td className="py-2 text-right">{r.quantity_on_hand}</td>
-                  <td className="py-2 text-right">{formatCurrency(Number(r.current_price || 0))}</td>
-                  <td className="py-2 text-right">{formatCurrency(Number(r.weighted_average_cost || 0))}</td>
-                  <td className="py-2 text-right font-medium">{formatCurrency(Number(r.inventory_value || 0))}</td>
-                  <td className="py-2 text-right text-[#5b5f94]">{formatCurrency(Number(r.retail_value || 0))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {valuation.length === 0 && <p className="py-6 text-center text-[12px] text-[#5b5f94]">{isZh ? '暂无数据' : 'No data'}</p>}
-        </div>
-        <div className="mt-3 flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => exportCsv('valuation')}>{isZh ? '导出估值 CSV' : 'Export Valuation CSV'}</Button>
-          <p className="text-[11px] text-[#5b5f94] py-2">{tt('reports.sqlHint')}</p>
-        </div>
-      </Card>
+      <ValuationSection valuation={valuation} onExport={() => exportCsv('valuation')} />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
