@@ -342,7 +342,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
           <div>
             <label htmlFor="report-pay" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
             <select id="report-pay" value={payFilter} onChange={e => setPayFilter(e.target.value)} className="mt-1 flex h-9 rounded-[10px] border border-cocm-ink/15 bg-white px-3 text-[12px]">
-              {Object.entries(PAY_FILTER_LABELS).map(([k, v]) => (
+              {Object.entries(PAY_FILTER_LABELS).filter(([k]) => k !== 'deferral').map(([k, v]) => (
                 <option key={k} value={k}>{isZh ? v.zh : v.en}</option>
               ))}
             </select>

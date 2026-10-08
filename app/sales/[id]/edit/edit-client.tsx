@@ -304,7 +304,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
                 <label htmlFor="edit-payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
                 <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   {paymentStatus === 'pending' && <option value="">{isZh ? '未选' : 'Not chosen'}</option>}
-                  {Object.entries(PAYMENT_LABELS).map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
+                  {Object.entries(PAYMENT_LABELS).filter(([k]) => k !== 'deferral').map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
                 </select>
               </div>
               <div>
