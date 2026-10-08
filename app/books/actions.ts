@@ -150,13 +150,29 @@ export type CategoryStat = { name: string; count: number };
 export async function getCategoryStats(): Promise<CategoryStat[]> {
   const supabase = await createSupabaseServerClient();
   if (!supabase) return [];
-  const { data } = await supabase.from('books').select('category').not('category', 'is', null).limit(5000);
-  const map = new Map<string, number>();
-  for (const r of (data || []) as any[]) {
+  const { data: cats } = await supabase.from('categories').select('name').order('sort_order').order('name').limit(1000);
+  const { data: books } = await supabase.from('books').select('category').not('category', 'is', null).limit(5000);
+  const counts = new Map<string, number>();
+  for (const r of (books || []) as any[]) {
     const c = String(r.category || '').trim();
-    if (c) map.set(c, (map.get(c) || 0) + 1);
+    if (c) counts.set(c, (counts.get(c) || 0) + 1);
   }
-  return [...map.entries()].map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+  return ((cats || []) as any[])
+    .map((c) => ({ name: c.name as string, count: counts.get(c.name as string) || 0 }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+}
+
+export async function createCategory(name: string): Promise<ActionResult> {
+  const n = name.trim();
+  if (!n) return fail('分类名称不能为空');
+  const { supabase, ok: can, error } = await requireBookEditor();
+  if (!can) return fail(error!);
+  const { data: existing } = await supabase.from('categories').select('id').eq('name', n).maybeSingle();
+  if (existing) return fail('该分类已存在');
+  const { error: err } = await supabase.from('categories').insert({ name: n });
+  if (err) return fail(friendlyDbError(err, { fallback: '添加分类失败，请重试' }));
+  revalidatePath('/books');
+  return ok();
 }
 
 async function requireBookEditor(): Promise<{ supabase: any; ok: boolean; error?: string }> {
@@ -179,6 +195,7 @@ export async function renameCategory(oldName: string, newName: string): Promise<
   if (!can) return fail(error!);
   const { error: err } = await supabase.from('books').update({ category: newN }).eq('category', oldN);
   if (err) return fail(friendlyDbError(err, { fallback: '改名失败，请重试' }));
+  await supabase.from('categories').update({ name: newN }).eq('name', oldN);
   revalidatePath('/books');
   return ok();
 }
@@ -192,6 +209,7 @@ export async function deleteCategory(name: string): Promise<ActionResult & { aff
   const affected = (existing || []).length;
   const { error: err } = await supabase.from('books').update({ category: null }).eq('category', n);
   if (err) return fail(friendlyDbError(err, { fallback: '删除失败，请重试' }));
+  await supabase.from('categories').delete().eq('name', n);
   revalidatePath('/books');
   return { success: true, affected };
 }

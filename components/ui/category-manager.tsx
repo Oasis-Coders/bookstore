@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n/use-t';
 import {
   getCategoryStats,
+  createCategory,
   renameCategory,
   deleteCategory,
   type CategoryStat,
@@ -22,6 +23,8 @@ export function CategoryManager() {
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [newName, setNewName] = useState('');
+  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
 
@@ -37,6 +40,18 @@ export function CategoryManager() {
   useEffect(() => {
     if (open) { load(); setMsg(''); setEditing(null); }
   }, [open ]);
+
+  const doAdd = async () => {
+    const v = newName.trim();
+    if (!v) { setMsg(isZh ? '分类名称不能为空' : 'Name cannot be empty'); return; }
+    setAdding(true);
+    const r = await createCategory(v);
+    setAdding(false);
+    if (!r.success) { setMsg(r.error || (isZh ? '添加失败' : 'Add failed')); return; }
+    setNewName('');
+    setMsg(isZh ? `已添加分类「${v}」` : `Added category "${v}"`);
+    load();
+  };
 
   const doRename = async (oldName: string) => {
     const v = editValue.trim();
@@ -85,6 +100,18 @@ export function CategoryManager() {
               {isZh ? '改名会更新该分类下所有图书；删除分类只清空图书的分类，图书本身保留。' : 'Renaming updates all books in the category; deleting only clears the category from books.'}
             </p>
             {msg && <p className="mt-2 text-[12px] text-cocm-ink">{msg}</p>}
+            <div className="mt-3 flex gap-2">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder={isZh ? '输入新分类名称' : 'New category name'}
+                className="h-9 flex-1 text-[12px]"
+                onKeyDown={(e) => { if (e.key === 'Enter') doAdd(); }}
+              />
+              <Button size="sm" className="h-9 rounded-[10px] px-4" disabled={adding || !newName.trim()} onClick={doAdd}>
+                {isZh ? '添加' : 'Add'}
+              </Button>
+            </div>
             <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto">
               {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
               {!loading && cats.length === 0 && (

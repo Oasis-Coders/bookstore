@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { ensurePublisherSuppliers } from '@/lib/ensure-publisher-supplier';
+import { ensureCategories } from '@/lib/ensure-categories';
 import { applyInventoryAdjustment } from '@/lib/inventory/rpc';
 
 export default function BulkImportPage() {
@@ -293,6 +294,18 @@ export default function BulkImportPage() {
         for (const w of warnings) notes.push(`${isZh ? '供应商同步提醒：' : 'Supplier sync note: '}${w}`);
       } catch (e: any) {
         notes.push(`${isZh ? '供应商同步失败：' : 'Supplier sync failed: '}${e?.message || ''}`);
+      }
+      // 分类同步进 categories 表：表格里出现的新分类自动建好，
+      // 之后在管理分类/图书表单下拉里可直接选用。
+      try {
+        const cats = preview.map(r => r.category).filter(Boolean);
+        const { created, warnings } = await ensureCategories(supabase, cats);
+        if (created.length > 0) {
+          notes.push(`${isZh ? '以下分类已自动创建：' : 'Auto-created categories: '}${created.join('、')}`);
+        }
+        for (const w of warnings) notes.push(`${isZh ? '分类同步提醒：' : 'Category sync note: '}${w}`);
+      } catch (e: any) {
+        notes.push(`${isZh ? '分类同步失败：' : 'Category sync failed: '}${e?.message || ''}`);
       }
       setSyncNotes([...stockNotes, ...notes]);
       setImportErrors(errors);

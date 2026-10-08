@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useT } from '@/lib/i18n/use-t';
+import { createCategory } from '@/app/books/actions';
 import { Input } from './input';
 import { Button } from './button';
 
@@ -29,10 +30,10 @@ export function CategorySelect({ name, id, defaultValue, required, className }: 
         setCategories(['灵修', '神学', '见证', '儿童', '音乐']);
         return;
       }
-      const { data } = await supabase.from('books').select('category').not('category', 'is', null);
+      const { data } = await supabase.from('categories').select('name').order('sort_order').order('name').limit(1000);
       if (data) {
-        const uniq = Array.from(new Set(data.map((d: any) => d.category).filter(Boolean))) as string[];
-        setCategories(uniq.length > 0 ? uniq : ['灵修', '神学', '见证', '儿童', '音乐']);
+        const names = (data.map((d: any) => d.name).filter(Boolean)) as string[];
+        setCategories(names.length > 0 ? names : ['灵修', '神学', '见证', '儿童', '音乐']);
       } else {
         setCategories(['灵修', '神学', '见证', '儿童', '音乐']);
       }
@@ -55,16 +56,28 @@ export function CategorySelect({ name, id, defaultValue, required, className }: 
     }
   };
 
-  const handleAdd = () => {
+  const [addingCat, setAddingCat] = useState(false);
+  const [addError, setAddError] = useState('');
+
+  const handleAdd = async () => {
     const trimmed = customCat.trim();
-    if (trimmed) {
-      if (!categories.includes(trimmed)) {
+    if (!trimmed) return;
+    // Persist immediately so the category exists even if the book form is cancelled
+    if (!categories.includes(trimmed)) {
+      setAddingCat(true);
+      setAddError('');
+      const r = await createCategory(trimmed);
+      setAddingCat(false);
+      if (!r.success) {
+        // Already exists (e.g. added elsewhere) — just select it
+        if (!categories.includes(trimmed)) { setAddError(r.error || ''); return; }
+      } else {
         setCategories((prev) => [...prev, trimmed]);
       }
-      setSelected(trimmed);
-      setShowAdd(false);
-      setCustomCat('');
     }
+    setSelected(trimmed);
+    setShowAdd(false);
+    setCustomCat('');
   };
 
   return (
@@ -92,14 +105,15 @@ export function CategorySelect({ name, id, defaultValue, required, className }: 
             className="flex-1"
             aria-label={isZh ? '新分类名称' : 'New category name'}
           />
-          <Button type="button" size="sm" onClick={handleAdd} disabled={!customCat.trim()}>
-            {isZh ? '添加' : 'Add'}
+          <Button type="button" size="sm" onClick={handleAdd} disabled={!customCat.trim() || addingCat}>
+            {addingCat ? (isZh ? '添加中…' : 'Adding…') : (isZh ? '添加' : 'Add')}
           </Button>
-          <Button type="button" variant="ghost" size="sm" onClick={() => { setShowAdd(false); setCustomCat(''); }}>
+          <Button type="button" variant="ghost" size="sm" onClick={() => { setShowAdd(false); setCustomCat(''); setAddError(''); }}>
             {isZh ? '取消' : 'Cancel'}
           </Button>
         </div>
       )}
+      {addError && <p className="mt-1 text-[11px] text-red-600">{addError}</p>}
       {/* Hidden input to submit the actual value */}
       <input type="hidden" name={name} value={selected} />
     </div>
