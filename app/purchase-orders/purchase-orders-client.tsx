@@ -7,6 +7,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
+import { PurchasingTabs } from './purchasing-tabs';
 
 const STAGE_LABELS: Record<string, { zh: string; en: string }> = {
   draft: { zh: '建单', en: 'Drafted' },
@@ -47,6 +48,7 @@ export function PurchaseOrdersClient({ pos }: { pos: any[] }) {
       eyebrow={tt('purchaseOrders.count', { n: pos.length })}
       actions={<Link href="/purchase-orders/new"><Button>{tt('purchaseOrders.newPO')}</Button></Link>}
     >
+      <PurchasingTabs active="orders" />
       <Card>
         <div className="flex flex-wrap gap-2 text-[12px] text-[#5b5f94] items-center">
           <span>{tt('purchaseOrders.statusFlow')}</span>
