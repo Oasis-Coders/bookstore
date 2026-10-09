@@ -8,11 +8,11 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', labelZh: '总览' },
   { href: '/books', label: 'Books', labelZh: '书库' },
-  { href: '/tools', label: 'Tools', labelZh: '书库工具' },
   { href: '/purchase-orders', label: 'Purchasing', labelZh: '采购' },
   { href: '/suppliers', label: 'Suppliers', labelZh: '供应商' },
   { href: '/sales', label: 'Sales', labelZh: '销售' },
   { href: '/reports', label: 'Reports', labelZh: '报表' },
+  { href: '/tools', label: 'Tools', labelZh: '常用工具' },
   { href: '/settings', label: 'Settings', labelZh: '设置' },
   { href: '/admin/users', label: 'Users', labelZh: '人员', roles: ['super_admin'] },
   { href: '/admin/history', label: 'Audit Log', labelZh: '操作记录', roles: ['admin', 'super_admin'] },
