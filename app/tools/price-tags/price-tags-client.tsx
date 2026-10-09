@@ -9,9 +9,9 @@ import { LABEL_FORMATS, chunk } from '../barcodes/print/label-format';
  * 价格标签打印 —— LL21 版式，每张标签手动填写书代码 + 售价。
  * 打印时请选择：A4、纵向、边距"无"、缩放 100%。
  */
-type Tag = { code: string; price: string };
+type Tag = { code: string; price: string; qty: number };
 
-const emptyRow = (): Tag => ({ code: '', price: '' });
+const emptyRow = (): Tag => ({ code: '', price: '', qty: 1 });
 
 export function PriceTagsClient() {
   const { lang } = useT();
@@ -22,15 +22,19 @@ export function PriceTagsClient() {
   const fmt = LABEL_FORMATS.find((f) => f.id === formatId) || LABEL_FORMATS[0];
   const perPage = fmt.cols * fmt.rows;
 
-  // 只打印至少填了一项的行
-  const tags = rows.filter((r) => r.code.trim() || r.price.trim());
+  // 只打印至少填了一项的行，每行按数量重复
+  const tags = rows.flatMap((r) =>
+    r.code.trim() || r.price.trim()
+      ? Array.from({ length: Math.min(999, Math.max(1, r.qty || 1)) }, () => ({ code: r.code, price: r.price }))
+      : []
+  );
   const pages = chunk(tags, perPage);
 
   const padTopMm = (297 - fmt.rows * fmt.hMm) / 2;
   const padSideMm = (210 - fmt.cols * fmt.wMm) / 2;
   const priceFontMm = fmt.wMm >= 90 ? 9 : 7.5;
 
-  const setRow = (i: number, field: keyof Tag, v: string) =>
+  const setRow = (i: number, field: keyof Tag, v: string | number) =>
     setRows((prev) => prev.map((r, j) => (j === i ? { ...r, [field]: v } : r)));
   const addRow = () => setRows((prev) => [...prev, emptyRow()]);
   const removeRow = (i: number) => setRows((prev) => prev.filter((_, j) => j !== i));
@@ -116,8 +120,8 @@ export function PriceTagsClient() {
         <div className="rounded-[14px] bg-white p-4 shadow-[0_2px_12px_rgba(45,47,146,0.08)]">
           <p className="mb-3 text-[12px] leading-relaxed text-[#5b5f94]">
             {isZh
-              ? '每行一张标签：填写书代码和售价（只填了一项的行也会打印，完全空着的行不打印）。'
-              : 'One row per tag: enter the book code and price. Rows with at least one field are printed; fully empty rows are skipped.'}
+              ? '每行一张标签：填写书代码和售价，"× 数量"可重复打印同一张（只填了一项的行也会打印，完全空着的行不打印）。'
+              : 'One row per tag: enter the book code and price; "× copies" repeats the same tag. Rows with at least one field are printed; fully empty rows are skipped.'}
           </p>
           <div className="space-y-2">
             {rows.map((r, i) => (
@@ -136,6 +140,17 @@ export function PriceTagsClient() {
                   inputMode="decimal"
                   className="h-9 w-32 shrink-0 rounded-[10px] border border-cocm-ink/10 bg-white px-3 text-[13px] text-cocm-ink outline-none focus:border-cocm-ink/40"
                 />
+                <label className="flex shrink-0 items-center gap-1 text-[12px] text-[#5b5f94]" title={isZh ? '打印数量' : 'Copies'}>
+                  ×
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={r.qty}
+                    onChange={(e) => setRow(i, 'qty', Math.min(999, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                    className="h-9 w-16 rounded-[10px] border border-cocm-ink/10 bg-white px-2 text-[13px] text-cocm-ink outline-none focus:border-cocm-ink/40"
+                  />
+                </label>
                 <button
                   onClick={() => removeRow(i)}
                   title={isZh ? '删除此行' : 'Remove row'}
