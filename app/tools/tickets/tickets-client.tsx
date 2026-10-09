@@ -9,6 +9,13 @@ import { StatusBadge, KindBadge, AdminOnly, STATUS_META } from './ticket-ui';
 
 const FILTERS: Array<'all' | TicketStatus> = ['all', 'submitted', 'in_progress', 'review', 'blocked', 'closed'];
 
+// 创建时间格式化：10-09 16:55（浏览器本地时区）
+function formatCreated(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function timeAgo(iso: string, isZh: boolean) {
   const d = new Date(iso).getTime();
   const mins = Math.max(0, Math.floor((Date.now() - d) / 60000));
@@ -76,22 +83,27 @@ export function TicketsClient() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {rows.map((r) => (
-              <Link key={r.id} href={`/tools/tickets/${r.id}`}>
-                <Card className="flex items-center gap-3 p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(45,47,146,0.15)]">
-                  <span className="shrink-0 font-mono text-[13px] font-bold text-cocm-red">#{r.number}</span>
-                  <KindBadge kind={r.kind} lang={lang} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium text-cocm-ink">{r.title}</p>
-                    <p className="mt-0.5 truncate text-[11px] text-[#5b5f94]">
-                      {r.creator_name || ''} · {timeAgo(r.updated_at, isZh)} · {r.message_count}{' '}
-                      {isZh ? '条消息' : 'messages'}
-                    </p>
-                  </div>
-                  <StatusBadge status={r.status} lang={lang} />
-                </Card>
-              </Link>
-            ))}
+            {rows.map((r) => {
+              const parts = [
+                r.creator_name || '',
+                `${isZh ? '创建于' : 'Created'} ${formatCreated(r.created_at)}`,
+                `${isZh ? '更新' : 'Updated'} ${timeAgo(r.updated_at, isZh)}`,
+                `${r.message_count} ${isZh ? '条消息' : 'messages'}`,
+              ].filter(Boolean);
+              return (
+                <Link key={r.id} href={`/tools/tickets/${r.id}`}>
+                  <Card className="flex items-center gap-3 p-4 transition-shadow hover:shadow-[0_4px_16px_rgba(45,47,146,0.15)]">
+                    <span className="shrink-0 font-mono text-[13px] font-bold text-cocm-red">#{r.number}</span>
+                    <KindBadge kind={r.kind} lang={lang} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-medium text-cocm-ink">{r.title}</p>
+                      <p className="mt-0.5 truncate text-[11px] text-[#5b5f94]">{parts.join(' · ')}</p>
+                    </div>
+                    <StatusBadge status={r.status} lang={lang} />
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
