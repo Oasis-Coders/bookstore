@@ -38,7 +38,15 @@ export function PrintBarcodesClient({ codes }: { codes: string[] }) {
 
   const fmt = FORMATS.find((f) => f.id === formatId) || FORMATS[0];
   const perPage = fmt.cols * fmt.rows;
-  const pages = chunk(codes, perPage);
+
+  // 单个条码：可选择打印数量，默认铺满整页
+  const [qtyInput, setQtyInput] = useState<string | null>(null);
+  const isSingle = codes.length === 1;
+  const qty = isSingle
+    ? (qtyInput === null ? perPage : Math.min(999, Math.max(1, parseInt(qtyInput, 10) || perPage)))
+    : codes.length;
+  const effectiveCodes = isSingle ? Array.from({ length: qty }, () => codes[0]) : codes;
+  const pages = chunk(effectiveCodes, perPage);
 
   // 条码粗细随标签尺寸缩放（EAN-13 允差范围内）
   const barWidth = Math.min(2.2, fmt.wMm / 40);
@@ -63,7 +71,7 @@ export function PrintBarcodesClient({ codes }: { codes: string[] }) {
         /* 无效条码则留空 */
       }
     });
-  }, [codes, formatId, barWidth, barHeight]);
+  }, [codes, formatId, barWidth, barHeight, effectiveCodes.length]);
 
   // 标签网格在 A4 纸上居中
   const padTopMm = (297 - fmt.rows * fmt.hMm) / 2;
@@ -123,8 +131,28 @@ export function PrintBarcodesClient({ codes }: { codes: string[] }) {
           </select>
         </label>
         <span className="text-[13px] text-[#5b5f94]">
-          {isZh ? `共 ${codes.length} 个条码，${pages.length} 页` : `${codes.length} codes, ${pages.length} pages`}
+          {isZh
+            ? isSingle
+              ? `条码 ${codes[0]}，共 ${effectiveCodes.length} 个，${pages.length} 页`
+              : `共 ${codes.length} 个条码，${pages.length} 页`
+            : isSingle
+              ? `${codes[0]} × ${effectiveCodes.length}, ${pages.length} pages`
+              : `${codes.length} codes, ${pages.length} pages`}
         </span>
+        {isSingle && (
+          <label className="flex items-center gap-2 text-[13px] text-[#5b5f94]">
+            {isZh ? '数量' : 'Copies'}
+            <input
+              type="number"
+              min={1}
+              max={999}
+              value={qtyInput ?? perPage}
+              onChange={(e) => setQtyInput(e.target.value)}
+              className="h-9 w-20 rounded-[10px] border border-cocm-ink/10 bg-white px-2 text-[13px] text-cocm-ink"
+            />
+            <span className="text-[12px]">{isZh ? `（一整页 ${perPage} 个）` : `(${perPage} per page)`}</span>
+          </label>
+        )}
         <button
           onClick={() => window.print()}
           className="ml-auto rounded-full bg-cocm-ink px-5 py-2 text-[13px] font-medium text-white hover:opacity-90"
@@ -158,9 +186,9 @@ export function PrintBarcodesClient({ codes }: { codes: string[] }) {
                 gridTemplateRows: `repeat(${fmt.rows}, ${fmt.hMm}mm)`,
               }}
             >
-              {pageCodes.map((code) => (
+              {pageCodes.map((code, ci) => (
                 <div
-                  key={code}
+                  key={`${pi}-${ci}`}
                   className="label-cell"
                   style={{ width: `${fmt.wMm}mm`, height: `${fmt.hMm}mm`, padding: '1.5mm 2mm' }}
                 >
