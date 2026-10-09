@@ -85,7 +85,8 @@ export function CategoryManager() {
         {isZh ? '管理分类' : 'Manage categories'}
       </Button>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-cocm-ink/30 p-4" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-cocm-ink/30" onClick={() => setOpen(false)}>
+          <div className="flex min-h-full items-center justify-center p-4">
           <div
             className="w-full max-w-[480px] rounded-[16px] bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -157,6 +158,7 @@ export function CategoryManager() {
                 </div>
               ))}
             </div>
+          </div>
           </div>
         </div>
       )}
