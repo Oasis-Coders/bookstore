@@ -82,8 +82,8 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
         {isZh ? '跳到主内容' : 'Skip to main content'}
       </a>
       <MobileSidebar items={filteredNav} avatarIcon={avatarIcon} avatarColor={avatarColor} displayName={displayName} userRole={userRole} />
-      <div className="mx-auto flex max-w-[1600px] gap-0 px-0 py-0 lg:gap-6 lg:px-6 lg:py-4">
-        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[260px] shrink-0 flex-col rounded-[24px] bg-cocm-ink text-white lg:flex shadow-[0_20px_60px_rgba(45,47,146,0.25)]">
+      <div className="mx-auto flex max-w-[1600px] gap-0 px-0 py-0 lg:gap-6 lg:px-6 lg:py-4 print:block print:max-w-none">
+        <aside className="sticky top-4 hidden h-[calc(100vh-2rem)] w-[260px] shrink-0 flex-col rounded-[24px] bg-cocm-ink text-white lg:flex shadow-[0_20px_60px_rgba(45,47,146,0.25)] print:hidden">
           <div className="relative overflow-hidden rounded-t-[24px]">
             <div className="absolute inset-0">
               <div className="absolute -top-12 -left-12 w-32 h-32 rounded-full bg-cocm-red/20 blur-[20px]" />
@@ -129,7 +129,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
         </aside>
 
         <main id="main-content" className="min-w-0 flex-1">
-          <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/70 border-b border-cocm-ink/5 lg:rounded-t-[20px] lg:border lg:mt-0 -mt-px">
+          <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/70 border-b border-cocm-ink/5 lg:rounded-t-[20px] lg:border lg:mt-0 -mt-px print:hidden">
             <div className="flex items-center justify-between px-4 py-4 lg:px-8 lg:py-6">
               <div className="min-w-0 flex-1">
                 {eyebrow && <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cocm-red mb-1">{eyebrow}</p>}
@@ -143,7 +143,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
               </div>
             </div>
           </div>
-          <div className="px-4 py-6 lg:px-8 lg:py-8">
+          <div className="px-4 py-6 lg:px-8 lg:py-8 print:px-0 print:py-0">
             {children}
           </div>
         </main>

@@ -73,7 +73,7 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-controls="mobile-drawer"
-        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-[12px] bg-cocm-ink text-white shadow-lg lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-[12px] bg-cocm-ink text-white shadow-lg lg:hidden print:hidden"
         aria-label={isZh ? '打开/关闭菜单' : 'Toggle menu'}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
@@ -81,7 +81,7 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
         </svg>
       </button>
 
-      <div className={`fixed inset-0 z-40 flex transition lg:hidden ${open ? 'visible' : 'invisible'}`}>
+      <div className={`fixed inset-0 z-40 flex transition lg:hidden print:hidden ${open ? 'visible' : 'invisible'}`}>
         <button
           type="button"
           aria-label={isZh ? '关闭菜单' : 'Close menu'}

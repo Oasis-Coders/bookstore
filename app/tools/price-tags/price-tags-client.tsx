@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useT } from '@/lib/i18n/use-t';
 import { LABEL_FORMATS, chunk } from '../barcodes/print/label-format';
 
@@ -43,7 +42,7 @@ export function PriceTagsClient() {
   const cleanPrice = (p: string) => p.trim().replace(/^£\s*/, '');
 
   return (
-    <div className="min-h-screen bg-[#e9ebf5] py-6 text-[#1a1c40] print:bg-white print:py-0">
+    <div className="text-[#1a1c40]">
       <style>{`
         .label-sheet {
           background: #ffffff;
@@ -87,11 +86,7 @@ export function PriceTagsClient() {
         }
       `}</style>
 
-      <div className="no-print mx-auto mb-4 flex w-full max-w-[900px] flex-wrap items-center gap-3 px-4">
-        <Link href="/tools" className="text-[13px] text-[#5b5f94] hover:text-cocm-ink">
-          {isZh ? '← 返回书库工具' : '← Back to Tools'}
-        </Link>
-        <h1 className="text-[16px] font-semibold text-cocm-ink">{isZh ? '价格标签打印' : 'Price Tag Printing'}</h1>
+      <div className="no-print mx-auto mb-4 flex w-full max-w-[900px] flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-[13px] text-[#5b5f94]">
           {isZh ? '版式' : 'Format'}
           <select
