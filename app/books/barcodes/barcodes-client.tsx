@@ -79,6 +79,12 @@ export function BarcodesClient({
   };
 
   const [exporting, setExporting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const toggleCode = (code: string) =>
+    setSelected((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
+  const allSelected = available.length > 0 && selected.length === available.length;
+  const toggleAll = () => setSelected(allSelected ? [] : available.map((r) => r.code));
 
   const exportCsv = async () => {
     setExporting(true);
@@ -239,28 +245,66 @@ export function BarcodesClient({
 
         {tab === 'available' && (
           <Card className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <CardTitle>{isZh ? '可用条码（前 300）' : 'Available (first 300)'}</CardTitle>
-              <div className="flex gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={toggleAll}
+                  className="inline-flex h-8 items-center rounded-[10px] border border-cocm-ink/15 px-3 text-[12px] font-medium text-cocm-ink hover:bg-white"
+                >
+                  {allSelected ? (isZh ? '清空选择' : 'Clear') : (isZh ? '全选' : 'Select all')}
+                </button>
+                {selected.length > 0 ? (
+                  <Link
+                    href={`/books/barcodes/print?codes=${selected.join(',')}`}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex h-8 items-center rounded-[10px] bg-cocm-ink px-3 text-[12px] font-medium text-white hover:opacity-90"
+                  >
+                    {isZh ? `打印选中 (${selected.length})` : `Print selected (${selected.length})`}
+                  </Link>
+                ) : (
+                  <span className="inline-flex h-8 cursor-not-allowed items-center rounded-[10px] bg-cocm-ink/30 px-3 text-[12px] font-medium text-white">
+                    {isZh ? '打印选中' : 'Print selected'}
+                  </span>
+                )}
                 <Link
                   href="/books/barcodes/print"
                   target="_blank"
                   rel="noopener"
-                  className="inline-flex h-8 items-center rounded-[10px] bg-cocm-ink px-3 text-[12px] font-medium text-white hover:opacity-90"
+                  className="inline-flex h-8 items-center rounded-[10px] border border-cocm-ink/15 px-3 text-[12px] font-medium text-cocm-ink hover:bg-white"
                 >
-                  {isZh ? '打印条形码' : 'Print barcodes'}
+                  {isZh ? '打印前 300' : 'Print first 300'}
                 </Link>
                 <Button size="sm" variant="ghost" className="h-8 rounded-[10px] text-[12px]" onClick={exportCsv} disabled={exporting}>
                   {exporting ? '…' : (isZh ? '导出全部可用 CSV（打印用）' : 'Export all available CSV')}
                 </Button>
               </div>
             </div>
+            {selected.length > 0 && (
+              <p className="mt-2 text-[12px] text-[#5b5f94]">
+                {isZh ? `已选 ${selected.length} 个，点击条码可取消选择` : `${selected.length} selected — click a code to deselect`}
+              </p>
+            )}
             <div className="mt-3 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {available.map((r) => (
-                <div key={r.code} className="rounded-[8px] bg-cocm-paper/60 px-2 py-1.5 text-center font-mono text-[12px] text-cocm-ink">
-                  {r.code}
-                </div>
-              ))}
+              {available.map((r) => {
+                const on = selected.includes(r.code);
+                return (
+                  <button
+                    key={r.code}
+                    type="button"
+                    onClick={() => toggleCode(r.code)}
+                    aria-pressed={on}
+                    title={on ? (isZh ? '点击取消选择' : 'Click to deselect') : (isZh ? '点击选择' : 'Click to select')}
+                    className={`rounded-[8px] px-2 py-1.5 text-center font-mono text-[12px] transition-colors ${
+                      on ? 'bg-cocm-ink text-white' : 'bg-cocm-paper/60 text-cocm-ink hover:bg-cocm-paper'
+                    }`}
+                  >
+                    {r.code}
+                  </button>
+                );
+              })}
             </div>
           </Card>
         )}
