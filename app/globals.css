@@ -229,3 +229,12 @@ a {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(45,47,146,0.25);
 }
+
+/* ── 打印时去掉极光背景：SVG 噪点 + 多层渐变 + fixed 会被 print-color-adjust: exact
+      逼成整页高 DPI 光栅化，spool 文件巨大导致打印机长时间无反应 ── */
+@media print {
+  .brand-wash-bg {
+    background: none !important;
+    background-color: #ffffff !important;
+  }
+}

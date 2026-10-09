@@ -80,7 +80,6 @@ export function PriceTagsClient() {
           @page { size: A4 portrait; margin: 0; }
           .no-print { display: none !important; }
           html, body { margin: 0 !important; padding: 0 !important; background: #ffffff !important; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .label-sheet { margin: 0 auto; box-shadow: none; break-after: page; page-break-after: always; }
           .label-sheet:last-child { break-after: auto; page-break-after: auto; }
         }
