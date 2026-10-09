@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n/use-t';
@@ -84,7 +85,7 @@ export function CategoryManager() {
       <Button variant="ghost" size="sm" className="rounded-[12px]" onClick={() => setOpen(true)}>
         {isZh ? '管理分类' : 'Manage categories'}
       </Button>
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 overflow-y-auto bg-cocm-ink/30" onClick={() => setOpen(false)}>
           <div className="flex min-h-full items-center justify-center p-4">
           <div
@@ -160,7 +161,8 @@ export function CategoryManager() {
             </div>
           </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
