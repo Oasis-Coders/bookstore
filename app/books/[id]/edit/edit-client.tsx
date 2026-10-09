@@ -112,7 +112,7 @@ export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; c
                   <p className="mt-1 text-[11px] text-cocm-ink">{isZh ? '内部备用条码：' : 'Spare code: '}<span className="font-mono font-semibold">{spareBarcode}</span></p>
                 ) : (
                   <p className="mt-1 text-[11px] text-[#5b5f94]">
-                    <Link href="/books/barcodes" className="underline hover:text-cocm-ink">{isZh ? '去分配内部备用条码' : 'Assign a spare barcode'}</Link>
+                    <Link href="/tools/barcodes" className="underline hover:text-cocm-ink">{isZh ? '去分配内部备用条码' : 'Assign a spare barcode'}</Link>
                   </p>
                 )}
               </div>

@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditSaleClient } from './edit-client';
 import { notFound, redirect } from 'next/navigation';
-import { getAssignedSpareBarcodeMap } from '@/app/books/barcodes/actions';
+import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
 
 export default async function EditSalePage(props: { params: Promise<{ id: string }>, searchParams?: Promise<any> }) {
   const { id } = await props.params;

@@ -52,15 +52,6 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
     <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
       <div className="flex gap-2">
         <CategoryManager />
-        <Link href="/books/barcodes">
-          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '备用条码' : 'Spare codes'}</Button>
-        </Link>
-        <Link href="/books/price-tags">
-          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '价格标签' : 'Price tags'}</Button>
-        </Link>
-        <Link href="/books/import">
-          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '批量导入' : 'Import'}</Button>
-        </Link>
         <Link href="/books/new">
           <Button variant="secondary" className="rounded-[12px] shadow-[0_2px_8px_rgba(45,47,146,0.15)] hover:shadow-[0_4px_12px_rgba(45,47,146,0.25)] transition-[box-shadow,transform] hover:scale-[1.02]">+ {tt('books.addBook')}</Button>
         </Link>

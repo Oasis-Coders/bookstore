@@ -59,7 +59,7 @@ export async function assignSpareBarcode(bookId: string): Promise<{ success: boo
     p_book_id: bookId,
   });
   if (error) return { success: false, error: friendlyDbError(error, { fallback: '分配失败' }) };
-  revalidatePath('/books/barcodes');
+  revalidatePath('/tools/barcodes');
   return { success: true, code: data as string };
 }
 
@@ -70,7 +70,7 @@ export async function generateMoreSpareBarcodes(count = 500): Promise<{ success:
   const n = Math.min(Math.max(1, Math.floor(count)), 5000);
   const { data, error } = await supabase.rpc('generate_spare_barcodes', { p_count: n });
   if (error) return { success: false, error: friendlyDbError(error, { fallback: '生成失败' }) };
-  revalidatePath('/books/barcodes');
+  revalidatePath('/tools/barcodes');
   return { success: true, generated: data as number };
 }
 

@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SalesClient } from './sales-client';
-import { getAssignedSpareBarcodeMap } from '@/app/books/barcodes/actions';
+import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string; edited?: string }> }) {
   const { q: qRaw, edited: editedRaw } = await searchParams;

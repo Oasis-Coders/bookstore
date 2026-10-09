@@ -8,6 +8,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { href: '/', label: 'Dashboard', labelZh: '总览' },
   { href: '/books', label: 'Books', labelZh: '书库' },
+  { href: '/tools', label: 'Tools', labelZh: '书库工具' },
   { href: '/purchase-orders', label: 'Purchasing', labelZh: '采购' },
   { href: '/suppliers', label: 'Suppliers', labelZh: '供应商' },
   { href: '/sales', label: 'Sales', labelZh: '销售' },

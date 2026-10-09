@@ -107,7 +107,7 @@ export function PrintBarcodesClient({ codes }: { codes: string[] }) {
       `}</style>
 
       <div className="no-print mx-auto mb-4 flex w-full max-w-[900px] flex-wrap items-center gap-3 px-4">
-        <Link href="/books/barcodes" className="text-[13px] text-[#5b5f94] hover:text-cocm-ink">
+        <Link href="/tools/barcodes" className="text-[13px] text-[#5b5f94] hover:text-cocm-ink">
           {isZh ? '← 返回备用条码库' : '← Back to spare barcodes'}
         </Link>
         <label className="flex items-center gap-2 text-[13px] text-[#5b5f94]">

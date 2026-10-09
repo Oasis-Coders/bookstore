@@ -84,8 +84,8 @@ export function PriceTagsClient() {
       `}</style>
 
       <div className="no-print mx-auto mb-4 flex w-full max-w-[900px] flex-wrap items-center gap-3 px-4">
-        <Link href="/books" className="text-[13px] text-[#5b5f94] hover:text-cocm-ink">
-          {isZh ? '← 返回书库' : '← Back to Books'}
+        <Link href="/tools" className="text-[13px] text-[#5b5f94] hover:text-cocm-ink">
+          {isZh ? '← 返回书库工具' : '← Back to Tools'}
         </Link>
         <h1 className="text-[16px] font-semibold text-cocm-ink">{isZh ? '价格标签打印' : 'Price Tag Printing'}</h1>
         <label className="flex items-center gap-2 text-[13px] text-[#5b5f94]">

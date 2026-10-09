@@ -169,7 +169,7 @@ export function BarcodesClient({
             <span className="flex-1">{msg}</span>
             {lastAssignedCode && (
               <Link
-                href={`/books/barcodes/print?codes=${lastAssignedCode}`}
+                href={`/tools/barcodes/print?codes=${lastAssignedCode}`}
                 target="_blank"
                 rel="noopener"
                 className="shrink-0 rounded-[8px] bg-cocm-ink px-2.5 py-1 text-[11px] font-medium text-white hover:opacity-90"
@@ -229,7 +229,7 @@ export function BarcodesClient({
                   <span className="font-mono text-[13px] font-semibold text-cocm-ink">{r.code}</span>
                   <span className="flex-1 truncate text-right text-[12px] text-[#5b5f94]">{r.book_title} · {r.book_sku}</span>
                   <Link
-                    href={`/books/barcodes/print?codes=${r.code}`}
+                    href={`/tools/barcodes/print?codes=${r.code}`}
                     target="_blank"
                     rel="noopener"
                     className="shrink-0 rounded-[8px] border border-cocm-ink/15 px-2 py-0.5 text-[11px] text-cocm-ink hover:bg-white"
@@ -257,7 +257,7 @@ export function BarcodesClient({
                 </button>
                 {selected.length > 0 ? (
                   <Link
-                    href={`/books/barcodes/print?codes=${selected.join(',')}`}
+                    href={`/tools/barcodes/print?codes=${selected.join(',')}`}
                     target="_blank"
                     rel="noopener"
                     className="inline-flex h-8 items-center rounded-[10px] bg-cocm-ink px-3 text-[12px] font-medium text-white hover:opacity-90"
@@ -270,7 +270,7 @@ export function BarcodesClient({
                   </span>
                 )}
                 <Link
-                  href="/books/barcodes/print"
+                  href="/tools/barcodes/print"
                   target="_blank"
                   rel="noopener"
                   className="inline-flex h-8 items-center rounded-[10px] border border-cocm-ink/15 px-3 text-[12px] font-medium text-cocm-ink hover:bg-white"
