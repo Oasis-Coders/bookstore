@@ -69,7 +69,7 @@ export default async function ToolsPage() {
     <AppShell
       title="Tools"
       titleZh="常用工具"
-      eyebrow={isZh ? '一次性小工具' : 'One-off utilities'}
+      eyebrow={isZh ? '一次性小工具合集' : 'One-off utilities'}
     >
       <div className="mx-auto grid max-w-[900px] gap-4 sm:grid-cols-3">
         {tools.filter((t) => !t.adminOnly || showTickets).map(renderCard)}
