@@ -184,7 +184,7 @@ export function TicketDetailClient({ ticketId }: { ticketId: string }) {
                       {isZh ? '确认修复，关闭工单' : 'Confirm fix & close'}
                     </Button>
                     <span className="text-[11px] text-[#5b5f94]">
-                      {isZh ? '请先在上面的预览链接里验收，没问题再关闭；关闭后改动会自动合并上线。' : 'Please verify on the preview link first; closing merges the change to production.'}
+                      {isZh ? '请先在上面的预览链接里验收，没问题再关闭；关闭后改动会在几分钟后自动合并上线。' : 'Please verify on the preview link first; closing merges the change to production in a few minutes.'}
                     </span>
                   </>
                 )}
@@ -240,7 +240,7 @@ export function TicketDetailClient({ ticketId }: { ticketId: string }) {
               </Card>
             ) : (
               <p className="mt-4 text-center text-[12px] text-[#5b5f94]">
-                {isZh ? '工单已关闭。如有问题可重新打开。' : 'Ticket closed. Reopen if needed.'}
+                {isZh ? '工单已关闭，改动将在几分钟后自动合并上线。如有问题可重新打开。' : 'Ticket closed. Changes will go live in a few minutes. Reopen if needed.'}
               </p>
             )}
           </>
