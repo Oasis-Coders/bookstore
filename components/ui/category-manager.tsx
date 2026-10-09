@@ -89,11 +89,12 @@ export function CategoryManager() {
         <div className="fixed inset-0 z-50 overflow-y-auto bg-cocm-ink/30" onClick={() => setOpen(false)}>
           <div className="flex min-h-full items-center justify-center p-4">
           <div
-            className="w-full max-w-[480px] rounded-[16px] bg-white p-5 shadow-xl"
+            className="flex h-[540px] max-h-[85vh] w-full max-w-[480px] flex-col rounded-[16px] bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label={isZh ? '管理分类' : 'Manage categories'}
           >
+            <div className="shrink-0">
             <div className="flex items-center justify-between">
               <h3 className="font-serif text-[16px] font-semibold text-cocm-ink">{isZh ? '管理分类' : 'Manage categories'}</h3>
               <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>{isZh ? '关闭' : 'Close'}</Button>
@@ -114,7 +115,8 @@ export function CategoryManager() {
                 {isZh ? '添加' : 'Add'}
               </Button>
             </div>
-            <div className="mt-3 max-h-[320px] space-y-2 overflow-y-auto">
+            </div>
+            <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
               {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
               {!loading && cats.length === 0 && (
                 <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
