@@ -137,16 +137,16 @@ export function CategoryManager() {
                     </>
                   ) : (
                     <>
-                      <span className="flex-1 truncate text-[13px] font-medium text-cocm-ink">{c.name}</span>
-                      <span className="text-[11px] text-[#5b5f94]">{c.count}{isZh ? ' 本' : ''}</span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cocm-ink" title={c.name}>{c.name}</span>
+                      <span className="shrink-0 text-[11px] text-[#5b5f94]">{c.count}{isZh ? ' 本' : ''}</span>
                       <Button
-                        size="sm" variant="ghost" className="h-7 rounded-[8px] px-2 text-[11px]"
+                        size="sm" variant="ghost" className="h-7 shrink-0 rounded-[8px] px-2 text-[11px]"
                         onClick={() => { setEditing(c.name); setEditValue(c.name); setMsg(''); }}
                       >
                         {isZh ? '改名' : 'Rename'}
                       </Button>
                       <Button
-                        size="sm" variant="ghost" className="h-7 rounded-[8px] px-2 text-[11px] text-red-600 hover:text-red-700"
+                        size="sm" variant="ghost" className="h-7 shrink-0 rounded-[8px] px-2 text-[11px] text-red-600 hover:text-red-700"
                         disabled={busy === c.name}
                         onClick={() => doDelete(c)}
                       >
