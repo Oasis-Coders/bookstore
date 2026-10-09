@@ -50,6 +50,16 @@ async function assertTicketAdmin() {
   return { supabase, user, displayName: meta.display_name || user.email || '管理员' };
 }
 
+/** 服务端页面门控用：当前用户是否为 admin / super_admin（不抛异常） */
+export async function isTicketAdmin(): Promise<boolean> {
+  try {
+    await assertTicketAdmin();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function listTickets(status: string): Promise<TicketRow[]> {
   const { supabase } = await assertTicketAdmin();
   let q = supabase.from('tickets').select('*').order('updated_at', { ascending: false }).limit(200);

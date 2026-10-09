@@ -2,12 +2,14 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { AppShell } from '@/components/layout/app-shell';
 import { Card } from '@/components/ui/card';
-import { AdminOnly } from './tickets/ticket-ui';
+import { isTicketAdmin } from './tickets/actions';
 
 /** 书库工具：一页式小工具的入口（备用条码、批量导入、价格标签打印） */
 export default async function ToolsPage() {
   const cookieStore = await cookies();
   const isZh = cookieStore.get('lang')?.value !== 'en';
+  // 服务端门控：问题申报卡片 staff 在 HTML 里根本看不到
+  const showTickets = await isTicketAdmin();
 
   const tools = [
     {
@@ -70,10 +72,7 @@ export default async function ToolsPage() {
       eyebrow={isZh ? '一次性小工具' : 'One-off utilities'}
     >
       <div className="mx-auto grid max-w-[900px] gap-4 sm:grid-cols-3">
-        {tools.filter((t) => !t.adminOnly).map(renderCard)}
-        <AdminOnly>
-          <>{tools.filter((t) => t.adminOnly).map(renderCard)}</>
-        </AdminOnly>
+        {tools.filter((t) => !t.adminOnly || showTickets).map(renderCard)}
       </div>
     </AppShell>
   );
