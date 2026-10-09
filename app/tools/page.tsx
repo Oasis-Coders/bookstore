@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Card } from '@/components/ui/card';
 import { isTicketAdmin } from './tickets/actions';
 
-/** 书库工具：一页式小工具的入口（备用条码、批量导入、价格标签打印） */
+/** 常用工具：一页式小工具的入口（备用条码、批量导入、价格标签打印） */
 export default async function ToolsPage() {
   const cookieStore = await cookies();
   const isZh = cookieStore.get('lang')?.value !== 'en';
@@ -68,7 +68,7 @@ export default async function ToolsPage() {
   return (
     <AppShell
       title="Tools"
-      titleZh="书库工具"
+      titleZh="常用工具"
       eyebrow={isZh ? '一次性小工具' : 'One-off utilities'}
     >
       <div className="mx-auto grid max-w-[900px] gap-4 sm:grid-cols-3">
