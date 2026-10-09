@@ -26,6 +26,7 @@ export function CategoryManager() {
   const [editValue, setEditValue] = useState('');
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
 
@@ -39,7 +40,7 @@ export function CategoryManager() {
   };
 
   useEffect(() => {
-    if (open) { load(); setMsg(''); setEditing(null); }
+    if (open) { load(); setMsg(''); setEditing(null); setQuery(''); }
   }, [open ]);
 
   const doAdd = async () => {
@@ -80,6 +81,9 @@ export function CategoryManager() {
     load();
   };
 
+  const q = query.trim().toLowerCase();
+  const visibleCats = q ? cats.filter((c) => c.name.toLowerCase().includes(q)) : cats;
+
   return (
     <>
       <Button variant="ghost" size="sm" className="rounded-[12px]" onClick={() => setOpen(true)}>
@@ -115,13 +119,24 @@ export function CategoryManager() {
                 {isZh ? '添加' : 'Add'}
               </Button>
             </div>
+            <div className="mt-2">
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={isZh ? '搜索分类…' : 'Search categories…'}
+                className="h-9 text-[12px]"
+              />
+            </div>
             </div>
             <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
               {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
               {!loading && cats.length === 0 && (
                 <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
               )}
-              {cats.map((c) => (
+              {!loading && cats.length > 0 && visibleCats.length === 0 && (
+                <p className="text-[12px] text-[#5b5f94]">{isZh ? `没有匹配「${query.trim()}」的分类` : 'No matching categories'}</p>
+              )}
+              {visibleCats.map((c) => (
                 <div key={c.name} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
                   {editing === c.name ? (
                     <>
