@@ -55,6 +55,9 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
         <Link href="/books/barcodes">
           <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '备用条码' : 'Spare codes'}</Button>
         </Link>
+        <Link href="/books/price-tags">
+          <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '价格标签' : 'Price tags'}</Button>
+        </Link>
         <Link href="/books/import">
           <Button variant="ghost" size="sm" className="rounded-[12px]">{isZh ? '批量导入' : 'Import'}</Button>
         </Link>

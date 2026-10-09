@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import JsBarcode from 'jsbarcode';
 import { useT } from '@/lib/i18n/use-t';
+import { LABEL_FORMATS, chunk } from './label-format';
 
 /**
  * 备用条码打印页 —— 按不干胶标签纸排版，整页打印。
@@ -19,16 +20,7 @@ type LabelFormat = {
   rows: number; // 每页行数
 };
 
-const FORMATS: LabelFormat[] = [
-  { id: 'll21', nameZh: 'LL21 63.5×38.1mm（每页21张）', nameEn: 'LL21 63.5×38.1mm (21/sheet)', wMm: 63.5, hMm: 38.1, cols: 3, rows: 7 },
-  { id: 'l7162', nameZh: 'L7162 99.1×38.1mm（每页14张）', nameEn: 'L7162 99.1×38.1mm (14/sheet)', wMm: 99.1, hMm: 38.1, cols: 2, rows: 7 },
-];
-
-function chunk<T>(arr: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-  return out;
-}
+const FORMATS: LabelFormat[] = LABEL_FORMATS;
 
 export function PrintBarcodesClient({ codes }: { codes: string[] }) {
   const { lang } = useT();
