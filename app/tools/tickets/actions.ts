@@ -5,6 +5,8 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 
 // 问题申报（ticket）：admin / super_admin 可见可操作。工单状态由 agent 跟进：
 // submitted → in_progress → review → closed（用户确认），危险操作 agent 会设为 blocked 等 Luke 拍板。
+// 需要改代码的工单在独立分支（branch）实现，用户在 preview_url 验收，
+// 确认关闭后 watcher 把分支合并到 main（branch_merged=true）。
 
 export type TicketStatus = 'submitted' | 'in_progress' | 'review' | 'blocked' | 'closed';
 export type TicketKind = 'bug' | 'feature' | 'other';
@@ -21,6 +23,9 @@ export type TicketRow = {
   created_at: string;
   updated_at: string;
   message_count: number;
+  branch: string | null;
+  preview_url: string | null;
+  branch_merged: boolean;
 };
 
 export type TicketMessageRow = {
@@ -75,6 +80,9 @@ export async function listTickets(status: string): Promise<TicketRow[]> {
     created_at: r.created_at,
     updated_at: r.updated_at,
     message_count: counts[i].count || 0,
+    branch: r.branch || null,
+    preview_url: r.preview_url || null,
+    branch_merged: !!r.branch_merged,
   }));
 }
 
@@ -96,6 +104,7 @@ export async function getTicket(id: string): Promise<{ ticket: TicketRow; messag
       id: t.id, number: t.number, title: t.title, kind: t.kind, description: t.description,
       status: t.status, created_by: t.created_by, creator_name, created_at: t.created_at,
       updated_at: t.updated_at, message_count: count || 0,
+      branch: t.branch || null, preview_url: t.preview_url || null, branch_merged: !!t.branch_merged,
     },
     messages: ((msgs || []) as any[]).map((m) => ({
       id: m.id, ticket_id: m.ticket_id, author_type: m.author_type, author_name: m.author_name,

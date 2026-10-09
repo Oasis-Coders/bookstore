@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useT } from '@/lib/i18n/use-t';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
   getTicket, postTicketMessage, closeTicket, reopenTicket,
   type TicketMessageRow, type TicketRow,
@@ -85,8 +86,25 @@ export function TicketDetailClient({ ticketId }: { ticketId: string }) {
 
   useEffect(() => {
     load(true);
-    const t = setInterval(() => load(false), 10000);
-    return () => clearInterval(t);
+    // Realtime 订阅：新消息 / 状态变化时自动刷新，不轮询
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    const ch = supabase
+      .channel(`ticket-${ticketId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ticket_messages', filter: `ticket_id=eq.${ticketId}` },
+        () => load(false)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tickets', filter: `id=eq.${ticketId}` },
+        () => load(false)
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, [ticketId]);
 
   const send = async () => {
@@ -147,11 +165,28 @@ export function TicketDetailClient({ ticketId }: { ticketId: string }) {
               </div>
               <p className="mt-2 text-[16px] font-semibold text-cocm-ink">{ticket.title}</p>
 
-              <div className="mt-4 flex gap-2">
+              {ticket.preview_url && (
+                <a
+                  href={ticket.preview_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 block rounded-[10px] border border-cocm-ink/15 bg-[#f4f2fa] px-3.5 py-2.5 text-[13px] text-cocm-ink hover:border-cocm-ink/40"
+                >
+                  <span className="font-semibold">🔍 {isZh ? '预览链接（在这个版本上验收）' : 'Preview link'}</span>
+                  <span className="mt-0.5 block break-all text-[12px] text-[#5b5f94] underline">{ticket.preview_url}</span>
+                </a>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 {ticket.status === 'review' && (
-                  <Button size="sm" className="rounded-[10px]" disabled={acting} onClick={doClose}>
-                    {isZh ? '确认修复，关闭工单' : 'Confirm fix & close'}
-                  </Button>
+                  <>
+                    <Button size="sm" className="rounded-[10px]" disabled={acting} onClick={doClose}>
+                      {isZh ? '确认修复，关闭工单' : 'Confirm fix & close'}
+                    </Button>
+                    <span className="text-[11px] text-[#5b5f94]">
+                      {isZh ? '请先在上面的预览链接里验收，没问题再关闭；关闭后改动会自动合并上线。' : 'Please verify on the preview link first; closing merges the change to production.'}
+                    </span>
+                  </>
                 )}
                 {ticket.status === 'closed' && (
                   <Button size="sm" variant="secondary" className="rounded-[10px]" disabled={acting} onClick={doReopen}>
