@@ -14,7 +14,8 @@ import {
 } from '@/app/books/actions';
 
 /**
- * 1B: 分类管理 — 改名 / 删除。删除分类会把该分类下图书的分类清空（图书保留）。
+ * 1B: 分类管理 — 添加 / 改名 / 删除 / 搜索。删除分类会把该分类下图书的分类清空（图书保留）。
+ * 顶部的输入框既是搜索框也是添加框：输入即过滤列表，点"添加"把当前输入新建为分类。
  */
 export function CategoryManager() {
   const { lang } = useT();
@@ -26,7 +27,6 @@ export function CategoryManager() {
   const [editValue, setEditValue] = useState('');
   const [newName, setNewName] = useState('');
   const [adding, setAdding] = useState(false);
-  const [query, setQuery] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState('');
 
@@ -40,12 +40,13 @@ export function CategoryManager() {
   };
 
   useEffect(() => {
-    if (open) { load(); setMsg(''); setEditing(null); setQuery(''); }
+    if (open) { load(); setMsg(''); setEditing(null); setNewName(''); }
   }, [open ]);
 
   const doAdd = async () => {
     const v = newName.trim();
     if (!v) { setMsg(isZh ? '分类名称不能为空' : 'Name cannot be empty'); return; }
+    if (cats.some((c) => c.name === v)) { setMsg(isZh ? '该分类已存在' : 'Category already exists'); return; }
     setAdding(true);
     const r = await createCategory(v);
     setAdding(false);
@@ -81,8 +82,9 @@ export function CategoryManager() {
     load();
   };
 
-  const q = query.trim().toLowerCase();
+  const q = newName.trim().toLowerCase();
   const visibleCats = q ? cats.filter((c) => c.name.toLowerCase().includes(q)) : cats;
+  const exactExists = q ? cats.some((c) => c.name.toLowerCase() === q) : false;
 
   return (
     <>
@@ -111,21 +113,13 @@ export function CategoryManager() {
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder={isZh ? '输入新分类名称' : 'New category name'}
+                placeholder={isZh ? '搜索分类，或输入新分类名称' : 'Search categories, or enter a new one'}
                 className="h-9 flex-1 text-[12px]"
                 onKeyDown={(e) => { if (e.key === 'Enter') doAdd(); }}
               />
-              <Button size="sm" className="h-9 rounded-[10px] px-4" disabled={adding || !newName.trim()} onClick={doAdd}>
+              <Button size="sm" className="h-9 shrink-0 rounded-[10px] px-4" disabled={adding || !newName.trim() || exactExists} onClick={doAdd}>
                 {isZh ? '添加' : 'Add'}
               </Button>
-            </div>
-            <div className="mt-2">
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={isZh ? '搜索分类…' : 'Search categories…'}
-                className="h-9 text-[12px]"
-              />
             </div>
             </div>
             <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
@@ -134,7 +128,7 @@ export function CategoryManager() {
                 <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
               )}
               {!loading && cats.length > 0 && visibleCats.length === 0 && (
-                <p className="text-[12px] text-[#5b5f94]">{isZh ? `没有匹配「${query.trim()}」的分类` : 'No matching categories'}</p>
+                <p className="text-[12px] text-[#5b5f94]">{isZh ? `没有匹配「${newName.trim()}」的分类，可点击「添加」新建` : `No match — click Add to create "${newName.trim()}"`}</p>
               )}
               {visibleCats.map((c) => (
                 <div key={c.name} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
