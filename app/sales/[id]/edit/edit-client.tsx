@@ -318,18 +318,18 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
             {paymentMethod === 'mix' && (
               <div className="rounded-[12px] border border-cocm-ink/15 bg-cocm-paper/50 p-3">
                 <p className="text-[11px] font-semibold text-cocm-ink">{isZh ? '混合支付：两种付款方式及金额（合计须等于应付）' : 'Mix payment: two methods, amounts must add up'}</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-2 grid grid-cols-1 gap-2">
                   <div className="flex gap-2">
-                    <select value={mixA} onChange={e => setMixA(e.target.value)} aria-label={isZh ? '付款方式一' : 'Method 1'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                    <select value={mixA} onChange={e => setMixA(e.target.value)} aria-label={isZh ? '付款方式一' : 'Method 1'} className="h-10 w-[124px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
                       {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
                     </select>
-                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtA} onChange={e => setMixAmtA(e.target.value)} placeholder="£" aria-label={isZh ? '金额一' : 'Amount 1'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtA} onChange={e => setMixAmtA(e.target.value)} placeholder="£" aria-label={isZh ? '金额一' : 'Amount 1'} className="h-10 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
                   </div>
                   <div className="flex gap-2">
-                    <select value={mixB} onChange={e => setMixB(e.target.value)} aria-label={isZh ? '付款方式二' : 'Method 2'} className="h-9 w-[104px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
+                    <select value={mixB} onChange={e => setMixB(e.target.value)} aria-label={isZh ? '付款方式二' : 'Method 2'} className="h-10 w-[124px] shrink-0 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px] text-cocm-ink">
                       {MIX_SUB_METHODS.map(m => <option key={m} value={m}>{isZh ? PAYMENT_LABELS[m].zh : PAYMENT_LABELS[m].en}</option>)}
                     </select>
-                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtB} onChange={e => setMixAmtB(e.target.value)} placeholder="£" aria-label={isZh ? '金额二' : 'Amount 2'} className="h-9 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
+                    <input type="number" inputMode="decimal" min="0" step="0.01" value={mixAmtB} onChange={e => setMixAmtB(e.target.value)} placeholder="£" aria-label={isZh ? '金额二' : 'Amount 2'} className="h-10 min-w-0 flex-1 rounded-[10px] border border-cocm-ink/15 bg-white px-2 text-[12px]" />
                   </div>
                 </div>
                 <p className={`mt-1.5 text-[11px] ${mixValid ? 'text-green-700' : 'text-cocm-red'}`}>
