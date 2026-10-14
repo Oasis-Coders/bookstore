@@ -4,7 +4,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { Card } from '@/components/ui/card';
 import { isTicketAdmin } from './tickets/actions';
 
-/** 常用工具：一页式小工具的入口（备用条码、批量导入、价格标签打印） */
+/** 书库工具：一页式小工具的入口（备用条码、批量导入、价格标签打印） */
 export default async function ToolsPage() {
   const cookieStore = await cookies();
   const isZh = cookieStore.get('lang')?.value !== 'en';
@@ -40,6 +40,15 @@ export default async function ToolsPage() {
       adminOnly: false,
     },
     {
+      href: '/tools/address-labels',
+      titleZh: '地址标签打印',
+      titleEn: 'Address Labels',
+      descZh: 'LL21 标签纸打印邮寄地址标签：手动填写五行英国邮寄地址、选择打印份数。',
+      descEn: 'Print mailing address labels on LL21 sheets: enter a 5-line UK postal address and choose copies.',
+      icon: '✉',
+      adminOnly: false,
+    },
+    {
       href: '/tools/tickets',
       titleZh: '问题申报',
       titleEn: 'Tickets',
@@ -68,7 +77,7 @@ export default async function ToolsPage() {
   return (
     <AppShell
       title="Tools"
-      titleZh="常用工具"
+      titleZh="书库工具"
       eyebrow={isZh ? '一次性小工具合集' : 'One-off utilities'}
     >
       <div className="mx-auto grid max-w-[900px] gap-4 sm:grid-cols-3">
