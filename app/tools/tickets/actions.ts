@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { createSupabaseServerClient, createSupabaseServiceRoleClient } from '@/lib/supabase/server';
 
 // 问题申报（ticket）：admin / super_admin 可见可操作。工单状态由 agent 跟进：
 // submitted → in_progress → review → closed（用户确认），危险操作 agent 会设为 blocked 等 Luke 拍板。
@@ -54,8 +54,12 @@ function toStoragePath(u: string): string {
   return u.replace(/^\/+/, '');
 }
 
-/** 把 image_urls（path 或历史公开 URL）换成短期签名 URL；单张失败时保留原值 */
+/** 把 image_urls（path 或历史公开 URL）换成短期签名 URL；单张失败时保留原值。
+ * 签名必须用 service role 客户端：storage 的 sign 接口要走 RLS，
+ * 而 ticket-attachments 桶没有给普通用户配 SELECT 策略，用用户身份签会失败。
+ * 这是纯服务端逻辑，调用方已做 admin 鉴权。 */
 async function signAttachmentUrls(supabase: any, urls: string[]): Promise<string[]> {
+  const signer = (await createSupabaseServiceRoleClient()) || supabase;
   const out: string[] = [];
   for (const u of urls) {
     const path = toStoragePath(u);
@@ -64,7 +68,7 @@ async function signAttachmentUrls(supabase: any, urls: string[]): Promise<string
       continue;
     }
     try {
-      const { data, error } = await supabase.storage
+      const { data, error } = await signer.storage
         .from(ATTACH_BUCKET)
         .createSignedUrl(path, ATTACH_URL_TTL);
       out.push(!error && data?.signedUrl ? data.signedUrl : u);
