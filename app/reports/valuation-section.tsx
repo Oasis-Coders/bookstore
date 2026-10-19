@@ -141,7 +141,9 @@ export function ValuationSection({ valuation, onExport }: { valuation: any[]; on
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
+          {rows.map((r, i) => {
+            const atLoss = num(r.weighted_average_cost) > num(r.current_price);
+            return (
             <tr key={`${r.book_id}-${r.location_id}-${i}`} className="border-b border-cocm-ink/5">
               {searching && <td className="py-2 pr-2 text-[#5b5f94]">{r.category || tt('reports.uncategorized')}</td>}
               <td className="py-2 pr-2 font-mono text-[11px]">{r.sku}</td>
@@ -149,12 +151,15 @@ export function ValuationSection({ valuation, onExport }: { valuation: any[]; on
               <td className="py-2 pr-2 text-[#5b5f94]">{r.shelf_position || '-'}</td>
               <td className="py-2 pr-2 text-[#5b5f94]">{r.warehouse_location || '-'}</td>
               <td className="py-2 text-right">{r.quantity_on_hand}</td>
-              <td className="py-2 text-right">{formatCurrency(num(r.current_price))}</td>
+              <td className={`py-2 text-right ${atLoss ? 'font-medium text-red-600' : ''}`}>
+                {formatCurrency(num(r.current_price))}
+              </td>
               <td className="py-2 text-right">{formatCurrency(num(r.weighted_average_cost))}</td>
               <td className="py-2 text-right font-medium">{formatCurrency(num(r.inventory_value))}</td>
               <td className="py-2 text-right text-[#5b5f94]">{formatCurrency(num(r.retail_value))}</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
