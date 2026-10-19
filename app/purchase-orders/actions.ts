@@ -178,6 +178,7 @@ export async function receivePOWithCost(input: { po_id: string; location_id: str
   await appendStageHandler(supabase, input.po_id, 'received');
   revalidatePath('/purchase-orders');
   revalidatePath('/reports');
+  revalidatePath('/'); // 总览页库存总值：收货后立即失效，避免侧边栏跳转看到旧数（工单 #10）
   return ok({ data });
 }
 
@@ -192,6 +193,7 @@ export async function finalizePO(poId: string): Promise<ActionResult> {
   await appendStageHandler(supabase, poId, 'finalized');
   revalidatePath('/purchase-orders');
   revalidatePath('/reports');
+  revalidatePath('/'); // 总览页库存总值同步失效（工单 #10）
   return ok();
 }
 

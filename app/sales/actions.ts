@@ -96,6 +96,7 @@ export async function createSale(formData: FormData): Promise<SaleResult> {
     revalidatePath('/sales');
     revalidatePath('/reports');
     revalidatePath('/books');
+    revalidatePath('/'); // 总览页库存总值：销售出库后立即失效（工单 #10）
     return { success: true, saleId: data as string };
   } catch (e: any) {
     return { success: false, error: friendlyDbError(e, { fallback: '销售失败，请重试' }) };
