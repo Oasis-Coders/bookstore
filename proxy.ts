@@ -23,7 +23,7 @@ function getEnv() {
   return { url, anonKey };
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 公开路径 - 不需要认证
