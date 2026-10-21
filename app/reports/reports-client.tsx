@@ -10,8 +10,9 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ValuationSection } from './valuation-section';
+import { PublisherReportSection } from './publisher-report-section';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, publisherReport = { rows: [], publishers: [], initialFilters: { from: '', to: '', publisher: 'all' } }, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; publisherReport?: { rows: any[]; publishers: string[]; initialFilters: { from: string; to: string; publisher: string } }; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -447,6 +448,13 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
 
       {/* Valuation */}
       <ValuationSection valuation={valuation} onExport={() => exportCsv('valuation')} />
+
+      {/* Publisher inventory movement report (工单 #13) */}
+      <PublisherReportSection
+        rows={publisherReport.rows}
+        publishers={publisherReport.publishers}
+        initialFilters={publisherReport.initialFilters}
+      />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

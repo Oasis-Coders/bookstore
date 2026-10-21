@@ -1,9 +1,16 @@
 import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { ReportsClient } from './reports-client';
+import { buildPublisherReportRows, distinctPublishers, type PublisherReportBook, type PublisherReportValuation } from './publisher-report-utils';
 
-export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string; pstatus?: string }> }) {
-  const { from, to, month, pay, pstatus } = await searchParams;
+function shiftDay(d: string, delta: number) {
+  const dt = new Date(d + 'T00:00:00Z');
+  dt.setUTCDate(dt.getUTCDate() + delta);
+  return dt.toISOString().slice(0, 10);
+}
+
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string; pstatus?: string; pub_from?: string; pub_to?: string; pub_publisher?: string }> }) {
+  const { from, to, month, pay, pstatus, pub_from, pub_to, pub_publisher } = await searchParams;
   const payFilter = pay && pay !== 'all' ? pay : null;
   const payStatusFilter = pstatus && pstatus !== 'all' ? pstatus : null;
   const supabase = await createSupabaseServerClient();
@@ -17,6 +24,10 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   let autoOpeningStock: number | null = null;
   let autoClosingStock: number | null = null;
   let mode: 'live' | 'empty' = 'empty';
+  // 工单 #13: 按出版社进出货报表
+  let publisherReportRows: any[] = [];
+  let publisherList: string[] = [];
+  let pubFilters = { from: '', to: '', publisher: 'all' };
 
   const targetMonth = month || new Date().toISOString().slice(0,7); // YYYY-MM
   const monthStart = `${targetMonth}-01`;
@@ -162,6 +173,70 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
         console.error('edited sales fetch error', e);
       }
 
+      // 2026-10-19: 工单 #13 按出版社进出货报表 — 出版社筛选 + 手动起止日期
+      try {
+        const year = new Date().getUTCFullYear();
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const pubFrom = pub_from || `${year}-01-01`;
+        const pubTo = pub_to || todayStr;
+        const pubPublisher = pub_publisher && pub_publisher !== 'all' ? pub_publisher : 'all';
+
+        const { data: pubBooks } = await supabase
+          .from('books')
+          .select('id, sku, title, publisher')
+          .eq('is_active', true)
+          .order('sku')
+          .limit(5000);
+        const allPubBooks = ((pubBooks || []) as any[]) as PublisherReportBook[];
+        publisherList = distinctPublishers(allPubBooks);
+        const filteredBooks = pubPublisher === 'all'
+          ? allPubBooks
+          : allPubBooks.filter((b) => (b.publisher || '').trim() === pubPublisher);
+        const bookIdSet = new Set(filteredBooks.map((b) => b.id));
+
+        const valuationById: Record<string, PublisherReportValuation> = {};
+        for (const v of valuation as any[]) {
+          if (v.book_id && bookIdSet.has(v.book_id)) {
+            valuationById[v.book_id] = {
+              quantity_on_hand: Number(v.quantity_on_hand || 0),
+              current_price: Number(v.current_price || 0),
+              weighted_average_cost: Number(v.weighted_average_cost || 0),
+              shelf_position: v.shelf_position || null,
+            };
+          }
+        }
+
+        // Opening stock = qty at end of the day before pubFrom
+        const openMap: Record<string, number> = {};
+        try {
+          const { data: openRows } = await supabase.rpc('inventory_qty_at', { p_as_of: shiftDay(pubFrom, -1) });
+          for (const r of (openRows || []) as any[]) {
+            if (bookIdSet.has(r.book_id)) openMap[r.book_id] = Number(r.qty_on_hand || 0);
+          }
+        } catch {}
+
+        // Purchased (received) in period
+        const purchMap: Record<string, number> = {};
+        try {
+          const { data: ptx } = await supabase
+            .from('inventory_transactions')
+            .select('book_id, quantity')
+            .eq('transaction_type', 'purchase_receipt')
+            .eq('reference_type', 'purchase_order')
+            .gte('occurred_at', pubFrom)
+            .lt('occurred_at', shiftDay(pubTo, 1))
+            .limit(20000);
+          for (const r of (ptx || []) as any[]) {
+            if (bookIdSet.has(r.book_id)) purchMap[r.book_id] = (purchMap[r.book_id] || 0) + Number(r.quantity || 0);
+          }
+        } catch {}
+
+        publisherReportRows = buildPublisherReportRows(filteredBooks, valuationById, openMap, purchMap);
+        pubFilters = { from: pubFrom, to: pubTo, publisher: pubPublisher };
+      } catch (e) {
+        console.error('publisher report fetch error', e);
+      }
+
       // Monthly financial data
       try {
         // Auto opening stock: inventory cost value right after the previous month's
@@ -236,7 +311,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all', pstatus: payStatusFilter ? payStatusFilter : 'all' }} />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} publisherReport={{ rows: publisherReportRows, publishers: publisherList, initialFilters: pubFilters }} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all', pstatus: payStatusFilter ? payStatusFilter : 'all' }} />
     </Suspense>
   );
 }
