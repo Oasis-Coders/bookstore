@@ -11,6 +11,7 @@ import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ValuationSection } from './valuation-section';
 import { PublisherReportSection } from './publisher-report-section';
+import { saleNetTotal, summarizeSalesList } from '@/lib/sales-summary';
 
 export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, publisherReport = { rows: [], publishers: [], initialFilters: { from: '', to: '', publisher: 'all' } }, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; publisherReport?: { rows: any[]; publishers: string[]; initialFilters: { from: string; to: string; publisher: string } }; initialFilters?: any }) {
   const { tt, lang } = useT();
@@ -359,12 +360,16 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
         </div>
       </Card>
 
-      {/* Sales List by Date */}
-      {salesList.length > 0 && (
+      {/* Sales List by Date (always visible; empty range shows 0 counts) */}
+      {(
         <Card className="mt-4">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-[14px] min-w-0">{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px] shrink-0">{isZh ? '导出CSV' : 'Export CSV'}</Button>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px]" data-testid="sales-summary">
+            <span>{isZh ? '销售单数' : 'Orders'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{summarizeSalesList(salesList).count}</span></span>
+            <span>{isZh ? '总销售额' : 'Total sales'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{formatCurrency(summarizeSalesList(salesList).total)}</span></span>
           </div>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
@@ -376,7 +381,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 font-mono font-medium">{r.sale_number}</td>
                     <td className="py-2"><Badge variant="active" className="text-[10px]">{payLabelOf(r.payment_method)}</Badge></td>
                     <td className="py-2 text-[11px]">{r.payment_status}</td>
-                    <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || r.subtotal || 0))}</td>
+                    <td className="py-2 text-right font-medium">{formatCurrency(saleNetTotal(r))}</td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.created_by_name || r.staff_name || '-'}</td>
                   </tr>
