@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n/context';
 import { RouteProgress } from '@/components/layout/route-progress';
@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: '活水书房 | COCM Bookshop',
   description: 'COCM Bookshop 活水书房 - Bookstore inventory, purchasing, and accounting',
   applicationName: '活水书房 | COCM Bookshop',
+};
+
+export const viewport: Viewport = {
   themeColor: '#eef0fd',
 };
 
