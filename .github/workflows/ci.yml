@@ -85,11 +85,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build production Next.js application
+      - name: Build production Next.js application (Demo mode for E2E & CWV verification)
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }}
+          NEXT_PUBLIC_SUPABASE_URL: ''
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
+          NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
         run: pnpm build
 
       - name: Cache Playwright browsers
@@ -111,8 +111,8 @@ jobs:
         env:
           CI: 'true'
           PLAYWRIGHT_WEB_COMMAND: 'pnpm start'
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ''
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
           NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
         run: pnpm test:e2e:perf
 
@@ -120,8 +120,8 @@ jobs:
         env:
           CI: 'true'
           PLAYWRIGHT_WEB_COMMAND: 'pnpm start'
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || '' }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || '' }}
+          NEXT_PUBLIC_SUPABASE_URL: ''
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ''
           NEXT_PUBLIC_SITE_URL: 'http://localhost:3000'
         run: pnpm test:e2e
 
