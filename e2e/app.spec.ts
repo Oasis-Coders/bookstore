@@ -7,7 +7,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('dashboard loads with stats', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await expect(main.getByText(/总览|Dashboard/).first()).toBeVisible({ timeout: 10000 });
     await expect(main.getByText(/库存总值|Inventory Value/).first()).toBeVisible();
   });
@@ -18,19 +18,18 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
       { href: '/books', text: /书库|Books/ },
       { href: '/purchase-orders', text: /采购单|Purchase/ },
       { href: '/suppliers', text: /供应商|Suppliers/ },
-      { href: '/locations', text: /库位|Locations/ },
       { href: '/sales', text: /销售|Sales/ },
       { href: '/reports', text: /报表|Reports/ },
       { href: '/settings', text: /设置|Settings/ },
     ];
     for (const link of links) {
       await page.goto(link.href);
-      await expect(page.locator('main')).toContainText(link.text, { timeout: 5000 });
+      await expect(page.locator('main:visible')).toContainText(link.text, { timeout: 5000 });
     }
   });
 
   test('books - search and add navigation', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/books');
     await expect(main.getByText(/书库|Books/).first()).toBeVisible({ timeout: 5000 });
     const searchInput = main.locator('input[name="q"]');
@@ -46,7 +45,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('books - create form validation', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/books/new');
     await expect(main.locator('input[name="sku"]')).toBeVisible();
     await expect(main.locator('input[name="title"]')).toBeVisible();
@@ -55,7 +54,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('suppliers - add navigation', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/suppliers');
     await expect(main.getByText(/供应商|Suppliers/).first()).toBeVisible({ timeout: 5000 });
     await main.getByRole('link', { name: /新增供应商|添加供应商|New Supplier|Add/ }).first().click();
@@ -65,17 +64,17 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
     await expect(page).toHaveURL(/\/suppliers/);
   });
 
-  test('locations - add navigation', async ({ page }) => {
-    const main = page.locator('main');
+  test('locations - redirects to books and new location form renders', async ({ page }) => {
+    const main = page.locator('main:visible');
     await page.goto('/locations');
-    await expect(main.getByText(/库位|Locations/).first()).toBeVisible({ timeout: 5000 });
-    await main.getByRole('link', { name: /新增库位|添加库位|New Location/ }).first().click();
-    await expect(page).toHaveURL(/\/locations\/new/);
+    // /locations redirects to /books (shelf_position in books replaced standalone locations list)
+    await expect(page).toHaveURL(/\/books/);
+    await page.goto('/locations/new');
     await expect(main.locator('input[name="code"]')).toBeVisible();
   });
 
   test('purchase orders - full workflow', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/purchase-orders');
     await expect(main.getByText(/采购单|Purchase/).first()).toBeVisible({ timeout: 5000 });
     await main.getByRole('link', { name: /新建采购单|New Purchase Order|New PO/ }).first().click();
@@ -94,7 +93,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('sales - cart interactions work', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/sales');
     await expect(main.getByText(/销售|Sales/).first()).toBeVisible({ timeout: 5000 });
     const paymentSelect = main.locator('select').first();
@@ -119,7 +118,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('reports - export buttons work', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/reports');
     await expect(main.getByText(/报表|Reports/).first()).toBeVisible({ timeout: 5000 });
     const downloadPromise = page.waitForEvent('download', { timeout: 5000 }).catch(() => null);
@@ -137,7 +136,7 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
   });
 
   test('settings - personal config works', async ({ page }) => {
-    const main = page.locator('main');
+    const main = page.locator('main:visible');
     await page.goto('/settings');
     await expect(main.getByText(/个人设置|Settings/).first()).toBeVisible({ timeout: 5000 });
     const nameInput = main.locator('input').first();
@@ -159,21 +158,21 @@ test.describe('COCM Bookshop - Full User Workflows', () => {
     await expect(page.getByRole('button', { name: /登录|Sign In|Login/ })).toBeVisible({ timeout: 5000 });
     await page.getByRole('link', { name: /创建账号|Create one|Sign Up/ }).click();
     await expect(page).toHaveURL(/mode=signup/);
-    await expect(page.locator('input[name="displayName"]')).toBeVisible();
+    await expect(page.locator('input[name="displayName"]:visible')).toBeVisible();
     await page.getByRole('link', { name: /已有账号|Already have an account|Sign In|Login/ }).click();
     await expect(page).toHaveURL(/\/auth/);
     await page.getByRole('link', { name: /忘记密码|Forgot password/ }).click();
     await expect(page).toHaveURL(/mode=reset/);
-    await expect(page.locator('input[name="email"]')).toBeVisible();
+    await expect(page.locator('input[name="email"]:visible')).toBeVisible();
   });
 
   test('responsive - mobile menu works', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto('/');
-    const menuBtn = page.locator('button[aria-controls="mobile-drawer"]');
+    const menuBtn = page.locator('button[aria-controls="mobile-drawer"]:visible');
     await expect(menuBtn).toBeVisible();
     await menuBtn.click();
-    await expect(page.locator('#mobile-drawer').getByText(/书库|Books/).first()).toBeVisible();
+    await expect(page.locator('#mobile-drawer:visible').getByText(/书库|Books/).first()).toBeVisible();
     await menuBtn.click();
   });
 
