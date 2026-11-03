@@ -109,7 +109,7 @@ test.describe('Core Web Vitals & Industry-Standard Performance Budgets', () => {
     const response = await page.goto('/reports', { waitUntil: 'load' });
     expect(response?.status()).toBeLessThan(400);
 
-    await expect(page.locator('main').getByText(/会计报表|Reports/).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('main:visible').getByText(/会计报表|Reports/).first()).toBeVisible({ timeout: 5000 });
 
     const metrics = await collectWebVitals(page);
     console.log('[Web Vitals /reports]', metrics);

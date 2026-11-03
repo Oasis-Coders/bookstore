@@ -173,7 +173,7 @@ export function SettingsClient({ profile, user, role }: Props) {
                 <label className="text-[11px] font-semibold text-[#5b5f94]">{isZh ? '颜色' : 'Color'}</label>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {colorOptions.map((c) => (
-                    <button key={c.value} type="button" onClick={() => setAvatarColor(c.value)} className={`h-7 w-7 rounded-full border-2 transition ${avatarColor === c.value ? 'border-cocm-ink scale-110' : 'border-white shadow-sm'}`} style={{ backgroundColor: c.bg }} title={c.label} />
+                    <button key={c.value} type="button" onClick={() => setAvatarColor(c.value)} className={`h-7 w-7 rounded-full border-2 transition ${avatarColor === c.value ? 'border-cocm-ink scale-110' : 'border-white shadow-sm'}`} style={{ backgroundColor: c.bg }} title={c.label} aria-label={c.label} />
                   ))}
                 </div>
               </div>

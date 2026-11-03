@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useId } from 'react';
 import { Input } from './input';
 
 type BookOpt = { id: string; title: string; sku: string; title_en?: string; shelf_position?: string; current_price?: number };
@@ -27,7 +27,8 @@ export function BookAutocomplete({
   const [selected, setSelected] = useState<BookOpt | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const listId = useRef(`book-autocomplete-${Math.random().toString(36).slice(2, 8)}`).current;
+  const reactId = useId();
+  const listId = `book-autocomplete-${reactId}`;
 
   useEffect(() => {
     if (value) {
