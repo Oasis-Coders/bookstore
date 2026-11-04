@@ -10,10 +10,8 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ValuationSection } from './valuation-section';
-import { PublisherReportSection } from './publisher-report-section';
-import { saleNetTotal, summarizeSalesList } from '@/lib/sales-summary';
 
-export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, publisherReport = { rows: [], publishers: [], initialFilters: { from: '', to: '', publisher: 'all' } }, initialFilters, publisherReportSlot, valuationSlot }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; publisherReport?: { rows: any[]; publishers: string[]; initialFilters: { from: string; to: string; publisher: string } }; initialFilters?: any; publisherReportSlot?: React.ReactNode; valuationSlot?: React.ReactNode }) {
+export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksList = [], editedSalesList = [], monthlyFinancial, currentInventoryValue, autoOpeningStock, autoClosingStock, initialFilters }: { valuation: any[]; lowStock: any[]; salesList?: any[]; salesBooksList?: any[]; editedSalesList?: any[]; monthlyFinancial?: any; currentInventoryValue?: number; autoOpeningStock?: number | null; autoClosingStock?: number | null; initialFilters?: any }) {
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const router = useRouter();
@@ -175,8 +173,8 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
         valuation.map(r => [r.sku, r.title, r.shelf_position || '', r.warehouse_location || '', r.quantity_on_hand, Number(r.current_price || 0).toFixed(2), r.weighted_average_cost, r.inventory_value, r.retail_value]));
     } else if (type === 'lowstock') {
       downloadCsv(`low_stock_${new Date().toISOString().slice(0,10)}.csv`,
-        ['SKU', 'Title', 'Threshold', 'On Hand', 'Shortage'],
-        lowStock.map(r => [r.sku, r.title, r.low_stock_threshold, r.quantity_on_hand, r.reorder_shortage]));
+        ['SKU', 'Title', 'Publisher', 'Threshold', 'On Hand', 'Shortage'],
+        lowStock.map(r => [r.sku, r.title, r.publisher || '', r.low_stock_threshold, r.quantity_on_hand, r.reorder_shortage]));
     } else if (type === 'sales') {
       downloadCsv(`sales_${fromDate}_to_${toDate}.csv`,
         ['Date', 'Sale Number', 'Payment Method', 'Status', 'Subtotal', 'Discount', 'Postage', 'Net Total', 'Customer', 'Staff'],
@@ -360,16 +358,12 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
         </div>
       </Card>
 
-      {/* Sales List by Date (always visible; empty range shows 0 counts) */}
-      {(
+      {/* Sales List by Date */}
+      {salesList.length > 0 && (
         <Card className="mt-4">
           <div className="flex items-center justify-between gap-2">
             <CardTitle className="text-[14px] min-w-0">{isZh ? `销售单列表 (${fromDate} 至 ${toDate})` : `Sales List (${fromDate} to ${toDate})`}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('sales')} className="rounded-[10px] shrink-0">{isZh ? '导出CSV' : 'Export CSV'}</Button>
-          </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-[12px]" data-testid="sales-summary">
-            <span>{isZh ? '销售单数' : 'Orders'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{summarizeSalesList(salesList).count}</span></span>
-            <span>{isZh ? '总销售额' : 'Total sales'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{formatCurrency(summarizeSalesList(salesList).total)}</span></span>
           </div>
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
@@ -381,7 +375,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                     <td className="py-2 font-mono font-medium">{r.sale_number}</td>
                     <td className="py-2"><Badge variant="active" className="text-[10px]">{payLabelOf(r.payment_method)}</Badge></td>
                     <td className="py-2 text-[11px]">{r.payment_status}</td>
-                    <td className="py-2 text-right font-medium">{formatCurrency(saleNetTotal(r))}</td>
+                    <td className="py-2 text-right font-medium">{formatCurrency(Number(r.net_total || r.subtotal || 0))}</td>
                     <td className="py-2 text-[#5b5f94]">{r.customer_name || '-'}</td>
                     <td className="py-2 text-[11px]">{r.created_by_name || r.staff_name || '-'}</td>
                   </tr>
@@ -452,16 +446,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
       )}
 
       {/* Valuation */}
-      {valuationSlot ?? <ValuationSection valuation={valuation} onExport={() => exportCsv('valuation')} />}
-
-      {/* Publisher inventory movement report (工单 #13) */}
-      {publisherReportSlot ?? (
-        <PublisherReportSection
-          rows={publisherReport.rows}
-          publishers={publisherReport.publishers}
-          initialFilters={publisherReport.initialFilters}
-        />
-      )}
+      <ValuationSection valuation={valuation} onExport={() => exportCsv('valuation')} />
 
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
@@ -477,6 +462,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
                 <div key={i} className="flex items-center justify-between gap-2 rounded-[12px] bg-[#fbe4e5]/50 px-3 py-2">
                   <div className="min-w-0">
                     <p className="text-[12px] font-medium truncate">{r.title}</p>
+                    <p className="text-[11px] text-[#5b5f94] truncate">{isZh ? '出版社' : 'Publisher'} {r.publisher || '-'} • {isZh ? '代号' : 'Code'} <span className="font-mono">{r.sku || '-'}</span></p>
                     <p className="text-[11px] text-[#5b5f94]">{tt('reports.threshold')} {r.low_stock_threshold} • {tt('reports.current')} {r.quantity_on_hand}</p>
                   </div>
                   <Badge variant="danger" className="shrink-0">{tt('reports.shortage')} {r.reorder_shortage}</Badge>
