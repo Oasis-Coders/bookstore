@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
 import { round2 } from '@/lib/utils';
+import { resolvePaymentStatusAfterMethodChange } from '@/lib/sale-payment';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { friendlyDbError } from '@/lib/friendly-error';
 
@@ -61,6 +62,11 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
     setPaymentStatus(v);
     if (v === 'pending') setPaymentMethod('');
     else if (paymentMethod === '') setPaymentMethod('cash');
+  };
+  // 工单 #15：选了付款方式 = 已经付款，待付自动变已付，不用手动改状态
+  const handleMethodChange = (v: string) => {
+    setPaymentMethod(v);
+    setPaymentStatus(resolvePaymentStatusAfterMethodChange(paymentStatus as 'paid' | 'pending', v));
   };
   const [discountPercent, setDiscountPercent] = useState(() => {
     const sub = Number(sale.subtotal || 0);
@@ -302,7 +308,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="edit-payment-method" className="text-[11px] font-medium">{isZh ? '付款方式' : 'Payment'}</label>
-                <select id="edit-payment-method" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
+                <select id="edit-payment-method" value={paymentMethod} onChange={e => handleMethodChange(e.target.value)} className="mt-1 flex h-10 w-full rounded-[12px] border border-cocm-ink/15 bg-white px-3 text-[12px] text-cocm-ink">
                   {paymentStatus === 'pending' && <option value="">{isZh ? '未选' : 'Not chosen'}</option>}
                   {Object.entries(PAYMENT_LABELS).filter(([k]) => k !== 'deferral').map(([k,v]) => <option key={k} value={k}>{isZh ? v.zh : v.en}</option>)}
                 </select>
@@ -315,6 +321,9 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
                 </select>
               </div>
             </div>
+            {paymentStatus === 'pending' && (
+              <p className="text-[11px] text-[#5b5f94]">{isZh ? '提示：选了付款方式后，状态会自动变成「已付」，不用手动改。' : 'Tip: picking a payment method will automatically mark this as Paid.'}</p>
+            )}
             {paymentMethod === 'mix' && (
               <div className="rounded-[12px] border border-cocm-ink/15 bg-cocm-paper/50 p-3">
                 <p className="text-[11px] font-semibold text-cocm-ink">{isZh ? '混合支付：两种付款方式及金额（合计须等于应付）' : 'Mix payment: two methods, amounts must add up'}</p>
