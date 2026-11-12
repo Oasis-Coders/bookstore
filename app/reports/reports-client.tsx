@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/utils';
 import { useT } from '@/lib/i18n/use-t';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ValuationSection } from './valuation-section';
+import { NO_PUBLISHER_KEY, filterLowStockByPublishers, lowStockPublishers } from '@/lib/reports/low-stock-filter';
 import { PublisherReportSection } from './publisher-report-section';
 import { LOW_STOCK_CSV_HEADERS, buildLowStockCsvRows } from './low-stock-export';
 import { saleNetTotal, summarizeSalesList } from '@/lib/sales-summary';
@@ -48,6 +49,27 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
   const [showHistory, setShowHistory] = useState(false);
   const [snapshotMsg, setSnapshotMsg] = useState('');
   const [filtering, setFiltering] = useState(false);
+  // Low-stock publisher filter: all publishers checked by default, so the
+  // list initially looks exactly as before; untick to narrow it down.
+  const publisherOptions = useMemo(() => lowStockPublishers(lowStock), [lowStock]);
+  const publisherKeys = publisherOptions.map(p => p.key).join('|');
+  const [selectedPublishers, setSelectedPublishers] = useState<Set<string>>(() => new Set(lowStockPublishers(lowStock).map(p => p.key)));
+  useEffect(() => {
+    setSelectedPublishers(new Set(publisherOptions.map(p => p.key)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [publisherKeys]);
+  const filteredLowStock = useMemo(() => filterLowStockByPublishers(lowStock, selectedPublishers), [lowStock, selectedPublishers]);
+  const togglePublisher = (key: string) => {
+    setSelectedPublishers(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+  const publisherLabelOf = (r: any) => {
+    const p = typeof r.publisher === 'string' ? r.publisher.trim() : '';
+    return p === '' ? tt('reports.lowStockNoPublisher') : p;
+  };
   const PAY_FILTER_LABELS: Record<string, { zh: string; en: string }> = {
     all: { zh: '全部', en: 'All' },
     cash: { zh: '现金', en: 'Cash' },
@@ -177,7 +199,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
     } else if (type === 'lowstock') {
       downloadCsv(`low_stock_${new Date().toISOString().slice(0,10)}.csv`,
         LOW_STOCK_CSV_HEADERS,
-        buildLowStockCsvRows(lowStock));
+        buildLowStockCsvRows(filteredLowStock));
     } else if (type === 'sales') {
       downloadCsv(`sales_${fromDate}_to_${toDate}.csv`,
         ['Date', 'Sale Number', 'Payment Method', 'Status', 'Subtotal', 'Discount', 'Postage', 'Net Total', 'Customer', 'Staff'],
@@ -470,15 +492,42 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <CardTitle className="text-[14px]">{tt('reports.lowStockTitle')}</CardTitle>
             <Button size="sm" variant="ghost" onClick={() => exportCsv('lowstock')} className="shrink-0">{isZh ? '导出' : 'Export'}</Button>
           </div>
+          {lowStock.length > 0 && (
+            <div className="mt-3 rounded-[12px] border border-[#ece5d6] bg-[#fdfcfa] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[12px] font-medium text-cocm-ink">{tt('reports.lowStockPublisherFilter')}</p>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setSelectedPublishers(new Set(publisherOptions.map(p => p.key)))} className="text-[11px] text-[#6d72a0] hover:text-cocm-ink underline decoration-dotted underline-offset-4">{tt('reports.lowStockSelectAll')}</button>
+                  <button type="button" onClick={() => setSelectedPublishers(new Set())} className="text-[11px] text-[#6d72a0] hover:text-cocm-ink underline decoration-dotted underline-offset-4">{tt('reports.lowStockClearAll')}</button>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {publisherOptions.map(opt => {
+                  const checked = selectedPublishers.has(opt.key);
+                  const label = opt.key === NO_PUBLISHER_KEY ? tt('reports.lowStockNoPublisher') : opt.label;
+                  return (
+                    <label key={opt.key} className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] transition ${checked ? 'border-cocm-ink/30 bg-white text-cocm-ink' : 'border-[#e9e2d4] bg-white/60 text-[#9aa0bd]'}`}>
+                      <input type="checkbox" checked={checked} onChange={() => togglePublisher(opt.key)} className="h-3.5 w-3.5 accent-[#2d2f92]" />
+                      <span>{label}</span>
+                      <span className="text-[#9aa0bd]">({opt.count})</span>
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] text-[#5b5f94]">{isZh ? `已选 ${selectedPublishers.size} 个出版社，共显示 ${filteredLowStock.length} 本` : `${selectedPublishers.size} of ${publisherOptions.length} publishers selected · showing ${filteredLowStock.length} books`}</p>
+            </div>
+          )}
           <div className="mt-3 space-y-2">
             {lowStock.length === 0 ? (
               <p className="py-6 text-center text-[12px] text-[#5b5f94]">{tt('reports.noLowStock')}</p>
+            ) : filteredLowStock.length === 0 ? (
+              <p className="py-6 text-center text-[12px] text-[#5b5f94]">{tt('reports.lowStockFilteredEmpty')}</p>
             ) : (
-              lowStock.map((r, i) => (
+              filteredLowStock.map((r, i) => (
                 <div key={i} className="flex items-center justify-between gap-2 rounded-[12px] bg-[#fbe4e5]/50 px-3 py-2">
                   <div className="min-w-0">
                     <p className="text-[12px] font-medium truncate">{r.title}</p>
-                    <p className="text-[11px] text-[#5b5f94] truncate">{isZh ? '出版社' : 'Publisher'} {r.publisher || '-'} • {isZh ? '代号' : 'Code'} <span className="font-mono">{r.sku || '-'}</span></p>
+                    <p className="text-[11px] text-[#5b5f94] truncate">{isZh ? '出版社' : 'Publisher'} {publisherLabelOf(r)} • {isZh ? '代号' : 'Code'} <span className="font-mono">{r.sku || '-'}</span></p>
                     <p className="text-[11px] text-[#5b5f94]">{tt('reports.threshold')} {r.low_stock_threshold} • {tt('reports.current')} {r.quantity_on_hand}</p>
                   </div>
                   <Badge variant="danger" className="shrink-0">{tt('reports.shortage')} {r.reorder_shortage}</Badge>
