@@ -9,6 +9,7 @@ import { AppShell } from '@/components/layout/app-shell';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
 import { useT } from '@/lib/i18n/use-t';
 import { round2 } from '@/lib/utils';
+import { computeEditTotals, isMixPaymentValid } from '@/lib/sale-edit-totals';
 import { resolvePaymentStatusAfterMethodChange } from '@/lib/sale-payment';
 import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 import { friendlyDbError } from '@/lib/friendly-error';
@@ -81,16 +82,12 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
-  const subtotal = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const discountPctNum = Math.min(100, Math.max(0, Number(discountPercent || 0)));
-  const discountAmount = subtotal * discountPctNum / 100;
-  const shippingNum = Math.max(0, Number(shippingCost || 0));
-  const netTotal = Math.max(0, subtotal - discountAmount + shippingNum);
-  // 2A: 混合支付校验：两种方式，金额之和 = 应付
+  // 工单 #17：空单（整单退货）时邮费清零、实付为 0
+  const { subtotal, discountAmount, shipping: shippingNum, netTotal } = computeEditTotals(cart, discountPctNum, Number(shippingCost || 0));
+  // 2A: 混合支付校验：两种方式，金额之和 = 应付；实付为 0 时无需填明细
   const mixSum = Number(mixAmtA || 0) + Number(mixAmtB || 0);
-  const mixValid = paymentMethod === 'mix'
-    ? (mixA !== '' && mixB !== '' && mixA !== mixB && Number(mixAmtA) > 0 && Number(mixAmtB) > 0 && Math.abs(mixSum - netTotal) < 0.005)
-    : true;
+  const mixValid = isMixPaymentValid(paymentMethod, mixA, mixB, mixAmtA, mixAmtB, netTotal);
 
   // For stock check during edit: available = current stockMap + qty already in this sale (since restore will happen)
   const oldQtyMap = useMemo(() => {
@@ -142,10 +139,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
   const removeItem = (id: string) => setCart(cart.filter(c => c.id !== id));
 
   const handleSave = async () => {
-    if (cart.length === 0) {
-      setMsg(isZh ? '改后至少要有一本书' : 'At least one book required');
-      return;
-    }
+    // 工单 #17：允许购物车为空（整单退货），保存后本单金额为 0
     // Duplicate check in UI as well
     const seen = new Set<string>();
     for (const c of cart) {
@@ -186,7 +180,8 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
         p_notes: notes.trim() === '' ? '' : notes,
         p_shipping_cost: Math.round(shippingNum * 100) / 100,
         p_reason: reason,
-        p_payment_mix: paymentMethod === 'mix' ? [{ method: mixA, amount: round2(mixAmtA) }, { method: mixB, amount: round2(mixAmtB) }] : [], // 非混合时清空旧明细（DB 将 [] 视为清除）
+        // 工单 #17：空单（实付 0）时混合明细无意义，传 [] 清掉旧明细
+        p_payment_mix: paymentMethod === 'mix' ? (netTotal === 0 ? [] : [{ method: mixA, amount: round2(mixAmtA) }, { method: mixB, amount: round2(mixAmtB) }]) : [], // 非混合时清空旧明细（DB 将 [] 视为清除）
       });
       if (error) {
         setMsg(friendlyDbError(error, { fallback: isZh ? '保存失败，请重试' : 'Save failed' }));
@@ -286,7 +281,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
                   </div>
                 </div>
               ))}
-              {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '至少选一本' : 'Select at least one book'}</p>}
+              {cart.length === 0 && <p className="py-4 text-center text-[12px] text-[#5b5f94]">{isZh ? '已清空全部图书，保存后本单金额为 £0（邮费也会清零）' : 'All books removed — saving sets this sale to £0 (postage cleared too)'}</p>}
             </div>
             <div className="mt-4 space-y-1 border-t border-cocm-ink/10 pt-3">
               <div className="flex items-center justify-between text-[12px]"><span>{isZh ? '小计' : 'Subtotal'}</span><span>£{subtotal.toFixed(2)}</span></div>
@@ -324,7 +319,7 @@ export function EditSaleClient({ sale, lines, edits, books, stockMap, spareMap }
             {paymentStatus === 'pending' && (
               <p className="text-[11px] text-[#5b5f94]">{isZh ? '提示：选了付款方式后，状态会自动变成「已付」，不用手动改。' : 'Tip: picking a payment method will automatically mark this as Paid.'}</p>
             )}
-            {paymentMethod === 'mix' && (
+            {paymentMethod === 'mix' && cart.length > 0 && (
               <div className="rounded-[12px] border border-cocm-ink/15 bg-cocm-paper/50 p-3">
                 <p className="text-[11px] font-semibold text-cocm-ink">{isZh ? '混合支付：两种付款方式及金额（合计须等于应付）' : 'Mix payment: two methods, amounts must add up'}</p>
                 <div className="mt-2 grid grid-cols-1 gap-2">
