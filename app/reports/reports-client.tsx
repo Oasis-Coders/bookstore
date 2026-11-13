@@ -394,6 +394,9 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
             <span>{isZh ? '销售单数' : 'Orders'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{summarizeSalesList(salesList).count}</span></span>
             <span>{isZh ? '总销售额' : 'Total sales'}<span className="ml-2 font-semibold tabular-nums text-cocm-ink">{formatCurrency(summarizeSalesList(salesList).total)}</span></span>
           </div>
+          {salesList.length === 0 ? (
+            <p className="py-6 text-center text-[12px] text-[#5b5f94]">{tt('reports.salesListEmpty')}</p>
+          ) : (
           <div className="mt-3 overflow-auto">
             <table className="w-full text-[12px]">
               <thead><tr className="border-b border-cocm-ink/10 text-left text-[#5b5f94]"><th className="pb-2">{isZh ? '日期' : 'Date'}</th><th className="pb-2">{isZh ? '单号' : 'Sale No'}</th><th className="pb-2">{isZh ? '付款方式' : 'Payment'}</th><th className="pb-2">{isZh ? '状态' : 'Status'}</th><th className="pb-2 text-right">{isZh ? '合计' : 'Total'}</th><th className="pb-2">{isZh ? '购书人' : 'Customer'}</th><th className="pb-2">{isZh ? '操作员' : 'Staff'}</th></tr></thead>
@@ -412,6 +415,7 @@ export function ReportsClient({ valuation, lowStock, salesList = [], salesBooksL
               </tbody>
             </table>
           </div>
+          )}
         </Card>
       )}
 
