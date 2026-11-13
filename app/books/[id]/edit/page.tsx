@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { EditBookClient } from './edit-client';
+import { getLatestPurchaseCost } from '@/lib/books/queries';
 
 export default async function EditBookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,5 +29,11 @@ export default async function EditBookPage({ params }: { params: Promise<{ id: s
     }
   } catch {}
 
-  return <EditBookClient book={book} canDelete={canDelete} spareBarcode={spareBarcode} />;
+  // 工单 #18：最近进货价（派生自收货批次，只读展示）
+  let latestPurchase: { unit_cost: number; received_at: string | null } | null = null;
+  try {
+    latestPurchase = await getLatestPurchaseCost(supabase, id);
+  } catch {}
+
+  return <EditBookClient book={book} canDelete={canDelete} spareBarcode={spareBarcode} latestPurchase={latestPurchase} />;
 }

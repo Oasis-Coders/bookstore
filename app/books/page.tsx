@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { BooksClient } from './books-client';
+import { latestPurchaseCost } from '@/lib/books/queries';
 
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string }> }) {
   const { q: qRaw, show: showRaw } = await searchParams;
@@ -34,7 +35,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         const { data: lowRows } = await supabase.from('low_stock_view').select('book_id');
         const lowIds = [...new Set(((lowRows || []) as any[]).map((r) => r.book_id).filter(Boolean))];
         if (lowIds.length) {
-          let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').in('id', lowIds);
+          let query = supabase.from('books').select('*, inventory_batches(quantity_remaining, unit_cost, received_at, quantity_received)').in('id', lowIds);
           if (q) {
             query = query.or(`title.ilike.%${q}%,title_en.ilike.%${q}%,title_simplified.ilike.%${q}%,title_traditional.ilike.%${q}%,publisher.ilike.%${q}%,sku.ilike.%${q}%,author.ilike.%${q}%,shelf_position.ilike.%${q}%,warehouse_location.ilike.%${q}%${spareOr}`);
           }
@@ -42,13 +43,14 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           books = (data || []).map((b: any) => ({
             ...b,
             on_hand: Array.isArray(b.inventory_batches) ? b.inventory_batches.reduce((s: number, batch: any) => s + (batch.quantity_remaining || 0), 0) : 0,
+            latest_purchase_cost: latestPurchaseCost(b.inventory_batches),
           })).sort((a: any, b: any) => a.on_hand - b.on_hand);
         }
         mode = 'live';
       } catch {}
     } else
     try {
-      let query = supabase.from('books').select('*, inventory_batches(quantity_remaining)').order('title');
+      let query = supabase.from('books').select('*, inventory_batches(quantity_remaining, unit_cost, received_at, quantity_received)').order('title');
       if (show === 'active') query = query.eq('is_active', true);
       if (show === 'inactive') query = query.eq('is_active', false);
       if (q) {
@@ -59,6 +61,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         books = data.map((b: any) => ({
           ...b,
           on_hand: Array.isArray(b.inventory_batches) ? b.inventory_batches.reduce((s: number, batch: any) => s + (batch.quantity_remaining || 0), 0) : 0,
+          latest_purchase_cost: latestPurchaseCost(b.inventory_batches),
         }));
         mode = 'live';
       }

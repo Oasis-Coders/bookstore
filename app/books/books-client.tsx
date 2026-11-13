@@ -24,6 +24,8 @@ type Book = {
   publisher?: string;
   author?: string;
   current_price?: number;
+  // 工单 #18：最近一次进货价（派生自收货批次，只读展示，不可手动修改）
+  latest_purchase_cost?: { unit_cost: number; received_at: string | null } | null;
   category?: string;
   low_stock_threshold?: number;
   on_hand?: number;
@@ -137,6 +139,9 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
                   <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-8 px-3 text-[11px] rounded-[9px] hover:bg-cocm-ink hover:text-white transition-colors font-medium">{isZh ? '编辑' : 'Edit'}</Button></Link>
                 </div>
               </div>
+              <p className="mt-1.5 text-[12px] text-[#5b5f94]">
+                {tt('books.purchaseCost')}：{book.latest_purchase_cost ? formatCurrency(book.latest_purchase_cost.unit_cost) : tt('books.noPurchaseRecord')}
+              </p>
             </Card>
           ))}
         </div>

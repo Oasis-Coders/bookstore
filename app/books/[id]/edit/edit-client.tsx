@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { updateBook, deleteBook } from '@/app/books/actions';
 import { CategorySelect } from '@/components/ui/category-select';
 import { PublisherSelect } from '@/components/ui/publisher-select';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; canDelete?: boolean; spareBarcode?: string | null }) {
+export function EditBookClient({ book, canDelete, spareBarcode, latestPurchase }: { book: any; canDelete?: boolean; spareBarcode?: string | null; latestPurchase?: { unit_cost: number; received_at: string | null } | null }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -56,6 +57,15 @@ export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; c
       <div className="mx-auto max-w-[640px] space-y-4">
         <Card>
           <CardTitle>{isZh ? '编辑图书' : 'Edit Book'}</CardTitle>
+          {/* 工单 #18：进货价只读展示——取自最近一次收货批次，系统自动记录，不可手动修改；不在表单内，不参与提交 */}
+          <div className="mt-3 rounded-[10px] bg-cocm-paper px-3 py-2 text-[12px] text-[#5b5f94]">
+            {isZh ? '进货价' : 'Purchase Cost'}：{latestPurchase ? (
+              <span className="font-semibold text-cocm-ink">{formatCurrency(latestPurchase.unit_cost)}{latestPurchase.received_at ? ` · ${isZh ? '最近进货' : 'Latest purchase'} ${formatDate(latestPurchase.received_at)}` : ''}</span>
+            ) : (
+              <span>{isZh ? '暂无进货记录' : 'No purchase yet'}</span>
+            )}
+            <span className="block text-[11px] opacity-70">{isZh ? '由最近一次进货自动记录，不可手动修改' : 'Recorded automatically from the latest purchase; cannot be edited manually'}</span>
+          </div>
           {msg && (
             <div
               className={`mt-3 rounded-[10px] px-3 py-2 text-[12px] ${
