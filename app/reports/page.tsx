@@ -11,6 +11,7 @@ import {
   getMonthRange,
   type SupabaseLike,
 } from './reports-data';
+import { resolveSalesRange } from '../../lib/reports/sales-range';
 
 function SectionSkeleton({ title }: { title: string }) {
   return (
@@ -86,6 +87,11 @@ export default async function ReportsPage({
 
   const { targetMonth, monthStart, monthEnd } = getMonthRange(month);
 
+  // Sales list: first open without from/to defaults to the 1st of the
+  // current month through today (same range the date inputs show), so the
+  // list and the monthly card agree without clicking 「查询」.
+  const salesRange = resolveSalesRange(from, to);
+
   let valuation: any[] = [];
   let lowStock: any[] = [];
   let salesList: any[] = [];
@@ -113,7 +119,7 @@ export default async function ReportsPage({
       // Run all above-the-fold report sections in parallel instead of a sequential waterfall
       const [invResult, salesResult, editsResult, financialResult] = await Promise.all([
         inventoryTask,
-        fetchSalesRangeData(supabase, { from, to, payFilter, payStatusFilter }),
+        fetchSalesRangeData(supabase, { from: salesRange.from, to: salesRange.to, payFilter, payStatusFilter }),
         fetchEditedSalesData(supabase),
         fetchMonthlyFinancialData(supabase, targetMonth, monthStart, monthEnd, currentValPromise),
       ]);
@@ -156,8 +162,8 @@ export default async function ReportsPage({
         autoClosingStock={autoClosingStock}
         publisherReportSlot={publisherReportSlot}
         initialFilters={{
-          from,
-          to,
+          from: salesRange.from,
+          to: salesRange.to,
           month: targetMonth,
           pay: payFilter ? payFilter : 'all',
           pstatus: payStatusFilter ? payStatusFilter : 'all',

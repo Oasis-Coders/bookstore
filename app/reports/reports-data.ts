@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { resolveSalesRange } from '../../lib/reports/sales-range';
 import {
   buildPublisherReportRows,
   distinctPublishers,
@@ -145,13 +146,13 @@ export async function fetchSalesRangeData(
   supabase: SupabaseLike,
   filters: { from?: string; to?: string; payFilter?: string | null; payStatusFilter?: string | null }
 ) {
-  const { from, to, payFilter, payStatusFilter } = filters;
+  const { payFilter, payStatusFilter } = filters;
+  // First open (no from/to in URL): default to 1st of the current month
+  // through today, so the list loads immediately instead of showing 0
+  // until the user clicks 「查询」.
+  const { from, to } = resolveSalesRange(filters.from, filters.to);
   let salesList: any[] = [];
   let salesBooksList: any[] = [];
-
-  if (!from && !to) {
-    return { salesList, salesBooksList };
-  }
 
   let profileMap: Record<string, string> = {};
 
