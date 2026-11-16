@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SalesClient } from './sales-client';
 import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
+import { listAllActiveBooks } from '@/lib/books/queries';
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string; edited?: string }> }) {
   const { q: qRaw, edited: editedRaw } = await searchParams;
@@ -40,8 +41,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       }
     } catch {}
     try {
-      const bRes = await supabase.from('books').select('id, title, sku, current_price, shelf_position, title_en').eq('is_active', true).order('title').limit(200);
-      books = bRes.data || [];
+      books = await listAllActiveBooks(supabase, 'id, title, sku, current_price, shelf_position, title_en');
     } catch (e) {
       console.error('books fetch error', e);
     }

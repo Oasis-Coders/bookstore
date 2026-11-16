@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
+import { listAllActiveBooks } from '@/lib/books/queries';
 import { useT } from '@/lib/i18n/use-t';
 import Link from 'next/link';
 import {
@@ -67,7 +68,7 @@ export default function PODetailPage() {
       setLocations(locData as any);
       if (locData.length > 0) setLocationId((v) => v || (locData as any)[0].id);
     }
-    const { data: bookData } = await supabase.from('books').select('id, title, sku').eq('is_active', true).order('title').limit(300);
+    const bookData = await listAllActiveBooks(supabase, 'id, title, sku');
     if (bookData) setBooks(bookData as any);
     setLoading(false);
   }
