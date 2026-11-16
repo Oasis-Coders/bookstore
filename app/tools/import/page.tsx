@@ -116,7 +116,7 @@ export default function BulkImportPage() {
 
   const downloadTemplate = () => {
     // BOM (\uFEFF) 让 Excel 直接按 UTF-8 打开，中文不再乱码。
-    // unit_cost（进货价）只用于首次启用系统时把现有库存一起导入；之后每笔采购的进货价在收货时手动填写。
+    // unit_cost（进货价）会显示在书卡上（没有收货批次时显示导入价）；有初始库存时同时记入库存批次；之后每笔采购的进货价在收货时手动填写。
     // isbn 会写入图书的 ISBN 栏（扫码枪扫出的条码也可直接用作代号）。
     const csv = '\uFEFF' + 'sku,isbn,title,title_en,title_simplified,title_traditional,author,publisher,category,shelf_position,warehouse_location,current_price,unit_cost,low_stock_threshold,initial_stock\nBOOK-001,9781234567890,活水得胜之路,The Way of Victory,活水得胜之路,活水得勝之路,张牧师,活水出版社,灵修,A-3-2,仓库A-1,12.5,7.8,5,10\nBOOK-002,,认识真理,Knowing the Truth,认识真理,認識真理,李弟兄,福音出版社,神学,B-1-5,仓库B-3,9.99,6.0,3,5';
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -151,6 +151,11 @@ export default function BulkImportPage() {
           errors.push(`${row.sku || '?' }: ${isZh ? '缺少代号或书名' : 'Missing Code or title'}`);
           continue;
         }
+        // 工单 #18 跟进：文件里的 Unit cost 单独存一份（books.import_unit_cost），
+        // 这样即使没填初始库存（不建库存批次），书卡上也能显示进货价。
+        const importCostRaw = (row.unit_cost ?? '').toString().trim();
+        const importCost = importCostRaw === '' ? NaN : Number(importCostRaw);
+        const hasImportCost = Number.isFinite(importCost) && importCost >= 0;
         const { data: existing } = await supabase.from('books').select('id, is_active').eq('sku', row.sku).maybeSingle();
         if (existing) {
           const updatePayload: any = {
@@ -168,6 +173,8 @@ export default function BulkImportPage() {
           };
           // ISBN 只在表格里填了时才更新，避免复导入把已有的 ISBN 清空
           if (row.isbn) updatePayload.isbn13 = row.isbn;
+          // 导入价：文件里填了 Unit cost 就更新（没填则保留原值，不清空）
+          if (hasImportCost) updatePayload.import_unit_cost = importCost;
           const { error } = await supabase.from('books').update(updatePayload).eq('id', existing.id);
           if (error) {
             errors.push(`${row.sku}: ${error.message}`);
@@ -196,7 +203,7 @@ export default function BulkImportPage() {
                         book_id: existing.id,
                         location_id: loc.id,
                         batch_code: `IMPORT-${row.sku}-${Date.now()}`,
-                        unit_cost: row.unit_cost ? Number(row.unit_cost) : (row.current_price ? Number(row.current_price) * 0.6 : 5),
+                        unit_cost: hasImportCost ? importCost : (row.current_price ? Number(row.current_price) * 0.6 : 5),
                         quantity_received: delta,
                         quantity_remaining: delta,
                         created_by: userId,
@@ -251,6 +258,7 @@ export default function BulkImportPage() {
             warehouse_location: row.warehouse_location || null,
             current_price: row.current_price ? Number(row.current_price) : 0,
             low_stock_threshold: row.low_stock_threshold ? Number(row.low_stock_threshold) : 5,
+            import_unit_cost: hasImportCost ? importCost : null,
             is_active: true,
           }).select('id').single();
           if (error) {
@@ -269,7 +277,7 @@ export default function BulkImportPage() {
                 location_id: loc.id,
                 batch_code: `IMPORT-${row.sku}-${Date.now()}`,
                 // 进货价：优先用表格里的 unit_cost（首次启用导入现有库存）；没填则沿用旧的估算
-                unit_cost: row.unit_cost ? Number(row.unit_cost) : (row.current_price ? Number(row.current_price) * 0.6 : 5),
+                unit_cost: hasImportCost ? importCost : (row.current_price ? Number(row.current_price) * 0.6 : 5),
                 quantity_received: initStock,
                 quantity_remaining: initStock,
                 created_by: userId,
@@ -332,7 +340,7 @@ export default function BulkImportPage() {
                 <li>{isZh ? '点击下载模板查看必填字段' : 'Download template to see required fields'}</li>
                 <li>{isZh ? '上传CSV文件（自动识别 UTF-8 / UTF-16 / GBK 编码），预览后确认导入' : 'Upload CSV (auto-detects UTF-8 / UTF-16 / GBK encoding), preview, then confirm import'}</li>
                 <li>{isZh ? '支持中英文、简繁体、书架位置、初始库存、进货价、ISBN' : 'Supports EN/ZH, simplified/traditional, shelf position, initial stock, unit cost, ISBN'}</li>
-                <li>{isZh ? '进货价（unit_cost）只用于首次启用时导入现有库存；之后每笔采购的进货价在收货时手动填写' : 'unit_cost is only for the initial go-live import; later purchase costs are entered at receipt'}</li>
+                <li>{isZh ? '进货价（unit_cost）会显示在书卡上，即使没有初始库存；有初始库存时同时记入库存批次，之后每笔采购的进货价在收货时填写' : 'unit_cost shows on the book card even without initial stock; with initial stock it is also recorded on the stock batch. Later purchase costs are entered at receipt'}</li>
                 <li>{isZh ? '初始库存（initial_stock）：新书建库存批次；已存在的书按表格值盘点（多出入库、不足出库并记审计），留空则不动库存' : 'initial_stock: new books get a stock batch; existing books are stock-taken to the sheet value (overage in, shortage out with audit). Leave blank to keep stock unchanged.'}</li>
                 <li>{isZh ? '外接扫码枪：USB扫码器可直接扫ISBN，自动填入代号' : 'Barcode: USB scanners work directly, scanning ISBN auto-fills code'}</li>
               </ol>

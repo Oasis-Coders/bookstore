@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { BooksClient } from './books-client';
-import { latestPurchaseCost } from '@/lib/books/queries';
+import { listPurchaseCosts } from '@/lib/books/queries';
 
 export default async function BooksPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string }> }) {
   const { q: qRaw, show: showRaw } = await searchParams;
@@ -43,7 +43,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           books = (data || []).map((b: any) => ({
             ...b,
             on_hand: Array.isArray(b.inventory_batches) ? b.inventory_batches.reduce((s: number, batch: any) => s + (batch.quantity_remaining || 0), 0) : 0,
-            latest_purchase_cost: latestPurchaseCost(b.inventory_batches),
+            purchase_costs: listPurchaseCosts(b.inventory_batches),
           })).sort((a: any, b: any) => a.on_hand - b.on_hand);
         }
         mode = 'live';
@@ -61,7 +61,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
         books = data.map((b: any) => ({
           ...b,
           on_hand: Array.isArray(b.inventory_batches) ? b.inventory_batches.reduce((s: number, batch: any) => s + (batch.quantity_remaining || 0), 0) : 0,
-          latest_purchase_cost: latestPurchaseCost(b.inventory_batches),
+          purchase_costs: listPurchaseCosts(b.inventory_batches),
         }));
         mode = 'live';
       }
@@ -78,6 +78,7 @@ export default async function BooksPage({ searchParams }: { searchParams: Promis
           books = data.map((b: any) => ({
             ...b,
             on_hand: 0,
+            purchase_costs: [],
             title_en: b.title_en || b.metadata?.title_en || null,
             title_simplified: b.title_simplified || b.metadata?.title_simplified || null,
             title_traditional: b.title_traditional || b.metadata?.title_traditional || null,
