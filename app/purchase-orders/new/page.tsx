@@ -8,6 +8,7 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { BookAutocomplete } from '@/components/ui/book-autocomplete';
+import { listAllActiveBooks } from '@/lib/books/queries';
 import { useT } from '@/lib/i18n/use-t';
 import { useUnsavedGuard } from '@/components/ui/use-unsaved-guard';
 import { createPODraft, getSupplierBooks } from '../actions';
@@ -46,12 +47,12 @@ export default function NewPOPage() {
     const supabase = createSupabaseBrowserClient();
     if (!supabase) { setLoadingOpts(false); return; }
     (async () => {
-      const [sRes, bRes] = await Promise.all([
+      const [sRes, bookData] = await Promise.all([
         supabase.from('suppliers').select('id, name_zh, code').eq('is_active', true).limit(50),
-        supabase.from('books').select('id, title, sku, title_en, shelf_position').eq('is_active', true).order('title').limit(300),
+        listAllActiveBooks(supabase, 'id, title, sku, title_en, shelf_position'),
       ]);
       setSuppliers((sRes.data as any) || []);
-      setBooks((bRes.data as any) || []);
+      setBooks((bookData as any) || []);
       setLoadingOpts(false);
     })();
   }, []);

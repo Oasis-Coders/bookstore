@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditSaleClient } from './edit-client';
 import { notFound, redirect } from 'next/navigation';
 import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
+import { listAllActiveBooks } from '@/lib/books/queries';
 
 export default async function EditSalePage(props: { params: Promise<{ id: string }>, searchParams?: Promise<any> }) {
   const { id } = await props.params;
@@ -38,8 +39,7 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
   let books: any[] = [];
   let stockMap: Record<string, number> = {};
   try {
-    const bRes = await supabase.from('books').select('id, title, sku, current_price, shelf_position').eq('is_active', true).order('title').limit(200);
-    books = bRes.data || [];
+    books = await listAllActiveBooks(supabase, 'id, title, sku, current_price, shelf_position');
   } catch {}
   try {
     const saleLocationId = (sale as any).location_id;
