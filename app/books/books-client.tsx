@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
+import { resolvePurchaseCost, type PurchaseCostEntry } from '@/lib/books/queries';
 import { useT } from '@/lib/i18n/use-t';
 import { CategoryManager } from '@/components/ui/category-manager';
 import Link from 'next/link';
@@ -24,6 +25,10 @@ type Book = {
   publisher?: string;
   author?: string;
   current_price?: number;
+  // 工单 #18 跟进：全部收货批次的进货价（只读展示，不可手动修改）；没有批次时
+  // 若导入文件里填过 Unit cost，显示导入价
+  purchase_costs?: PurchaseCostEntry[] | null;
+  import_unit_cost?: number | null;
   category?: string;
   low_stock_threshold?: number;
   on_hand?: number;
@@ -137,6 +142,31 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
                   <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-8 px-3 text-[11px] rounded-[9px] hover:bg-cocm-ink hover:text-white transition-colors font-medium">{isZh ? '编辑' : 'Edit'}</Button></Link>
                 </div>
               </div>
+              <p className="mt-1.5 text-[12px] text-[#5b5f94]">
+                {tt('books.purchaseCost')}：
+              {(() => {
+                const pc = resolvePurchaseCost(book.purchase_costs, book.import_unit_cost);
+                if (pc.kind === 'batches') {
+                  const shown = pc.entries.slice(0, 3);
+                  return (
+                    <span>
+                      {shown.map((e, i) => (
+                        <span key={i}>
+                          {i > 0 ? '、' : ''}
+                          {formatCurrency(e.unit_cost)}
+                          {e.received_at ? `（${e.received_at.slice(0, 10)}）` : ''}
+                        </span>
+                      ))}
+                      {pc.entries.length > 3 ? <span className="opacity-70">{tt('books.batchesMore', { n: pc.entries.length - 3 })}</span> : null}
+                    </span>
+                  );
+                }
+                if (pc.kind === 'import') {
+                  return <span>{formatCurrency(pc.unit_cost)}（{tt('books.importedCost')}）</span>;
+                }
+                return <span>{tt('books.noPurchaseRecord')}</span>;
+              })()}
+              </p>
             </Card>
           ))}
         </div>

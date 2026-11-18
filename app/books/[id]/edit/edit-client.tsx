@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { updateBook, deleteBook } from '@/app/books/actions';
 import { CategorySelect } from '@/components/ui/category-select';
 import { PublisherSelect } from '@/components/ui/publisher-select';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; canDelete?: boolean; spareBarcode?: string | null }) {
+export function EditBookClient({ book, canDelete, spareBarcode, purchaseCosts }: { book: any; canDelete?: boolean; spareBarcode?: string | null; purchaseCosts?: { unit_cost: number; received_at: string | null; quantity_received: number | null; quantity_remaining: number | null }[] | null }) {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const router = useRouter();
@@ -56,6 +57,32 @@ export function EditBookClient({ book, canDelete, spareBarcode }: { book: any; c
       <div className="mx-auto max-w-[640px] space-y-4">
         <Card>
           <CardTitle>{isZh ? '编辑图书' : 'Edit Book'}</CardTitle>
+          {/* 工单 #18 跟进：进货价只读展示——列出全部收货批次（单价 + 日期 + 数量），系统自动记录，不可手动修改；不在表单内，不参与提交。无收货批次时，若导入文件里填过 Unit cost，显示导入价。 */}
+          <div className="mt-3 rounded-[10px] bg-cocm-paper px-3 py-2 text-[12px] text-[#5b5f94]">
+            {isZh ? '进货价' : 'Purchase Cost'}：{purchaseCosts && purchaseCosts.length > 0 ? (
+              <span className="font-semibold text-cocm-ink">
+                {purchaseCosts.map((p, i) => (
+                  <span key={i} className="block font-normal">
+                    <span className="font-semibold">{formatCurrency(p.unit_cost)}</span>
+                    {p.received_at ? ` · ${formatDate(p.received_at)}` : ''}
+                    {typeof p.quantity_received === 'number' ? ` · ${isZh ? `进货 ${p.quantity_received} 本` : `Received ${p.quantity_received}`}` : ''}
+                    {typeof p.quantity_remaining === 'number' ? `（${isZh ? `在库 ${p.quantity_remaining} 本` : `in stock ${p.quantity_remaining}`}）` : ''}
+                  </span>
+                ))}
+              </span>
+            ) : (
+              typeof book.import_unit_cost === 'number' ? (
+                <span className="font-semibold text-cocm-ink">{formatCurrency(book.import_unit_cost)}（{isZh ? '导入价' : 'Imported cost'}）</span>
+              ) : (
+                <span>{isZh ? '暂无进货记录' : 'No purchase yet'}</span>
+              )
+            )}
+            <span className="block text-[11px] opacity-70">{purchaseCosts && purchaseCosts.length > 0
+              ? (isZh ? '由每次进货自动记录，不可手动修改' : 'Recorded automatically from each purchase; cannot be edited manually')
+              : (typeof book.import_unit_cost === 'number'
+                ? (isZh ? '来自批量导入文件，无收货记录；有进货后以实际批次价为准' : 'From the bulk import file; no purchase receipt yet. Actual batch prices take over once purchased.')
+                : (isZh ? '由进货自动记录，不可手动修改' : 'Recorded automatically from purchases; cannot be edited manually'))}</span>
+          </div>
           {msg && (
             <div
               className={`mt-3 rounded-[10px] px-3 py-2 text-[12px] ${

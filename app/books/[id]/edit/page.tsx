@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { EditBookClient } from './edit-client';
+import { getPurchaseCosts } from '@/lib/books/queries';
 
 export default async function EditBookPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -28,5 +29,11 @@ export default async function EditBookPage({ params }: { params: Promise<{ id: s
     }
   } catch {}
 
-  return <EditBookClient book={book} canDelete={canDelete} spareBarcode={spareBarcode} />;
+  // 工单 #18 跟进：全部收货批次的进货价（只读展示）；无批次时用导入价兜底（book.import_unit_cost）
+  let purchaseCosts: { unit_cost: number; received_at: string | null; quantity_received: number | null; quantity_remaining: number | null }[] = [];
+  try {
+    purchaseCosts = await getPurchaseCosts(supabase, id);
+  } catch {}
+
+  return <EditBookClient book={book} canDelete={canDelete} spareBarcode={spareBarcode} purchaseCosts={purchaseCosts} />;
 }
