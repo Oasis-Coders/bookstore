@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { fetchAllPages, sumInventoryValue } from '@/lib/supabase/fetch-all';
 import { DashboardClient } from './dashboard-client';
 
 async function getDashboardData() {
@@ -15,9 +16,20 @@ async function getDashboardData() {
   }
 
   try {
-    const [valuationRes, lowStockRes, booksRes, poRes, dailySalesRes] = await Promise.all([
-      supabase.from('inventory_valuation_view').select('*'),
-      supabase.from('low_stock_view').select('*'),
+    const [valuationRows, lowStockCountRes, booksRes, poRes, dailySalesRes] = await Promise.all([
+      // 估值行数会超过 PostgREST 单次 1000 行上限，必须分页拉全再求和，
+      // 否则库存总值会被静默截断少算（工单 #20）。排序保证分页稳定。
+      fetchAllPages<any>(async (from, to) => {
+        const res = await supabase
+          .from('inventory_valuation_view')
+          .select('*')
+          .order('sku', { ascending: true })
+          .order('location_id', { ascending: true })
+          .range(from, to);
+        return { data: res.data as any[] | null, error: res.error };
+      }).then((rows) => ({ data: rows })),
+      // 低库存只需要总数：用 count 查询，避免拉全量还被 1000 行截断。
+      supabase.from('low_stock_view').select('*', { count: 'exact', head: true }),
       supabase.from('books').select('id', { count: 'exact' }).eq('is_active', true),
       supabase.from('purchase_orders').select('*, suppliers(name_zh)').order('created_at', { ascending: false }).limit(5),
       // Daily sales - try view first, fallback to manual aggregation
@@ -57,9 +69,9 @@ async function getDashboardData() {
       })(),
     ]);
 
-    const totalValue = valuationRes.data?.reduce((sum: number, r: any) => sum + Number(r.inventory_value || 0), 0) || 0;
+    const totalValue = sumInventoryValue(valuationRows.data || []);
     const totalBooks = booksRes.count || 0;
-    const lowStockCount = lowStockRes.data?.length || 0;
+    const lowStockCount = lowStockCountRes.count || 0;
 
     return {
       mode: 'live' as const,
@@ -67,7 +79,7 @@ async function getDashboardData() {
       totalBooks,
       lowStockCount,
       recentPOs: poRes.data || [],
-      valuation: valuationRes.data?.slice(0, 5) || [],
+      valuation: valuationRows.data?.slice(0, 5) || [],
       dailySales: dailySalesRes as any,
     };
   } catch {
