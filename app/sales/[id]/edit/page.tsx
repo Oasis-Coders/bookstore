@@ -1,55 +1,75 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { EditSaleClient } from './edit-client';
 import { notFound, redirect } from 'next/navigation';
-import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
 import { listAllActiveBooks } from '@/lib/books/queries';
+import { fetchAssignedSpareBarcodeMap } from '@/app/sales/sales-data';
 
-export default async function EditSalePage(props: { params: Promise<{ id: string }>, searchParams?: Promise<any> }) {
+export default async function EditSalePage(props: { params: Promise<{ id: string }>; searchParams?: Promise<any> }) {
   const { id } = await props.params;
 
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect('/auth?redirectTo=/sales');
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect('/auth?redirectTo=/sales');
 
-  const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
-  const roleNames = (roles || []).map((r: any) => r.roles?.name);
+  const [rolesRes, saleRes, linesRes, editsRes, books, spareMap] = await Promise.all([
+    supabase.from('user_roles').select('roles(name)').eq('user_id', user.id),
+    supabase.from('sales_transactions').select('*').eq('id', id).single(),
+    supabase.from('sales_transaction_lines').select('*, books(title, sku)').eq('sale_id', id),
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('sale_edits_view')
+          .select('*')
+          .eq('sale_id', id)
+          .order('edited_at', { ascending: false });
+        return data || [];
+      } catch {
+        try {
+          const { data } = await supabase
+            .from('sale_edits')
+            .select('*')
+            .eq('sale_id', id)
+            .order('edited_at', { ascending: false });
+          return data || [];
+        } catch {
+          return [];
+        }
+      }
+    })(),
+    listAllActiveBooks(supabase, 'id, title, sku, current_price, shelf_position').catch(() => [] as any[]),
+    fetchAssignedSpareBarcodeMap(supabase),
+  ]);
+
+  const roleNames = (rolesRes.data || []).map((r: any) => r.roles?.name);
   // 2026-10-07: 改单放开给 staff（退换货）；DB 层 RPC 同步放宽，操作记入 sale_edits 审计
   const canEdit = roleNames.includes('staff') || roleNames.includes('admin') || roleNames.includes('super_admin');
   if (!canEdit) redirect('/');
 
-  const { data: sale } = await supabase.from('sales_transactions').select('*').eq('id', id).single();
+  const sale = saleRes.data;
   if (!sale) notFound();
 
-  const { data: lines } = await supabase.from('sales_transaction_lines').select('*, books(title, sku)').eq('sale_id', id);
-
-  let edits: any[] = [];
-  try {
-    const { data } = await supabase.from('sale_edits_view').select('*').eq('sale_id', id).order('edited_at', { ascending: false });
-    edits = data || [];
-  } catch {
-    try {
-      const { data } = await supabase.from('sale_edits').select('*').eq('sale_id', id).order('edited_at', { ascending: false });
-      edits = data || [];
-    } catch {}
-  }
-
-  // Books + stock for autocomplete - location-specific to sale's location
-  let books: any[] = [];
-  let stockMap: Record<string, number> = {};
-  try {
-    books = await listAllActiveBooks(supabase, 'id, title, sku, current_price, shelf_position');
-  } catch {}
+  const stockMap: Record<string, number> = {};
   try {
     const saleLocationId = (sale as any).location_id;
     if (saleLocationId) {
-      const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').eq('location_id', saleLocationId).gt('quantity_remaining', 0).limit(1000);
+      const { data: batches } = await supabase
+        .from('inventory_batches')
+        .select('book_id, quantity_remaining')
+        .eq('location_id', saleLocationId)
+        .gt('quantity_remaining', 0)
+        .limit(1000);
       if (batches) {
         for (const b of batches as any[]) stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
       }
     } else {
-      const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
+      const { data: val } = await supabase
+        .from('inventory_valuation_view')
+        .select('book_id, quantity_on_hand')
+        .limit(500);
       if (val) {
         for (const r of val as any[]) {
           stockMap[r.book_id] = (stockMap[r.book_id] || 0) + Number(r.quantity_on_hand || 0);
@@ -58,12 +78,25 @@ export default async function EditSalePage(props: { params: Promise<{ id: string
     }
   } catch {
     try {
-      const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').gt('quantity_remaining', 0).limit(500);
+      const { data: batches } = await supabase
+        .from('inventory_batches')
+        .select('book_id, quantity_remaining')
+        .gt('quantity_remaining', 0)
+        .limit(500);
       if (batches) {
         for (const b of batches as any[]) stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
       }
     } catch {}
   }
 
-  return <EditSaleClient sale={sale} lines={lines || []} edits={edits} books={books} stockMap={stockMap} spareMap={await getAssignedSpareBarcodeMap()} />;
+  return (
+    <EditSaleClient
+      sale={sale}
+      lines={linesRes.data || []}
+      edits={editsRes}
+      books={books}
+      stockMap={stockMap}
+      spareMap={spareMap}
+    />
+  );
 }

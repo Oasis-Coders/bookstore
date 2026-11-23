@@ -56,14 +56,11 @@ Fast feedback stage (typically completes in < 1 minute) that verifies static typ
 1. **`pnpm typecheck` (`tsc --noEmit`)**:
    - Validates TypeScript types across all Server Components, Client Components, API routes, and Supabase helpers.
 2. **`pnpm test` (`vitest run`)**:
-   - Runs all unit test suites, including:
-     - [`__tests__/reports-summary.test.ts`](../__tests__/reports-summary.test.ts): Sales net total and order count aggregation (工单 #12).
-     - [`app/reports/publisher-report-utils.test.ts`](../app/reports/publisher-report-utils.test.ts): Publisher inventory movement report row merging and sorting (工单 #13).
+   - Runs all unit test suites across `__tests__/`, `app/`, and `lib/`.
 3. **`pnpm test:perf` (`vitest run __tests__/reports-performance.test.ts`)**:
    - Runs [`__tests__/reports-performance.test.ts`](../__tests__/reports-performance.test.ts) using a simulated-latency Supabase client (`createLatencyMockSupabase`) to verify:
-     - Above-the-fold sections in [`app/reports/reports-data.ts`](../app/reports/reports-data.ts) (`fetchInventoryOverview`, `fetchSalesRangeData`, `fetchEditedSalesData`, `fetchMonthlyFinancialData`) execute **in parallel** via `Promise.all` rather than a >3s sequential waterfall.
-     - Publisher report queries (`books`, `inventory_qty_at` RPC, `inventory_transactions`) run concurrently.
-     - Redundant `profiles` table lookups are deduplicated by reusing `profileMap`.
+     - **`/reports`** ([`app/reports/reports-data.ts`](../app/reports/reports-data.ts)): Above-the-fold sections and publisher report queries execute in parallel via `Promise.all`, and `profileMap` is reused without duplicate `profiles` queries.
+     - **`/sales`** ([`app/sales/sales-data.ts`](../app/sales/sales-data.ts)): All 5 data pipelines in `fetchSalesPageData` execute concurrently via `Promise.all`, and `fetchSaleLocationAndStock` resolves `saleLocationId` in a single `locations` query.
 
 ---
 

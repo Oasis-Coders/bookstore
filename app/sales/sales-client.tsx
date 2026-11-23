@@ -296,7 +296,7 @@ export function SalesClient({ books, recentSales, stockMap, isAdmin, canEdit, ed
               <label htmlFor="sales-book-picker" className="text-[11px] font-semibold">{isZh ? '选择图书（输入缩小范围，显示书架位置）' : 'Select Book (type to filter, shows shelf location)'}</label>
               <BookAutocomplete id="sales-book-picker" books={books || []} value={selectedBookId} onChange={(id) => { if (id) addBookById(id); }} isZh={isZh} spareMap={spareMap} placeholder={isZh ? '输入书名/代号/备用条码...' : 'Type title/sku/spare barcode...'} />
               <div className="mt-2 flex gap-2">
-                <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); submitScan(); } }} />
+                <Input value={scanInput} onChange={e => setScanInput(e.target.value)} placeholder={tt('sales.scanPlaceholder')} className="flex-1 text-[11px]" onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (e.nativeEvent.isComposing || e.keyCode === 229) return; submitScan(); } }} />
                 <Button variant="secondary" size="sm" onClick={submitScan}>{tt('sales.add')}</Button>
               </div>
 

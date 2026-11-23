@@ -1,125 +1,45 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { SalesClient } from './sales-client';
-import { getAssignedSpareBarcodeMap } from '@/app/tools/barcodes/actions';
-import { listAllActiveBooks } from '@/lib/books/queries';
+import { fetchSalesPageData } from './sales-data';
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ q?: string; edited?: string }> }) {
   const { q: qRaw, edited: editedRaw } = await searchParams;
   const q = (qRaw || '').trim();
   const onlyEdited = editedRaw === '1';
   const supabase = await createSupabaseServerClient();
-  let books: any[] = [] as any[];
-  let recentSales: any[] = [] as any[];
-  let stockMap: Record<string, number> = {};
-  let isAdmin = false;
-  let canEdit = false;
-  let editedSaleIds: string[] = [];
-  let saleLocationId: string | null = null;
 
-  if (supabase) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roles } = await supabase.from('user_roles').select('roles(name)').eq('user_id', user.id);
-        const names = (roles || []).map((r: any) => r.roles?.name);
-        isAdmin = names.includes('admin') || names.includes('super_admin');
-        // 2026-10-07: 改单放开给 staff（退换货），DB 层 RPC 同步放宽
-        canEdit = isAdmin || names.includes('staff');
-      }
-    } catch {}
-    // Deterministic sale location - same as createSale
-    try {
-      const { data: storeLoc } = await supabase.from('locations').select('id').eq('code', 'STORE-LON').eq('is_active', true).single();
-      if (storeLoc?.id) saleLocationId = storeLoc.id;
-      else {
-        const { data: storeTypeLoc } = await supabase.from('locations').select('id').eq('is_active', true).eq('location_type', 'store').order('code', { ascending: true }).limit(1).single();
-        if (storeTypeLoc?.id) saleLocationId = storeTypeLoc.id;
-        else {
-          const { data: anyLoc } = await supabase.from('locations').select('id').eq('is_active', true).order('code', { ascending: true }).limit(1).single();
-          if (anyLoc?.id) saleLocationId = anyLoc.id;
-        }
-      }
-    } catch {}
-    try {
-      books = await listAllActiveBooks(supabase, 'id, title, sku, current_price, shelf_position, title_en');
-    } catch (e) {
-      console.error('books fetch error', e);
-    }
-    try {
-      // 2C: 按单号降序；支持按购书人/单号搜索；edited=1 时只看改过单
-      let sQuery = supabase.from('sales_transactions').select('id, sale_number, subtotal, discount_amount, shipping_cost, payment_method, payment_mix, payment_status, customer_name, sold_at, sale_date').order('sale_number', { ascending: false });
-      if (onlyEdited) {
-        const { data: editedRows } = await supabase.from('sale_edits').select('sale_id').order('edited_at', { ascending: false }).limit(200);
-        const eIds = [...new Set((editedRows || []).map((r: any) => r.sale_id))].slice(0, 50);
-        if (eIds.length === 0) {
-          recentSales = [];
-        } else {
-          sQuery = sQuery.in('id', eIds);
-          const sRes = await sQuery.limit(50);
-          recentSales = sRes.data || [];
-        }
-      } else {
-        if (q) {
-          sQuery = sQuery.or(`sale_number.ilike.%${q}%,customer_name.ilike.%${q}%`);
-        }
-        const sRes = await sQuery.limit(q ? 50 : 20);
-        recentSales = sRes.data || [];
-      }
-      recentSales = (recentSales as any[]).map((s: any) => ({
-        id: s.id,
-        sale_number: s.sale_number || `C${s.id.slice(0,6)}`,
-        subtotal: s.subtotal,
-        discount_amount: s.discount_amount,
-        shipping_cost: s.shipping_cost,
-        net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
-        payment_method: s.payment_method,
-        payment_mix: s.payment_mix,
-        payment_status: s.payment_status,
-        customer_name: s.customer_name,
-        sold_at: s.sale_date || new Date(s.sold_at).toLocaleString('en-GB'),
-      }));
-    } catch (e) {
-      console.error('sales fetch error', e);
-    }
-    // 2026-10-07: 改过的单打标记📌 — 查这些单是否有改单记录
-    try {
-      const ids = recentSales.map((s: any) => s.id);
-      if (ids.length > 0) {
-        const { data: edits } = await supabase.from('sale_edits').select('sale_id').in('sale_id', ids);
-        editedSaleIds = [...new Set((edits || []).map((e: any) => e.sale_id))];
-      }
-    } catch {}
-    try {
-      // Location-specific stock - only count batches in the sale location
-      if (saleLocationId) {
-        const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').eq('location_id', saleLocationId).gt('quantity_remaining', 0).limit(1000);
-        if (batches) {
-          for (const b of batches as any[]) {
-            stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
-          }
-        }
-      } else {
-        // Fallback: if no location, sum all (should not happen)
-        const { data: val } = await supabase.from('inventory_valuation_view').select('book_id, quantity_on_hand').limit(500);
-        if (val) {
-          for (const r of val as any[]) {
-            const bid = (r as any).book_id;
-            const q = Number((r as any).quantity_on_hand || 0);
-            stockMap[bid] = (stockMap[bid] || 0) + q;
-          }
-        }
-      }
-    } catch {
-      try {
-        const { data: batches } = await supabase.from('inventory_batches').select('book_id, quantity_remaining').gt('quantity_remaining', 0).limit(500);
-        if (batches) {
-          for (const b of batches as any[]) {
-            stockMap[b.book_id] = (stockMap[b.book_id] || 0) + Number(b.quantity_remaining || 0);
-          }
-        }
-      } catch {}
-    }
+  if (!supabase) {
+    return (
+      <SalesClient
+        books={[]}
+        recentSales={[]}
+        stockMap={{}}
+        isAdmin={false}
+        canEdit={false}
+        editedSaleIds={[]}
+        onlyEdited={onlyEdited}
+        salesQuery={q}
+        spareMap={{}}
+      />
+    );
   }
 
-  return <SalesClient books={books} recentSales={recentSales} stockMap={stockMap} isAdmin={isAdmin} canEdit={canEdit} editedSaleIds={editedSaleIds} onlyEdited={onlyEdited} salesQuery={q} spareMap={await getAssignedSpareBarcodeMap()} />;
+  const { books, recentSales, stockMap, isAdmin, canEdit, editedSaleIds, spareMap } = await fetchSalesPageData(
+    supabase,
+    { q, onlyEdited }
+  );
+
+  return (
+    <SalesClient
+      books={books}
+      recentSales={recentSales}
+      stockMap={stockMap}
+      isAdmin={isAdmin}
+      canEdit={canEdit}
+      editedSaleIds={editedSaleIds}
+      onlyEdited={onlyEdited}
+      salesQuery={q}
+      spareMap={spareMap}
+    />
+  );
 }

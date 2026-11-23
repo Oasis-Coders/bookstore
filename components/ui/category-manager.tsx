@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useT } from '@/lib/i18n/use-t';
@@ -20,7 +19,9 @@ import {
 export function CategoryManager() {
   const { lang } = useT();
   const isZh = lang === 'zh';
-  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const pressedOutsideRef = useRef(false);
   const [cats, setCats] = useState<CategoryStat[]>([]);
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
@@ -39,18 +40,65 @@ export function CategoryManager() {
     }
   };
 
+  const openModal = () => {
+    setMsg('');
+    setEditing(null);
+    setNewName('');
+    load();
+    const dlg = dialogRef.current;
+    if (dlg && !dlg.open) {
+      dlg.showModal();
+    }
+  };
+
+  const closeModal = () => {
+    const dlg = dialogRef.current;
+    if (dlg && dlg.open) {
+      dlg.close();
+    }
+  };
+
   useEffect(() => {
-    if (open) { load(); setMsg(''); setEditing(null); setNewName(''); }
-  }, [open ]);
+    const dlg = dialogRef.current;
+    if (!dlg || 'closedBy' in HTMLDialogElement.prototype) return;
+
+    const isOutside = (e: PointerEvent) => {
+      const r = dlg.getBoundingClientRect();
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      pressedOutsideRef.current = isOutside(e);
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (pressedOutsideRef.current && isOutside(e)) {
+        dlg.close();
+      }
+    };
+    dlg.addEventListener('pointerdown', onPointerDown);
+    dlg.addEventListener('pointerup', onPointerUp);
+    return () => {
+      dlg.removeEventListener('pointerdown', onPointerDown);
+      dlg.removeEventListener('pointerup', onPointerUp);
+    };
+  }, []);
 
   const doAdd = async () => {
     const v = newName.trim();
-    if (!v) { setMsg(isZh ? '分类名称不能为空' : 'Name cannot be empty'); return; }
-    if (cats.some((c) => c.name === v)) { setMsg(isZh ? '该分类已存在' : 'Category already exists'); return; }
+    if (!v) {
+      setMsg(isZh ? '分类名称不能为空' : 'Name cannot be empty');
+      return;
+    }
+    if (cats.some((c) => c.name === v)) {
+      setMsg(isZh ? '该分类已存在' : 'Category already exists');
+      return;
+    }
     setAdding(true);
     const r = await createCategory(v);
     setAdding(false);
-    if (!r.success) { setMsg(r.error || (isZh ? '添加失败' : 'Add failed')); return; }
+    if (!r.success) {
+      setMsg(r.error || (isZh ? '添加失败' : 'Add failed'));
+      return;
+    }
     setNewName('');
     setMsg(isZh ? `已添加分类「${v}」` : `Added category "${v}"`);
     load();
@@ -58,12 +106,21 @@ export function CategoryManager() {
 
   const doRename = async (oldName: string) => {
     const v = editValue.trim();
-    if (!v) { setMsg(isZh ? '新名称不能为空' : 'Name cannot be empty'); return; }
-    if (v === oldName) { setEditing(null); return; }
+    if (!v) {
+      setMsg(isZh ? '新名称不能为空' : 'Name cannot be empty');
+      return;
+    }
+    if (v === oldName) {
+      setEditing(null);
+      return;
+    }
     setBusy(oldName);
     const r = await renameCategory(oldName, v);
     setBusy(null);
-    if (!r.success) { setMsg(r.error || (isZh ? '改名失败' : 'Rename failed')); return; }
+    if (!r.success) {
+      setMsg(r.error || (isZh ? '改名失败' : 'Rename failed'));
+      return;
+    }
     setEditing(null);
     setMsg(isZh ? `已改名：${oldName} → ${v}` : `Renamed: ${oldName} → ${v}`);
     load();
@@ -77,7 +134,10 @@ export function CategoryManager() {
     setBusy(c.name);
     const r = await deleteCategory(c.name);
     setBusy(null);
-    if (!r.success) { setMsg(r.error || (isZh ? '删除失败' : 'Delete failed')); return; }
+    if (!r.success) {
+      setMsg(r.error || (isZh ? '删除失败' : 'Delete failed'));
+      return;
+    }
     setMsg(isZh ? `已删除「${c.name}」，${r.affected || 0} 本书已取消分类` : `Deleted "${c.name}"`);
     load();
   };
@@ -88,93 +148,147 @@ export function CategoryManager() {
 
   return (
     <>
-      <Button variant="ghost" size="sm" className="rounded-[12px]" onClick={() => setOpen(true)}>
+      <Button variant="ghost" size="sm" className="rounded-[12px]" onClick={openModal}>
         {isZh ? '管理分类' : 'Manage categories'}
       </Button>
-      {open && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-50 overflow-y-auto bg-cocm-ink/30" onClick={() => setOpen(false)}>
-          <div className="flex min-h-full items-center justify-center p-4">
-          <div
-            className="flex h-[540px] max-h-[85vh] w-full max-w-[480px] flex-col rounded-[16px] bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-label={isZh ? '管理分类' : 'Manage categories'}
-          >
-            <div className="shrink-0">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif text-[16px] font-semibold text-cocm-ink">{isZh ? '管理分类' : 'Manage categories'}</h3>
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>{isZh ? '关闭' : 'Close'}</Button>
-            </div>
-            <p className="mt-1 text-[11px] text-[#5b5f94]">
-              {isZh ? '改名会更新该分类下所有图书；删除分类只清空图书的分类，图书本身保留。' : 'Renaming updates all books in the category; deleting only clears the category from books.'}
+      <dialog
+        ref={dialogRef}
+        aria-labelledby={titleId}
+        {...({ closedby: 'any' } as any)}
+        className="m-auto h-[540px] max-h-[85vh] w-full max-w-[480px] rounded-[16px] border-0 bg-white p-5 text-cocm-ink shadow-xl backdrop:bg-cocm-ink/30 open:flex open:flex-col"
+      >
+        <div className="shrink-0">
+          <div className="flex items-center justify-between">
+            <h1 id={titleId} className="font-serif text-[16px] font-semibold text-cocm-ink">
+              {isZh ? '管理分类' : 'Manage categories'}
+            </h1>
+            <Button variant="ghost" size="sm" type="button" onClick={closeModal}>
+              {isZh ? '关闭' : 'Close'}
+            </Button>
+          </div>
+          <p className="mt-1 text-[11px] text-[#5b5f94]">
+            {isZh
+              ? '改名会更新该分类下所有图书；删除分类只清空图书的分类，图书本身保留。'
+              : 'Renaming updates all books in the category; deleting only clears the category from books.'}
+          </p>
+          {msg && <p className="mt-2 text-[12px] text-cocm-ink">{msg}</p>}
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              aria-label={isZh ? '搜索或新建分类' : 'Search or add category'}
+              placeholder={isZh ? '搜索分类，或输入新分类名称' : 'Search categories, or enter a new one'}
+              className="h-9 flex-1 text-[12px]"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                  doAdd();
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              type="button"
+              className="h-9 shrink-0 rounded-[10px] px-4"
+              disabled={adding || !newName.trim() || exactExists}
+              onClick={doAdd}
+            >
+              {isZh ? '添加' : 'Add'}
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
+          {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
+          {!loading && cats.length === 0 && (
+            <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
+          )}
+          {!loading && cats.length > 0 && visibleCats.length === 0 && (
+            <p className="text-[12px] text-[#5b5f94]">
+              {isZh
+                ? `没有匹配「${newName.trim()}」的分类，可点击「添加」新建`
+                : `No match — click Add to create "${newName.trim()}"`}
             </p>
-            {msg && <p className="mt-2 text-[12px] text-cocm-ink">{msg}</p>}
-            <div className="mt-3 flex gap-2">
-              <Input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder={isZh ? '搜索分类，或输入新分类名称' : 'Search categories, or enter a new one'}
-                className="h-9 flex-1 text-[12px]"
-                onKeyDown={(e) => { if (e.key === 'Enter') doAdd(); }}
-              />
-              <Button size="sm" className="h-9 shrink-0 rounded-[10px] px-4" disabled={adding || !newName.trim() || exactExists} onClick={doAdd}>
-                {isZh ? '添加' : 'Add'}
-              </Button>
-            </div>
-            </div>
-            <div className="mt-3 min-h-0 flex-1 space-y-2 overflow-y-auto">
-              {loading && <p className="text-[12px] text-[#5b5f94]">{isZh ? '加载中…' : 'Loading…'}</p>}
-              {!loading && cats.length === 0 && (
-                <p className="text-[12px] text-[#5b5f94]">{isZh ? '暂无分类' : 'No categories yet'}</p>
+          )}
+          {visibleCats.map((c) => (
+            <div key={c.name} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
+              {editing === c.name ? (
+                <>
+                  <Input
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    aria-label={isZh ? '新分类名称' : 'New category name'}
+                    className="h-8 flex-1 text-[12px]"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+                        doRename(c.name);
+                      }
+                      if (e.key === 'Escape') {
+                        e.stopPropagation();
+                        setEditing(null);
+                      }
+                    }}
+                  />
+                  <Button
+                    size="sm"
+                    type="button"
+                    className="h-8 rounded-[8px]"
+                    disabled={busy === c.name}
+                    onClick={() => doRename(c.name)}
+                  >
+                    {isZh ? '保存' : 'Save'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                    className="h-8 rounded-[8px]"
+                    onClick={() => setEditing(null)}
+                  >
+                    {isZh ? '取消' : 'Cancel'}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cocm-ink" title={c.name}>
+                    {c.name}
+                  </span>
+                  <span className="shrink-0 text-[11px] text-[#5b5f94]">
+                    {c.count}
+                    {isZh ? ' 本' : ''}
+                  </span>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                    className="h-7 shrink-0 rounded-[8px] px-2 text-[11px]"
+                    onClick={() => {
+                      setEditing(c.name);
+                      setEditValue(c.name);
+                      setMsg('');
+                    }}
+                  >
+                    {isZh ? '改名' : 'Rename'}
+                  </Button>
+                  <Button
+                    size="sm"
+                    type="button"
+                    variant="ghost"
+                    className="h-7 shrink-0 rounded-[8px] px-2 text-[11px] text-red-600 hover:text-red-700"
+                    disabled={busy === c.name}
+                    onClick={() => doDelete(c)}
+                  >
+                    {isZh ? '删除' : 'Delete'}
+                  </Button>
+                </>
               )}
-              {!loading && cats.length > 0 && visibleCats.length === 0 && (
-                <p className="text-[12px] text-[#5b5f94]">{isZh ? `没有匹配「${newName.trim()}」的分类，可点击「添加」新建` : `No match — click Add to create "${newName.trim()}"`}</p>
-              )}
-              {visibleCats.map((c) => (
-                <div key={c.name} className="flex items-center gap-2 rounded-[10px] border border-cocm-ink/10 px-3 py-2">
-                  {editing === c.name ? (
-                    <>
-                      <Input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        className="h-8 flex-1 text-[12px]"
-                        autoFocus
-                        onKeyDown={(e) => { if (e.key === 'Enter') doRename(c.name); if (e.key === 'Escape') setEditing(null); }}
-                      />
-                      <Button size="sm" className="h-8 rounded-[8px]" disabled={busy === c.name} onClick={() => doRename(c.name)}>
-                        {isZh ? '保存' : 'Save'}
-                      </Button>
-                      <Button size="sm" variant="ghost" className="h-8 rounded-[8px]" onClick={() => setEditing(null)}>
-                        {isZh ? '取消' : 'Cancel'}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cocm-ink" title={c.name}>{c.name}</span>
-                      <span className="shrink-0 text-[11px] text-[#5b5f94]">{c.count}{isZh ? ' 本' : ''}</span>
-                      <Button
-                        size="sm" variant="ghost" className="h-7 shrink-0 rounded-[8px] px-2 text-[11px]"
-                        onClick={() => { setEditing(c.name); setEditValue(c.name); setMsg(''); }}
-                      >
-                        {isZh ? '改名' : 'Rename'}
-                      </Button>
-                      <Button
-                        size="sm" variant="ghost" className="h-7 shrink-0 rounded-[8px] px-2 text-[11px] text-red-600 hover:text-red-700"
-                        disabled={busy === c.name}
-                        onClick={() => doDelete(c)}
-                      >
-                        {isZh ? '删除' : 'Delete'}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ))}
             </div>
-          </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          ))}
+        </div>
+      </dialog>
     </>
   );
 }

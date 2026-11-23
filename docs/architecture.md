@@ -58,6 +58,13 @@ locations (store / warehouse)
 - `inventory_movement_report_view`: 带符号数量/价值变动，按日期/库位/书过滤
 - `sales_margin_report_view`: 收入、COGS、毛利、毛利率
 
+## 并发与流式加载
+
+- **`app/reports/reports-data.ts`**: 首屏四路数据（库存估值/低库存、财务月报 RPC、区间销售、改单记录）`Promise.all` 并发，复用 `valuationPromise` 与 `profileMap`
+- **`app/reports/page.tsx`**: 屏下重查询「按出版社进出货报表」（`fetchPublisherReportData`）通过 `<Suspense>` (`publisherReportSlot`) 独立流式渲染，不阻塞首屏
+- **`app/sales/sales-data.ts`**: 销售页五路数据（权限、单次 `locations` 库位解析+批次库存、全量在售书、近期销售+改单标记、备用条码映射）`Promise.all` 并发
+- **性能门禁**: `__tests__/reports-performance.test.ts`（并发延迟单测）+ `e2e/performance.spec.ts`（Core Web Vitals E2E 阈值校验）
+
 ## RLS
 
 沿用 COCM 的 staff/admin/super_admin：
@@ -71,8 +78,8 @@ locations (store / warehouse)
 
 - `app/`: Server Components 读 Supabase，Client Components 调 RPC
 - `components/layout/app-shell.tsx`: 复用 COCM 的森林侧边栏 + 奶油背景
-- `components/ui/`: Button/Card/Input/Badge — 12/20/28 圆角 + 三层阴影
-- `lib/supabase/`: browser/server/client 工厂，middleware 刷新 session
+- `components/ui/`: Button/Card/Input/Badge — 12/20/28 圆角 + 三层阴影（`BookAutocomplete` 使用 React `useId()` 保证 SSR/CSR 水合一致性）
+- `lib/supabase/`: browser/server/client 工厂，`proxy.ts` 刷新 session（未配置 Supabase 环境变量时自动进入 Demo 模式）
 - `lib/inventory/rpc.ts`: RPC 封装，带类型
 
 ## 设计
@@ -88,3 +95,4 @@ locations (store / warehouse)
 - Vercel 环境变量见 README
 - Supabase Site URL 必须设为 Vercel 域名，否则邀请跳 localhost
 - 首位 super_admin 手动插 user_roles
+- GitHub Actions CI/CD 流水线详见 [`docs/ci-cd.md`](./ci-cd.md)

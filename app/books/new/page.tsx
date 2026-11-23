@@ -82,6 +82,7 @@ export default function NewBookPage() {
   const handleScanInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
+      if (e.nativeEvent.isComposing || e.keyCode === 229) return;
       const val = (e.target as HTMLInputElement).value;
       if (val) handleBarcodeScan(val);
     }
