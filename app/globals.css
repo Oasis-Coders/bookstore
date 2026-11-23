@@ -6,6 +6,19 @@
 
 :root {
   color-scheme: light;
+  --scrollbar-thumb: rgba(45, 47, 146, 0.35);
+  --scrollbar-track: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 * {
@@ -216,18 +229,24 @@ a {
 }
 
 /* ── Custom scrollbar for Chinese text readability ── */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+@supports not (scrollbar-color: auto) {
+  :root {
+    scrollbar-width: auto;
+  }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(45,47,146,0.15);
-  border-radius: 4px;
-}
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(45,47,146,0.25);
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(45, 47, 146, 0.45);
+  }
 }
 
 /* ── 打印时去掉极光背景：SVG 噪点 + 多层渐变 + fixed 会被 print-color-adjust: exact

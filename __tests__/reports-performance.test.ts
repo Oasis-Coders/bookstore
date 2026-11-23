@@ -9,16 +9,17 @@ import {
   shiftDay,
   type SupabaseLike,
 } from '../app/reports/reports-data';
+import { fetchSalesPageData, fetchSaleLocationAndStock } from '../app/sales/sales-data';
 
 /**
  * Creates a simulated Supabase client with configurable per-query network latency (`delayMs`).
- * Records every query / RPC call and timestamps so tests can verify concurrency vs sequential execution.
+ * Records every query / RPC / auth call and timestamps so tests can verify concurrency vs sequential execution.
  */
 function createLatencyMockSupabase(delayMs: number) {
-  const calls: { type: 'table' | 'rpc'; name: string; startMs: number; endMs: number }[] = [];
+  const calls: { type: 'table' | 'rpc' | 'auth'; name: string; startMs: number; endMs: number }[] = [];
   const origin = performance.now();
 
-  const wait = <T>(name: string, type: 'table' | 'rpc', data: T) => {
+  const wait = <T>(name: string, type: 'table' | 'rpc' | 'auth', data: T) => {
     const startMs = performance.now() - origin;
     return new Promise<{ data: T; error: null }>((resolve) => {
       setTimeout(() => {
@@ -117,8 +118,8 @@ function createLatencyMockSupabase(delayMs: number) {
         ];
       case 'books':
         return [
-          { id: 'b1', sku: 'BK-001', title: 'Book One', publisher: '活水出版社' },
-          { id: 'b2', sku: 'BK-002', title: 'Book Two', publisher: '海天书楼' },
+          { id: 'b1', sku: 'BK-001', title: 'Book One', publisher: '活水出版社', current_price: 15, shelf_position: 'A1' },
+          { id: 'b2', sku: 'BK-002', title: 'Book Two', publisher: '海天书楼', current_price: 12, shelf_position: 'B2' },
         ];
       case 'inventory_transactions':
         return [{ book_id: 'b1', quantity: 4 }];
@@ -133,6 +134,21 @@ function createLatencyMockSupabase(delayMs: number) {
           opening_stock: 100,
           closing_stock: 110,
         };
+      case 'user_roles':
+        return [{ roles: { name: 'staff' } }];
+      case 'locations':
+        return [
+          { id: 'loc-wh', code: 'WH-01', location_type: 'warehouse' },
+          { id: 'loc-store', code: 'STORE-MAIN', location_type: 'store' },
+        ];
+      case 'inventory_batches':
+        return [
+          { book_id: 'b1', quantity_remaining: 7 },
+          { book_id: 'b1', quantity_remaining: 3 },
+          { book_id: 'b2', quantity_remaining: 5 },
+        ];
+      case 'spare_barcodes':
+        return [{ code: '2700000000018', assigned_book_id: 'b1' }];
       default:
         return [];
     }
@@ -143,12 +159,16 @@ function createLatencyMockSupabase(delayMs: number) {
       select: () => builder,
       order: () => builder,
       limit: () => builder,
+      range: () => builder,
       eq: () => builder,
       neq: () => builder,
+      gt: () => builder,
       gte: () => builder,
       lte: () => builder,
       lt: () => builder,
       in: () => builder,
+      not: () => builder,
+      or: () => builder,
       maybeSingle: () => wait(`${table}.maybeSingle`, 'table', mockDataForTable(table)),
       single: () => wait(`${table}.single`, 'table', mockDataForTable(table)),
       then: (onfulfilled?: any, onrejected?: any) =>
@@ -158,6 +178,9 @@ function createLatencyMockSupabase(delayMs: number) {
   };
 
   const client = {
+    auth: {
+      getUser: () => wait('auth.getUser', 'auth', { user: { id: 'u1', email: 'staff@cocm.org.uk' } }),
+    },
     from: (table: string) => makeBuilder(table),
     rpc: (fn: string) => {
       if (fn === 'inventory_qty_at') {
@@ -189,9 +212,6 @@ describe('Reports Route Data Fetching Performance & Concurrency', () => {
   });
 
   it('executes above-the-fold report sections in parallel rather than a >3s sequential waterfall', async () => {
-    // Suppose each DB round-trip takes 50ms (representing ~250ms in production).
-    // A 12-step sequential waterfall would take 12 * 50ms = 600ms (or >3000ms at 250ms/query).
-    // With parallel execution + streaming separation, the critical path is at most 2 round-trips (~100ms).
     const delayMs = 50;
     const { client, calls } = createLatencyMockSupabase(delayMs);
     const { targetMonth, monthStart, monthEnd } = getMonthRange('2026-10');
@@ -210,7 +230,6 @@ describe('Reports Route Data Fetching Performance & Concurrency', () => {
 
     const elapsedMs = performance.now() - start;
 
-    // Verify correctness of fetched data
     expect(invResult.currentInventoryValue).toBe(110);
     expect(invResult.lowStock).toHaveLength(1);
     expect(salesResult.salesList).toHaveLength(1);
@@ -221,11 +240,8 @@ describe('Reports Route Data Fetching Performance & Concurrency', () => {
     expect(financialResult.monthlyFinancial?.sales_total).toBe(30);
     expect(financialResult.autoOpeningStock).toBe(100);
 
-    // Total sequential time of all queries executed would be calls.length * delayMs (>= 450ms)
     const sequentialEquivalentMs = calls.length * delayMs;
     expect(calls.length).toBeGreaterThanOrEqual(8);
-
-    // Parallel execution should complete in ~2-3 round-trips, well under half the sequential time
     expect(elapsedMs).toBeLessThan(sequentialEquivalentMs * 0.5);
   });
 
@@ -252,9 +268,7 @@ describe('Reports Route Data Fetching Performance & Concurrency', () => {
 
     expect(pubReport.rows).toHaveLength(2);
     expect(pubReport.publishers).toEqual(['海天书楼', '活水出版社']);
-    expect(calls.length).toBe(3); // books + inventory_qty_at + inventory_transactions
-
-    // All 3 queries run concurrently in 1 round-trip (~50ms), not 3 sequential round-trips (150ms)
+    expect(calls.length).toBe(3);
     expect(elapsedMs).toBeLessThan(delayMs * 2.2);
   });
 
@@ -263,9 +277,47 @@ describe('Reports Route Data Fetching Performance & Concurrency', () => {
     await fetchSalesRangeData(client, { from: '2026-10-01', to: '2026-10-31' });
 
     const profileCalls = calls.filter((c) => c.name === 'profiles');
-    // Because sales_transaction_lines has the same created_by ('u1') as sales_transactions,
-    // profiles should only be queried once!
     expect(profileCalls).toHaveLength(1);
   });
 });
 
+describe('Sales Route (/sales) Data Fetching Performance & Concurrency', () => {
+  it('executes all 5 /sales pipelines in parallel (~2 round-trips instead of 8-11 sequential round-trips)', async () => {
+    const delayMs = 50;
+    const { client, calls } = createLatencyMockSupabase(delayMs);
+
+    const start = performance.now();
+    const result = await fetchSalesPageData(client, { q: '', onlyEdited: false });
+    const elapsedMs = performance.now() - start;
+
+    // Verify all data pipelines resolved accurately
+    expect(result.isAdmin).toBe(false);
+    expect(result.canEdit).toBe(true);
+    expect(result.saleLocationId).toBe('loc-store');
+    expect(result.stockMap).toEqual({ b1: 10, b2: 5 });
+    expect(result.books).toHaveLength(2);
+    expect(result.recentSales).toHaveLength(1);
+    expect(result.recentSales[0].net_total).toBe(30);
+    expect(result.editedSaleIds).toEqual(['s1']);
+    expect(result.spareMap).toEqual({ '2700000000018': 'b1' });
+
+    // 8 total calls executed (auth.getUser, user_roles, locations, inventory_batches, books, sales_transactions, sale_edits, spare_barcodes)
+    expect(calls.length).toBe(8);
+    const sequentialEquivalentMs = calls.length * delayMs; // 400ms
+
+    // Because all 5 pipelines start concurrently and the deepest chain is 2 steps (50ms + 50ms = ~100ms),
+    // elapsed time is well under half of sequential execution
+    expect(elapsedMs).toBeLessThan(sequentialEquivalentMs * 0.45);
+  });
+
+  it('resolves saleLocationId in a single locations query even when STORE-LON is absent', async () => {
+    const { client, calls } = createLatencyMockSupabase(10);
+    const { saleLocationId, stockMap } = await fetchSaleLocationAndStock(client);
+
+    expect(saleLocationId).toBe('loc-store');
+    expect(stockMap).toEqual({ b1: 10, b2: 5 });
+
+    const locationCalls = calls.filter((c) => c.name === 'locations');
+    expect(locationCalls).toHaveLength(1);
+  });
+});

@@ -71,7 +71,7 @@ export function ValuationSection({ valuation, onExport }: { valuation: any[]; on
   const sortedRows = useMemo(() => {
     const k = bookSort.key;
     const isText = k === 'title' || k === 'sku';
-    return [...activeRows].sort((a, b) => {
+    return activeRows.toSorted((a, b) => {
       const va = isText ? String(a[k] || '') : num(a[k]);
       const vb = isText ? String(b[k] || '') : num(b[k]);
       return compareVals(va, vb) * bookSort.dir;

@@ -92,7 +92,7 @@ export function AppShell({ title, titleZh, eyebrow, children, actions }: AppShel
             <div className="absolute inset-0 bg-gradient-to-br from-cocm-red/10 via-transparent to-transparent" />
             <div className="relative px-5 py-6">
               <div className="flex items-center gap-3">
-                <img src="/cocm-logo.png" alt="COCM" className="h-10 w-10 rounded-full ring-1 ring-white/20" />
+                <img src="/cocm-logo.png" alt="COCM" width={40} height={40} className="h-10 w-10 rounded-full ring-1 ring-white/20" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[14px] font-semibold leading-tight tracking-tight">{isZh ? '活水书房' : 'COCM Bookshop'}</p>
                   <span className="text-[11px] font-sans font-medium tracking-wide opacity-60">{isZh ? '书店管理系统' : 'Bookshop System'}</span>

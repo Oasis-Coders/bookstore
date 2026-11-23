@@ -37,7 +37,7 @@ export function MobileSidebar({ items = defaultNav, avatarIcon = '活', avatarCo
   const sidebarContent = children || (
     <>
       <div className="flex items-center gap-3">
-        <img src="/cocm-logo.png" alt="COCM" className="h-9 w-9 rounded-full ring-1 ring-white/20" />
+        <img src="/cocm-logo.png" alt="COCM" width={36} height={36} className="h-9 w-9 rounded-full ring-1 ring-white/20" />
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold text-white">活水书房</p>
           <p className="text-[11px] text-white/60">COCM Bookshop</p>

@@ -48,7 +48,7 @@ export function AuthClient({
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div>
             <div className="flex items-center gap-3">
-              <img src="/cocm-logo.png" alt="COCM" className="w-10 h-10 rounded-full ring-1 ring-white/20" />
+              <img src="/cocm-logo.png" alt="COCM" width={40} height={40} className="w-10 h-10 rounded-full ring-1 ring-white/20" />
               <span className="font-serif text-[20px] text-white tracking-tight">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
             </div>
           </div>
@@ -87,7 +87,7 @@ export function AuthClient({
         <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
-            <img src="/cocm-logo.png" alt="COCM" className="w-9 h-9 rounded-full ring-1 ring-cocm-ink/10" />
+            <img src="/cocm-logo.png" alt="COCM" width={36} height={36} className="w-9 h-9 rounded-full ring-1 ring-cocm-ink/10" />
             <span className="font-serif text-[18px] text-cocm-ink">{isZh ? '活水书房' : 'COCM Bookshop'}</span>
           </div>
 

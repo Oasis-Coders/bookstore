@@ -187,7 +187,7 @@ export function BarcodesClient({
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') doSearch(); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (e.nativeEvent.isComposing || e.keyCode === 229) return; doSearch(); } }}
                 placeholder={isZh ? '搜书名 / 代号…' : 'Search title / Code…'}
                 className="flex-1"
               />
