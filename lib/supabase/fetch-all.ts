@@ -32,3 +32,10 @@ export function sumInventoryValue(
 ): number {
   return rows.reduce((sum, r) => sum + (Number(r.inventory_value) || 0), 0);
 }
+
+/** 库存零售总值求和（retail_value 可能是字符串数字）。 */
+export function sumRetailValue(
+  rows: { retail_value?: unknown }[],
+): number {
+  return rows.reduce((sum, r) => sum + (Number(r.retail_value) || 0), 0);
+}

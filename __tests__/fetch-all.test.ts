@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 // 相对路径导入：vitest 下 @/ 别名曾出现解析失败（见 AGENTS.md 记录）
-import { fetchAllPages, sumInventoryValue } from '../lib/supabase/fetch-all';
+import { fetchAllPages, sumInventoryValue, sumRetailValue } from '../lib/supabase/fetch-all';
 
 describe('fetchAllPages', () => {
   it('拉完所有分页，而不是停在第一页 1000 行（工单 #20 回归）', async () => {
@@ -66,5 +66,23 @@ describe('sumInventoryValue', () => {
         {},
       ]),
     ).toBe(20);
+  });
+});
+
+describe('sumRetailValue', () => {
+  it('报表页零售总值汇总所有行，含第 1000 行之后（工单 #20 复查回归）', () => {
+    const rows = Array.from({ length: 1199 }, () => ({ retail_value: 10 }));
+    expect(sumRetailValue(rows)).toBe(11990);
+  });
+
+  it('兼容字符串数字与空值', () => {
+    expect(
+      sumRetailValue([
+        { retail_value: '3.25' },
+        { retail_value: 1.75 },
+        { retail_value: null },
+        {},
+      ]),
+    ).toBe(5);
   });
 });

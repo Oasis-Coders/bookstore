@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AppShell } from '@/components/layout/app-shell';
 import { formatCurrency } from '@/lib/utils';
-import { resolvePurchaseCost, type PurchaseCostEntry } from '@/lib/books/queries';
 import { useT } from '@/lib/i18n/use-t';
 import { CategoryManager } from '@/components/ui/category-manager';
 import Link from 'next/link';
@@ -25,17 +24,16 @@ type Book = {
   publisher?: string;
   author?: string;
   current_price?: number;
-  // 工单 #18 跟进：全部收货批次的进货价（只读展示，不可手动修改）；没有批次时
-  // 若导入文件里填过 Unit cost，显示导入价
-  purchase_costs?: PurchaseCostEntry[] | null;
-  import_unit_cost?: number | null;
   category?: string;
   low_stock_threshold?: number;
   on_hand?: number;
   is_active?: boolean;
 };
 
-export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string; mode: 'live' | 'empty'; show: 'all' | 'active' | 'inactive' | 'lowstock' }) {
+export function BooksClient({ books, q, mode, show, totalCount }: { books: Book[]; q: string; mode: 'live' | 'empty'; show: 'all' | 'active' | 'inactive' | 'lowstock'; totalCount?: number | null }) {
+  // 列表最多展示前 80 种，顶部计数用服务端 count 的真实总数（工单 #20 复查），
+  // 不能拿已加载条数冒充总数。
+  const displayTotal = typeof totalCount === 'number' ? totalCount : books.length;
   const { tt, lang } = useT();
   const isZh = lang === 'zh';
   const [scanning, setScanning] = useState(false);
@@ -54,7 +52,7 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
   };
 
   return (
-    <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: books.length })} actions={
+    <AppShell title={tt('books.title')} titleZh={tt('books.title')} eyebrow={tt('books.count', { n: displayTotal })} actions={
       <div className="flex gap-2">
         <CategoryManager />
         <Link href="/books/new">
@@ -104,6 +102,10 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
           </div>
         </div>
 
+        {displayTotal > books.length && (
+          <p className="text-[11px] text-[#5b5f94]">{isZh ? `共 ${displayTotal} 种，当前只显示前 ${books.length} 种，用上面的搜索可以缩小范围。` : `${displayTotal} titles in total; showing the first ${books.length}. Use search above to narrow it down.`}</p>
+        )}
+
         <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
           {books.map((book) => (
             <Card key={book.id} className="cv-auto group p-5 hover:shadow-[0_8px_24px_rgba(45,47,146,0.08),0_2px_8px_rgba(45,47,146,0.04)] hover:-translate-y-[1px] hover:border-cocm-ink/10 transition-[box-shadow,border-color,transform] duration-300">
@@ -142,31 +144,6 @@ export function BooksClient({ books, q, mode, show }: { books: Book[]; q: string
                   <Link href={`/books/${book.id}/edit`}><Button size="sm" variant="ghost" className="h-8 px-3 text-[11px] rounded-[9px] hover:bg-cocm-ink hover:text-white transition-colors font-medium">{isZh ? '编辑' : 'Edit'}</Button></Link>
                 </div>
               </div>
-              <p className="mt-1.5 text-[12px] text-[#5b5f94]">
-                {tt('books.purchaseCost')}：
-              {(() => {
-                const pc = resolvePurchaseCost(book.purchase_costs, book.import_unit_cost);
-                if (pc.kind === 'batches') {
-                  const shown = pc.entries.slice(0, 3);
-                  return (
-                    <span>
-                      {shown.map((e, i) => (
-                        <span key={i}>
-                          {i > 0 ? '、' : ''}
-                          {formatCurrency(e.unit_cost)}
-                          {e.received_at ? `（${e.received_at.slice(0, 10)}）` : ''}
-                        </span>
-                      ))}
-                      {pc.entries.length > 3 ? <span className="opacity-70">{tt('books.batchesMore', { n: pc.entries.length - 3 })}</span> : null}
-                    </span>
-                  );
-                }
-                if (pc.kind === 'import') {
-                  return <span>{formatCurrency(pc.unit_cost)}（{tt('books.importedCost')}）</span>;
-                }
-                return <span>{tt('books.noPurchaseRecord')}</span>;
-              })()}
-              </p>
             </Card>
           ))}
         </div>
