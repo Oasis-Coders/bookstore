@@ -1,174 +1,255 @@
 import { Suspense } from 'react';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { fetchAllPages, sumInventoryValue } from '@/lib/supabase/fetch-all';
 import { ReportsClient } from './reports-client';
-import { PublisherReportSection } from './publisher-report-section';
-import {
-  fetchInventoryOverview,
-  fetchMonthlyFinancialData,
-  fetchSalesRangeData,
-  fetchEditedSalesData,
-  fetchPublisherReportData,
-  getMonthRange,
-  type SupabaseLike,
-} from './reports-data';
-import { resolveSalesRange } from '../../lib/reports/sales-range';
 
-function SectionSkeleton({ title }: { title: string }) {
-  return (
-    <div
-      className="mt-4 rounded-[20px] border border-cocm-ink/10 bg-white p-6 shadow-sm"
-      data-testid="publisher-report-skeleton"
-    >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[14px] font-semibold text-cocm-ink">{title}</span>
-        <div className="h-8 w-24 animate-pulse rounded-[10px] bg-cocm-ink/10" />
-      </div>
-      <div className="mt-4 space-y-2">
-        <div className="h-10 w-full animate-pulse rounded-[12px] bg-cocm-ink/10" />
-        <div className="h-10 w-full animate-pulse rounded-[12px] bg-cocm-ink/5" />
-        <div className="h-10 w-full animate-pulse rounded-[12px] bg-cocm-ink/5" />
-      </div>
-    </div>
-  );
-}
-
-async function AsyncPublisherReport({
-  supabase,
-  valuationPromise,
-  params,
-}: {
-  supabase: SupabaseLike | null;
-  valuationPromise: Promise<any[]>;
-  params: { pub_from?: string; pub_to?: string; pub_publisher?: string };
-}) {
-  if (!supabase) {
-    const year = new Date().getUTCFullYear();
-    const todayStr = new Date().toISOString().slice(0, 10);
-    return (
-      <PublisherReportSection
-        rows={[]}
-        publishers={[]}
-        initialFilters={{
-          from: params.pub_from || `${year}-01-01`,
-          to: params.pub_to || todayStr,
-          publisher: params.pub_publisher && params.pub_publisher !== 'all' ? params.pub_publisher : 'all',
-        }}
-      />
-    );
-  }
-  const publisherReport = await fetchPublisherReportData(supabase, valuationPromise, params);
-  return (
-    <PublisherReportSection
-      rows={publisherReport.rows}
-      publishers={publisherReport.publishers}
-      initialFilters={publisherReport.initialFilters}
-    />
-  );
-}
-
-export default async function ReportsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    from?: string;
-    to?: string;
-    month?: string;
-    pay?: string;
-    pstatus?: string;
-    pub_from?: string;
-    pub_to?: string;
-    pub_publisher?: string;
-  }>;
-}) {
-  const { from, to, month, pay, pstatus, pub_from, pub_to, pub_publisher } = await searchParams;
+export default async function ReportsPage({ searchParams }: { searchParams: Promise<{ from?: string; to?: string; month?: string; pay?: string; pstatus?: string }> }) {
+  const { from, to, month, pay, pstatus } = await searchParams;
   const payFilter = pay && pay !== 'all' ? pay : null;
   const payStatusFilter = pstatus && pstatus !== 'all' ? pstatus : null;
   const supabase = await createSupabaseServerClient();
-
-  const { targetMonth, monthStart, monthEnd } = getMonthRange(month);
-
-  // Sales list: first open without from/to defaults to the 1st of the
-  // current month through today (same range the date inputs show), so the
-  // list and the monthly card agree without clicking 「查询」.
-  const salesRange = resolveSalesRange(from, to);
-
-  let valuation: any[] = [];
-  let lowStock: any[] = [];
-  let salesList: any[] = [];
-  let salesBooksList: any[] = [];
-  let editedSalesList: any[] = [];
+  let valuation: any[] = [] as any[];
+  let lowStock: any[] = [] as any[];
+  let salesList: any[] = [] as any[];
+  let salesBooksList: any[] = [] as any[];
+  let editedSalesList: any[] = [] as any[];
   let monthlyFinancial: any = null;
   let currentInventoryValue = 0;
   let autoOpeningStock: number | null = null;
   let autoClosingStock: number | null = null;
+  let mode: 'live' | 'empty' = 'empty';
 
-  let valuationPromise: Promise<any[]> = Promise.resolve([]);
+  const targetMonth = month || new Date().toISOString().slice(0,7); // YYYY-MM
+  const monthStart = `${targetMonth}-01`;
+  // compute month end
+  const d = new Date(`${targetMonth}-01T00:00:00`);
+  d.setMonth(d.getMonth()+1); d.setDate(0);
+  const monthEnd = d.toISOString().slice(0,10);
 
   if (supabase) {
     try {
-      // Kick off inventory overview immediately and share its promise with downstream tasks
-      const inventoryTask = fetchInventoryOverview(supabase).catch(() => ({
-        valuation: [] as any[],
-        lowStock: [] as any[],
-        currentInventoryValue: 0,
-        mode: 'empty' as const,
-      }));
-      valuationPromise = inventoryTask.then((r) => r.valuation);
-      const currentValPromise = inventoryTask.then((r) => r.currentInventoryValue);
-
-      // Run all above-the-fold report sections in parallel instead of a sequential waterfall
-      const [invResult, salesResult, editsResult, financialResult] = await Promise.all([
-        inventoryTask,
-        fetchSalesRangeData(supabase, { from: salesRange.from, to: salesRange.to, payFilter, payStatusFilter }),
-        fetchEditedSalesData(supabase),
-        fetchMonthlyFinancialData(supabase, targetMonth, monthStart, monthEnd, currentValPromise),
+      const [valuationRows, lRes] = await Promise.all([
+        // .limit(5000) 也救不了：PostgREST 单次最多返回 1000 行，超出会被
+        // 静默截断（工单 #20 复查：报表页成本/零售总值同样少算）。必须分页
+        // 拉全再汇总/展示，排序保证分页稳定（与首页同一口径）。
+        fetchAllPages<any>(async (from, to) => {
+          const res = await supabase
+            .from('inventory_valuation_view')
+            .select('*')
+            .order('sku', { ascending: true })
+            .order('location_id', { ascending: true })
+            .range(from, to);
+          return { data: res.data as any[] | null, error: res.error };
+        }),
+        supabase.from('low_stock_view').select('*').limit(100),
       ]);
+      if (valuationRows && valuationRows.length > 0) {
+        valuation = valuationRows;
+        mode = 'live';
+        // 月度报表的当月期末库存（系统值）也来自这里，一并随全量汇总修正。
+        currentInventoryValue = sumInventoryValue(valuationRows);
+      }
+      if (lRes.data) lowStock = lRes.data;
 
-      valuation = invResult.valuation;
-      lowStock = invResult.lowStock;
-      currentInventoryValue = invResult.currentInventoryValue;
-      salesList = salesResult.salesList;
-      salesBooksList = salesResult.salesBooksList;
-      editedSalesList = editsResult;
-      monthlyFinancial = financialResult.monthlyFinancial;
-      autoOpeningStock = financialResult.autoOpeningStock;
-      autoClosingStock = financialResult.autoClosingStock;
+      // Fetch sales for date range if provided
+      if (from || to) {
+        try {
+          let query = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by').order('sale_number', { ascending: true });
+          if (from) query = query.gte('sale_date', from);
+          if (to) query = query.lte('sale_date', to);
+          if (payFilter) query = query.eq('payment_method', payFilter); // 未选(pending) = NULL, 按指定方式筛选时自然排除
+          if (payStatusFilter) query = query.eq('payment_status', payStatusFilter);
+          const { data } = await query.limit(2000);
+          // Fetch staff names separately for robustness (FK may not have PostgREST relationship)
+          let profileMap: Record<string, string> = {};
+          if (data && data.length > 0) {
+            const ids = [...new Set((data as any[]).map(s => s.created_by).filter(Boolean))];
+            if (ids.length > 0) {
+              const { data: profs } = await supabase.from('profiles').select('id, display_name').in('id', ids);
+              if (profs) {
+                for (const p of profs as any[]) profileMap[p.id] = p.display_name;
+              }
+            }
+          }
+          salesList = (data || []).map((s: any) => ({
+            ...s,
+            net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
+            created_by_name: profileMap[s.created_by] || s.created_by?.slice(0,8) || '-',
+            staff_name: profileMap[s.created_by] || '-',
+          }));
+        } catch (e) {
+          // fallback: try with join if profiles relationship exists
+          try {
+            let q2 = supabase.from('sales_transactions').select('id, sale_number, sale_date, sold_at, payment_method, payment_status, subtotal, discount_amount, shipping_cost, customer_name, status, created_by, profiles(display_name)').order('sale_number', { ascending: true });
+            if (from) q2 = q2.gte('sale_date', from);
+            if (to) q2 = q2.lte('sale_date', to);
+            if (payFilter) q2 = q2.eq('payment_method', payFilter);
+            if (payStatusFilter) q2 = q2.eq('payment_status', payStatusFilter);
+            const { data } = await q2.limit(2000);
+            salesList = (data || []).map((s: any) => ({
+              ...s,
+              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
+              created_by_name: s.profiles?.display_name || s.created_by?.slice(0,8) || '-',
+              staff_name: s.profiles?.display_name || '-',
+            }));
+          } catch {}
+        }
+
+        // Sales book lines: derive from the exact sale set above (same date range),
+        // so every line in range is included (no arbitrary 200-line truncation).
+        try {
+          const saleIds = salesList.map((s: any) => s.id);
+          if (saleIds.length > 0) {
+            const { data: lines } = await supabase.from('sales_transaction_lines')
+              .select('sale_id, quantity, unit_price, cost_of_goods_sold, sales_transactions!inner(sale_date, sale_number, payment_method, customer_name, created_by), books(sku, title, title_en, shelf_position, warehouse_location)')
+              .in('sale_id', saleIds)
+              .order('created_at', { ascending: true })
+              .limit(5000);
+            let bookProfileMap: Record<string, string> = {};
+            if (lines && (lines as any[]).length > 0) {
+              const cids = [...new Set((lines as any[]).map((l:any)=>l.sales_transactions?.created_by).filter(Boolean))];
+              if (cids.length > 0) {
+                const { data: bp } = await supabase.from('profiles').select('id, display_name').in('id', cids);
+                if (bp) for (const p of bp as any[]) bookProfileMap[p.id]=p.display_name;
+              }
+            }
+            salesBooksList = (lines || []).map((l: any) => ({
+              sale_date: l.sales_transactions?.sale_date,
+              sale_number: l.sales_transactions?.sale_number,
+              sku: l.books?.sku,
+              title: l.books?.title,
+              title_en: l.books?.title_en,
+              shelf_position: l.books?.shelf_position,
+              warehouse_location: l.books?.warehouse_location,
+              quantity: l.quantity,
+              unit_price: l.unit_price,
+              cost_of_goods_sold: l.cost_of_goods_sold,
+              payment_method: l.sales_transactions?.payment_method,
+              customer_name: l.sales_transactions?.customer_name,
+              created_by: l.sales_transactions?.created_by,
+              staff_name: bookProfileMap[l.sales_transactions?.created_by] || '-',
+            }));
+          }
+        } catch {
+          try {
+            let vQuery = supabase.from('sales_books_report_view').select('*').order('sale_number', { ascending: true }).limit(2000);
+            if (from) vQuery = vQuery.gte('sale_date', from);
+            if (to) vQuery = vQuery.lte('sale_date', to);
+            const { data } = await vQuery;
+            salesBooksList = data || [];
+          } catch {}
+        }
+      }
+
+      // 2026-10-07: 改单记录报表 — 近期所有改过的单（按改单时间倒序）
+      try {
+        const { data: editsData } = await supabase.from('sale_edits')
+          .select('id, sale_id, change_type, reason, edited_at, edited_by')
+          .order('edited_at', { ascending: false })
+          .limit(200);
+        if (editsData && editsData.length > 0) {
+          const saleIds = [...new Set((editsData as any[]).map(e => e.sale_id))];
+          const editorIds = [...new Set((editsData as any[]).map(e => e.edited_by).filter(Boolean))];
+          const [sRes, pRes] = await Promise.all([
+            supabase.from('sales_transactions').select('id, sale_number, sale_date, subtotal, discount_amount, shipping_cost').in('id', saleIds),
+            editorIds.length > 0 ? supabase.from('profiles').select('id, display_name').in('id', editorIds) : Promise.resolve({ data: [] } as any),
+          ]);
+          const saleMap: Record<string, any> = {};
+          for (const s of (sRes.data || []) as any[]) saleMap[s.id] = s;
+          const editorMap: Record<string, string> = {};
+          for (const p of (pRes.data || []) as any[]) editorMap[p.id] = p.display_name;
+          editedSalesList = (editsData as any[]).map(e => {
+            const s = saleMap[e.sale_id] || {};
+            return {
+              edited_at: e.edited_at,
+              sale_date: s.sale_date,
+              sale_number: s.sale_number,
+              net_total: Number(s.subtotal || 0) - Number(s.discount_amount || 0) + Number(s.shipping_cost || 0),
+              change_type: e.change_type,
+              reason: e.reason,
+              edited_by_name: editorMap[e.edited_by] || '-',
+            };
+          });
+        }
+      } catch (e) {
+        console.error('edited sales fetch error', e);
+      }
+
+      // Monthly financial data
+      try {
+        // Auto opening stock: inventory cost value right after the previous month's
+        // last transaction (inventory_value_at(prev month end)).
+        try {
+          const prevEnd = new Date(`${monthStart}T00:00:00`);
+          prevEnd.setDate(prevEnd.getDate() - 1);
+          const prevEndStr = prevEnd.toISOString().slice(0, 10);
+          const { data: autoOpen } = await supabase.rpc('inventory_value_at', { p_as_of: prevEndStr });
+          if (autoOpen != null) autoOpeningStock = Number(autoOpen);
+        } catch {}
+        // Auto closing stock: for past months, inventory cost at month end
+        // (inventory_value_at(monthEnd)); for the current month, live inventory.
+        try {
+          const nowMonth = new Date().toISOString().slice(0, 7);
+          if (targetMonth === nowMonth) {
+            autoClosingStock = currentInventoryValue;
+          } else {
+            const { data: autoClose } = await supabase.rpc('inventory_value_at', { p_as_of: monthEnd });
+            if (autoClose != null) autoClosingStock = Number(autoClose);
+          }
+        } catch {}
+        // Try view first
+        const { data: finView } = await supabase.from('monthly_financial_view').select('*').eq('month_start', monthStart).maybeSingle();
+        if (finView) {
+          monthlyFinancial = finView;
+        } else {
+          // Manual calc fallback
+          const salesInMonth = await supabase.from('sales_transactions').select('subtotal, discount_amount, shipping_cost').gte('sale_date', monthStart).lte('sale_date', monthEnd).eq('status','completed');
+          const salesTotal = (salesInMonth.data || []).reduce((s: number, r: any) => s + Number(r.subtotal||0) - Number(r.discount_amount||0) + Number(r.shipping_cost||0), 0);
+          
+          // COGS for month
+          const cogsQuery = await supabase.from('sales_transaction_lines').select('cost_of_goods_sold, sales_transactions!inner(sale_date, status)').gte('sales_transactions.sale_date', monthStart).lte('sales_transactions.sale_date', monthEnd);
+          // Note: above join filter may not work in all postgrest versions, fallback to client filter
+          let cogsTotal = 0;
+          if (cogsQuery.data) {
+            cogsTotal = (cogsQuery.data as any[]).reduce((s, r) => s + Number(r.cost_of_goods_sold||0), 0);
+          }
+
+          // Purchases for month
+          const poQuery = await supabase.from('purchase_orders').select('id, subtotal').gte('order_date', monthStart).lte('order_date', monthEnd).neq('status','draft').neq('status','cancelled');
+          let purchasesTotal = 0;
+          if (poQuery.data && poQuery.data.length > 0) {
+            // sum via lines for accuracy
+            const poIds = poQuery.data.map((p:any)=>p.id);
+            const linesQuery = await supabase.from('purchase_order_lines').select('quantity_ordered, unit_cost').in('purchase_order_id', poIds);
+            purchasesTotal = (linesQuery.data || []).reduce((s:any, l:any)=> s + Number(l.quantity_ordered||0)*Number(l.unit_cost||0), 0);
+          }
+
+          // Opening/closing from snapshots
+          const { data: snap } = await supabase.from('monthly_stock_snapshots').select('*').eq('month_start', monthStart).maybeSingle();
+          const { data: prevSnap } = await supabase.from('monthly_stock_snapshots').select('closing_stock').lt('month_start', monthStart).order('month_start', { ascending: false }).limit(1).maybeSingle();
+
+          monthlyFinancial = {
+            month_start: monthStart,
+            month_end: monthEnd,
+            sales_total: salesTotal,
+            cogs_total: cogsTotal,
+            purchases_total: purchasesTotal,
+            opening_stock: snap?.opening_stock ?? prevSnap?.closing_stock ?? autoOpeningStock ?? currentInventoryValue, // fallback
+            closing_stock: snap?.closing_stock ?? currentInventoryValue,
+            order_count: (salesInMonth.data || []).length,
+          };
+        }
+      } catch (e) {
+        // keep null
+      }
+
     } catch {}
   }
 
-  // Stream the heavy below-the-fold Publisher Inventory Movement Report (20,000 inventory_transactions + inventory_qty_at RPC)
-  // via its own Suspense boundary so the main page shell & financial report render without waiting on it.
-  const publisherReportSlot = (
-    <Suspense fallback={<SectionSkeleton title="按出版社进出货报表 / Publisher Inventory Report" />}>
-      <AsyncPublisherReport
-        supabase={supabase}
-        valuationPromise={valuationPromise}
-        params={{ pub_from, pub_to, pub_publisher }}
-      />
-    </Suspense>
-  );
 
   return (
     <Suspense fallback={<div className="p-6 text-[12px] text-[#7e84ad]">Loading...</div>}>
-      <ReportsClient
-        valuation={valuation}
-        lowStock={lowStock}
-        salesList={salesList}
-        salesBooksList={salesBooksList}
-        editedSalesList={editedSalesList}
-        monthlyFinancial={monthlyFinancial}
-        currentInventoryValue={currentInventoryValue}
-        autoOpeningStock={autoOpeningStock}
-        autoClosingStock={autoClosingStock}
-        publisherReportSlot={publisherReportSlot}
-        initialFilters={{
-          from: salesRange.from,
-          to: salesRange.to,
-          month: targetMonth,
-          pay: payFilter ? payFilter : 'all',
-          pstatus: payStatusFilter ? payStatusFilter : 'all',
-        }}
-      />
+      <ReportsClient valuation={valuation} lowStock={lowStock} salesList={salesList} salesBooksList={salesBooksList} editedSalesList={editedSalesList} monthlyFinancial={monthlyFinancial} currentInventoryValue={currentInventoryValue} autoOpeningStock={autoOpeningStock} autoClosingStock={autoClosingStock} initialFilters={{ from, to, month: targetMonth, pay: payFilter ? payFilter : 'all', pstatus: payStatusFilter ? payStatusFilter : 'all' }} />
     </Suspense>
   );
 }
